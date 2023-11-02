@@ -135,35 +135,35 @@ function tores() {
 
     if ( max == tank) {
         if(max == 414) {
-            classe = "Dragon"
+            classe = "Gardien"
         } else if (max > 260) {
-            classe = "Rempart"
+            classe = "Avant garde"
         } else {
-            classe = "Paladin"
+            classe = "Avant garde"
         }
     } else if (max == dpsp) {
         if(max == 414) {
-            classe = "Annihilateur"
+            classe = "Bourreau"
         } else if (max > 260) {
-            classe = "Chantelame"
+            classe = "Ecuyer"
         } else {
-            classe = "Chasseur"
+            classe = "Ecuyer"
         }
     } else if (max == dpsm) {
         if(max == 414) {
-            classe = "Chevalier Chaos"
+            classe = "Ombre"
         } else if (max > 260) {
-            classe = "Mage de guerre"
+            classe = "Apprentis sorcier"
         } else {
-            classe = "Évocateur"
+            classe = "Apprentis sorcier"
         }
     } else {
         if(max == 414) {
-            classe = "Ange"
+            classe = "salvateur"
         } else if (max > 260) {
-            classe = "Maître soigneur"
+            classe = "Apprenti soigneur"
         } else {
-            classe = "Chamane"
+            classe = "Apprenti soigneur"
         }
     }
     $('#userClasse').text(classe);
