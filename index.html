@@ -1,0 +1,507 @@
+<html>
+    <head>
+        <title>
+            Page du test
+        </title>
+        <link rel='stylesheet' type='text/css' href='index.css'>
+    </head>
+
+    <body>
+        <form name="teste" method="get">
+            <div id="nom">
+                <h1>
+                    Tu as l’impression de flotter, tu ne sens pas ton corps, tu ne sais pas si tu rêves ou si tu viens de te réveiller.  Autour de toi il n’y a que les étoiles qui brillent et des trainées de poussières ... 
+                </h1>
+                <br>
+                <br>
+                <fieldset class="remplir">
+                    <label for="nom_input"> Je m'appel </label>
+                    <input type="text" name="nom_input" id="nom_input">
+                </fieldset>
+                <p class="suivant"> <a href="#" id="continue_nom" onclick="javascript:checkNom()">Continuer</a> </p>
+            </div>
+            <div id="age" class="hidden">
+
+                <h1>
+                    Les lointaines lueurs vacillantes semblent lentement se déplacer. Les étoiles les plus éloignées disparaissent lors que tu le fixes pour réapparaitre quand tu détourne le regard. Tu ne reconnais aucune constellation.
+                <br>
+                <br>
+
+                <fieldset class="remplir">
+                    <label for="age_input"> J'ai </label>
+                    <input type="number" name="age_input" id="age_input">
+                    <label for="age_input"> ans </label>
+                </fieldset>
+
+                <p class="suivant"> <a href="#" id="continue_age" onclick="javascript:checkAge()">Continuer</a> </p>
+
+            </div>
+            <div id="transition1" class="hidden"> 
+                <h1>
+                    Tu n’arrives pas à retrouver tes souvenirs. Tu a la sensation de tomber en arrière. Tout deviens noir autour de toi.
+                </h1>
+            </div>
+            <div id="transition2" class="hidden">
+                <h1>
+                    Tu es incapable de bouger mais tu commences lentement à ressentir ton corps. Tu réouvres les yeux et ...
+                </h1>
+            </div>
+
+            <div class="container">
+                <div id='1_1' class="hidden container2">
+                    <h2>Soleil ou Lune :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/draw of sun.jpg" class="choice" data-score1="23" data-score2="23" data-score3="72" data-score4="72" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ2()"> 
+                            <h3>Soleil</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/lune.jpg" class="choice" data-score1="72" data-score2="72" data-score3="23" data-score4="23" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ2()">
+                            <h3>Lune</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='1_2' class="hidden container2" >
+                    <h2>Tu es pendant ton temps libre, tu fais :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/livre.jpg" class="choice" data-score1="23" data-score2="23" data-score3="72" data-score4="72" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ2()"> 
+                            <h3>Une activité cérébrale</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/dumbbells.jpg" class="choice" data-score1="72" data-score2="72" data-score3="23" data-score4="23" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ2()">
+                            <h3>Une activité physique</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='1_3' class="hidden container2">
+                    <h2>Tu tends une embuscade mais plan prévue ne se déroule pas comme prevue, tu :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/suivre le plan.jpg"  class="choice" data-score1="72" data-score2="23" data-score3="72" data-score4="23" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ2()"> 
+                            <h3>Suis le plan</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/impro.png"  class="choice" data-score1="23" data-score2="72" data-score3="23" data-score4="72" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ2()">
+                            <h3>Improvise.</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div id='2_1' class="hidden container5">
+                    <h2>Tu es a coté d'un animal que tu as dréssé, c'est : </h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/cat.jpg" class="choice" data-score1="13" data-score2="13" data-score3="52" data-score4="68" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()"> 
+                            <h2>Un chat</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/chien.jpg" class="choice" data-score1="52" data-score2="68" data-score3="31" data-score4="52" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()">
+                            <h2>Un chiens</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/corbeau.jpg" class="choice" data-score1="45" data-score2="45" data-score3="68" data-score4="42" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()"> 
+                            <h2>Un corbeau</h2> 
+                        </div>
+                        <div class="container4">
+                                <img src="./ressources/Q1/ours.jpg" class="choice" data-score1="68" data-score2="52" data-score3="13" data-score4="13" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()">
+                                <h2>Un ours</h2>
+                        </div>
+                    </div>
+                </div>
+                <div id='2_2' class="hidden container5">
+                    <h2>Tu es recherché, tu te caches dans la première maison que tu vois et quelqu'un toque a la porte, tu :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="6" data-score2="17" data-score3="21" data-score4="76" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()"> 
+                            <h2>Je me caches dans un placard</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="71" data-score2="13" data-score3="11" data-score4="2" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()">
+                            <h2>J'ouvre la porte</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="14" data-score2="21" data-score3="65" data-score4="11" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()"> 
+                            <h2>Je regarde discrètement par la fenetre</h2> 
+                        </div>
+                        <div class="container4">
+                                <img src="./ressources/Q1/interro.png" class="choice" data-score1="23" data-score2="63" data-score3="21" data-score4="9" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()">
+                                <h2>Je reste sur le coté de la porte pret a sauter sur la personne qui rentrera</h2>
+                        </div>
+                    </div>
+                </div>
+                <div id='2_3' class="hidden container5">
+                    <h2>Une bagarre eclate proche :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="2" data-score2="8" data-score3="53" data-score4="35" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()"> 
+                            <h2>Je m'eloigne et j'evite les problèmes</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="20" data-score2="21" data-score3="25" data-score4="51" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()">
+                            <h2>Je me rapproche de la foule pour regarder</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="73" data-score2="14" data-score3="6" data-score4="11" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()"> 
+                            <h2>Je m'interpose</h2> 
+                        </div>
+                        <div class="container4">
+                                <img src="./ressources/Q1/interro.png" class="choice" data-score1="5" data-score2="57" data-score3="16" data-score4="3" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ3()">
+                                <h2>Je me rapprocher de cet amusement pret a metre de l'huile sur le feu</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div id='3_1' class="hidden container5">
+                    <h2>Tu es dans soirée dans une taverne :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/boissons.jpg" class="choice" data-score1="53" data-score2="13" data-score3="9" data-score4="5" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()"> 
+                            <h2>Je me lance dans un concours de boisson</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/thé.jpg" class="choice" data-score1="9" data-score2="9" data-score3="41" data-score4="41" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()">
+                            <h2>Je commande un thé</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/coin tranquile.jpg" class="choice" data-score1="10" data-score2="33" data-score3="43" data-score4="40" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()"> 
+                            <h2>Je m'assois dans un coin tranquile</h2> 
+                        </div>
+                        <div class="container4">
+                                <img src="./ressources/Q1/flechette.jpg" class="choice" data-score1="27" data-score2="45" data-score3="13" data-score4="15" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()">
+                                <h2>Je vais jouer au flechettes</h2>
+                        </div>
+                    </div>
+                </div>
+                <div id='3_2' class="hidden container5">
+                    <h2>Tu passes un portail et te retrouves dans un jardin tu vas en premier vers :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/etang bleu.jpg" class="choice" data-score1="16" data-score2="46" data-score3="22" data-score4="21" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()"> 
+                            <h2>Un etang émmettant une lueure bleuté où flotte des fleurs multicolores</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/statue.jpg" class="choice" data-score1="59" data-score2="21" data-score3="18" data-score4="19" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()">
+                            <h2>Une statue d'un blanc immaculé couverte de plantes grimpantes</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/fleur.jpg" class="choice" data-score1="21" data-score2="17" data-score3="15" data-score4="42" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()"> 
+                            <h2>Une fleur qui degage ton odeur préferée</h2> 
+                        </div>
+                        <div class="container4">
+                                <img src="./ressources/Q1/arbre.png" class="choice" data-score1="17" data-score2="16" data-score3="45" data-score4="18" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()">
+                                <h2>un arbre en cristal avec la seve et les feuilles dorées</h2>
+                        </div>
+                    </div>
+                </div>
+                <div id='3_3' class="hidden container5">
+                    <h2>Tu arrives dans une nouvelle ville, tu :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="26" data-score2="13" data-score3="23" data-score4="51" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()"> 
+                            <h2>Trouves un endroit pour dormir</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="14" data-score2="15" data-score3="62" data-score4="15" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()">
+                            <h2>Vas a l'office du tourisme</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="54" data-score2="21" data-score3="11" data-score4="14" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()"> 
+                            <h2>Cherches les meilleurs restaurants</h2> 
+                        </div>
+                        <div class="container4">
+                                <img src="./ressources/Q1/interro.png" class="choice" data-score1="11" data-score2="53" data-score3="10" data-score4="9" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ4()">
+                                <h2>Fais les magasins</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div id='4_1' class="hidden container5">
+                    <h2>Au cours de fouilles tu trouves une salle avec des coffre lequel attire ton attention en premier </h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="34" data-score2="32" data-score3="41" data-score4="6" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()"> 
+                            <h2>un gros coffre mettalique avec un renfoncement au milieu</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="4" data-score2="62" data-score3="43" data-score4="37" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()">
+                            <h2>un coffret en bois peint et laqué</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="51" data-score2="5" data-score3="7" data-score4="49" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()"> 
+                            <h2>une malle recouverte de cuire</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="24" data-score2="7" data-score3="13" data-score4="17" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()">
+                            <h2>un vieux coffre de bois a la serrure et bordure dorées</h2>
+                        </div>
+                    </div>
+                </div>
+                <div id='4_2' class="hidden container5">
+                    <h2>Tu preferes </h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/sentire.jpg" class="choice" data-score1="41" data-score2="38" data-score3="50" data-score4="58" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()"> 
+                            <h2>sentire</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/penser.jpg" class="choice" data-score1="12" data-score2="15" data-score3="43" data-score4="53" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()">
+                            <h2>penser</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/ressentire.jpg" class="choice" data-score1="55" data-score2="52" data-score3="14" data-score4="15" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()"> 
+                            <h2>ressentir</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/reflechire.jpg" class="choice" data-score1="7" data-score2="11" data-score3="31" data-score4="26" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()">
+                            <h2>réflechire</h2>
+                        </div>
+                    </div>
+                </div>
+                <div id='4_3' class="hidden container5">
+                    <h2>Tu observes :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/terre.jpg" class="choice" data-score1="41" data-score2="12" data-score3="36" data-score4="45" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()"> 
+                            <h2>De la terre</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/bois.png" class="choice" data-score1="7" data-score2="38" data-score3="42" data-score4="45" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()">
+                            <h2>Du bois</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/pierre.jpg" class="choice" data-score1="55" data-score2="35" data-score3="27" data-score4="9" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()"> 
+                            <h2>De la pierre</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/metal.png" class="choice" data-score1="16" data-score2="36" data-score3="14" data-score4="15" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ5()">
+                            <h2>!Du métal</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div id='5_1' class="hidden container2">
+                    <h2>droite ou gauche :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/droite.png" class="choice" data-score1="25" data-score2="66" data-score3="50" data-score4="75" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ6()"> 
+                            <h3>droite</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/gauche.png" class="choice" data-score1="75" data-score2="34" data-score3="50" data-score4="25" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ6()">
+                            <h3>gauche</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='5_2' class="hidden container2" >
+                    <h2>tu preferes :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/terrain.jpg" class="choice" data-score1="80" data-score2="57" data-score3="36" data-score4="75" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ6()"> 
+                            <h3>le terrain</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/explorer.jpg" class="choice" data-score1="21" data-score2="43" data-score3="63" data-score4="25" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ6()">
+                            <h3>l'exploration</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='5_3' class="hidden container2">
+                    <h2>Tu es sur la fin de ta vie, tu :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/combat.jpg"  class="choice" data-score1="78" data-score2="74" data-score3="33" data-score4="9" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ6()"> 
+                            <h3>Meurts au combat</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/lit.jpg"  class="choice" data-score1="21" data-score2="26" data-score3="76" data-score4="91" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toQ6()">
+                            <h3>Meurts de vieillesse.</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div id='6_1' class="hidden container2">
+                    <h2>Tu preferes :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="33" data-score2="85" data-score3="86" data-score4="33" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toNextEnv()"> 
+                            <h3>tromper</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="65" data-score2="15" data-score3="25" data-score4="66" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toNextEnv()">
+                            <h3>etre trompé</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='6_2' class="hidden container2" >
+                    <h2>il y a un incendit dans les habitations, tu :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/famille.png" class="choice" data-score1="50" data-score2="72" data-score3="45" data-score4="45" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toNextEnv()"> 
+                            <h3>Sauves un membre de ta famille</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/inconnu.png" class="choice" data-score1="50" data-score2="28" data-score3="55" data-score4="55" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toNextEnv()">
+                            <h3>Sauves 5 inconnus</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='6_3' class="hidden container2">
+                    <h2>Une clé dont tu as besoin est accrocher à une corde nouer autour d'un arbre, tu :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png"  class="choice" data-score1="23" data-score2="21" data-score3="59" data-score4="65" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toNextEnv()"> 
+                            <h3>Dénoues le noeud</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png"  class="choice" data-score1="75" data-score2="83" data-score3="33" data-score4="12" data-score5="0" data-score6="0" data-score7="0" data-score8="0" data-score9="0" data-score10="0" onclick="toNextEnv()">
+                            <h3>Prends ton arme pour couper la corde.</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div id='race_1' class="hidden container2">
+                    <h2>Tu es plus actif :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Env/jour.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="75" data-score6="25" data-score7="50" data-score8="75" data-score9="75" data-score10="66" onclick="toNextEnv()"> 
+                            <h3>Le jour</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Env/nuit.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="25" data-score6="75" data-score7="50" data-score8="25" data-score9="25" data-score10="33" onclick="toNextEnv()">
+                            <h3>La nuit</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='race_2' class="hidden container2">
+                    <h2>Tu preferes un environnement :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="33" data-score6="95" data-score7="25" data-score8="66" data-score9="50" data-score10="50" onclick="toNextEnv()"> 
+                            <h3>Humide</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/interro.png" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="66" data-score6="5" data-score7="75" data-score8="33" data-score9="50" data-score10="50" onclick="toNextEnv()">
+                            <h3>Sec</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='race_3' class="hidden container2">
+                    <h2>Tu preferes etre  :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Q1/groupe.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="75" data-score6="75" data-score7="33" data-score8="25" data-score9="25" data-score10="33" onclick="toNextEnv()"> 
+                            <h3>En groupe</h3> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Q1/seul.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="25" data-score6="25" data-score7="66" data-score8="75" data-score9="75" data-score10="66" onclick="toNextEnv()">
+                            <h3>Seul</h3>
+                        </div>
+                    </div>
+                </div>
+                <div id='race_4' class="hidden container5">
+                    <h2>Tu preferes les environnements :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Env/plaines.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="25" data-score6="25" data-score7="20" data-score8="20" data-score9="20" data-score10="15" onclick="toNextEnv()"> 
+                            <h2>En grandes plaines</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Env/foret.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="10" data-score6="45" data-score7="15" data-score8="50" data-score9="50" data-score10="20" onclick="toNextEnv()">
+                            <h2>Ou la foret est dense</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Env/montagne.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="15" data-score6="15" data-score7="35" data-score8="20" data-score9="15" data-score10="35" onclick="toNextEnv()"> 
+                            <h2>Montagneux</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Env/ville.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="50" data-score6="15" data-score7="30" data-score8="10" data-score9="15" data-score10="30" onclick="toNextEnv()">
+                            <h2>Urbains</h2>
+                        </div>
+                    </div>
+                </div>
+                <div id='race_5' class="hidden container5">
+                    <h2>Tu entames un voyage, tu te diriges vers :</h2>
+                    <br>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Env/ocean.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="35" data-score6="12" data-score7="14" data-score8="17" data-score9="41" data-score10="11" onclick="tores()"> 
+                            <h2>Les mers inexplorées</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Env/foret myst.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="21" data-score6="38" data-score7="13" data-score8="37" data-score9="36" data-score10="24" onclick="tores()">
+                            <h2>La foret verdoyante</h2>
+                        </div>
+                    </div>
+                    <div class="container3">
+                        <div class="container4">
+                            <img src="./ressources/Env/ville anim.png" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="31" data-score6="13" data-score7="31" data-score8="19" data-score9="14" data-score10="28" onclick="tores()"> 
+                            <h2>Une grande ville animée</h2> 
+                        </div>
+                        <div class="container4">
+                            <img src="./ressources/Env/myst mont.jpg" class="choice" data-score1="0" data-score2="0" data-score3="0" data-score4="0" data-score5="13" data-score6="37" data-score7="42" data-score8="27" data-score9="9" data-score10="37" onclick="tores()">
+                            <h2>Des montagnes mysterieuses</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </form>
+
+        <div id="resultat" class="hidden">
+            <div id="res2">
+                Tu te réveilles et sens l’herbe sous toi, tu vois le ciel bleu au-dessus. En te relevant tu te trouves au bord d’un lac. <br>
+                Tes souvenirs sont toujours flous mais certaines choses te reviennent. <br>
+                Tu t’appelles <span id="userName"></span>, tu es devenu <span id="userClasse"></span> et tu es un <span id="userRace"></span> de <span id="userAge"></span> ans. <br>
+                Tu restes à regarder le lac en réfléchissant a ce que tu vas faire maintenant … <br> <br>
+
+                A toi de te lancer dans ton aventure.
+            </div>
+        </div>
+
+    </body>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="index.js"></script>
+</html>
