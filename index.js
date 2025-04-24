@@ -42,9 +42,13 @@ document.getElementById('openBtn').addEventListener('click', () => {
         alert("Merci de sélectionner une fiche !");
         return;
     }
-    
+
     window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
 });
 
 // Charger les fiches au chargement
 chargerFiches();
+
+document.getElementById('testBtn').addEventListener('click', () => {
+    window.location.href = 'test.html';
+});

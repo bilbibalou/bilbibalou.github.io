@@ -48,3 +48,27 @@ h1 {
     font-size: 16px;
     margin-bottom: 10px;
 }
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.actions button {
+    width: 250px;
+}
+
+.open-section {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.open-section select,
+.open-section button {
+    width: 250px;
+    margin-top: 10px;
+}
