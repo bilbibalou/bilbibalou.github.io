@@ -1,0 +1,494 @@
+{
+    "Générale": {
+        "Bouclier": [
+            {
+                "Nom": "Lever de bouclier",
+                "Description": "Levez votre bouclier en position défensive pour vous protéger des attaques ennemies.",
+                "Effet": "Boost armure +2 / 1t",
+                "Degat": null,
+                "Cout": 7,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Parade",
+                "Description": "Vous vous concentrez sur vos ennemis et leurs mouvements pour adopter la parade parfaite à la prochaine attaque.",
+                "Effet": "Bloque",
+                "Degat": null,
+                "Cout": 13,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Défi",
+                "Description": "Lancez un défi à un de vos opposant.",
+                "Effet": "Provocation 1t",
+                "Degat": null,
+                "Cout": 5,
+                "Portee": "distance courte"
+            },
+            {
+                "Nom": "Renfort",
+                "Description": "Prêtez main forte à un allié en difficulté en le protégeant.",
+                "Effet": "Boost un allié armure +1 / 1t",
+                "Degat": null,
+                "Cout": 5,
+                "Portee": "distance courte"
+            },
+            {
+                "Nom": "Ruade",
+                "Description": "Chargez une cible pour arriver à son corps à corps et l'attaquer.",
+                "Effet": "Charge",
+                "Degat": 0,
+                "Cout": 7,
+                "Portee": "distance moyenne"
+            },
+            {
+                "Nom": "Coup de bouclier",
+                "Description": "Frappez d'un coup de bouclier pleine face votre cible pour la repousser d'un pas.",
+                "Effet": "Recule",
+                "Degat": 1,
+                "Cout": 7,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Désequilibre",
+                "Description": "Donnez un bon coup de pied à la cible pour faire perdre l'équilibre.",
+                "Effet": "Déséquilibre",
+                "Degat": 1,
+                "Cout": 4,
+                "Portee": "corps à corps"
+            }
+        ],
+        "Corps a corps physique": [
+            {
+                "Nom": "Affûtage",
+                "Description": "Affûter le tranchant de l'arme.",
+                "Effet": "buff dégât +1 / 3t",
+                "Degat": null,
+                "Cout": 6,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Balayage",
+                "Description": "Coup en cône devant le lanceur.",
+                "Effet": "Dégâts AOE cône",
+                "Degat": 2,
+                "Cout": 11,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Brise épaule",
+                "Description": "Un grand coup épaule contre épaule.",
+                "Effet": "Dégâts + déséquilibre",
+                "Degat": 0,
+                "Cout": 8,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Coup de garde",
+                "Description": "Un bon coup de garde dans la tête.",
+                "Effet": "Dégâts + stun",
+                "Degat": 0,
+                "Cout": 14,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Coup rapide",
+                "Description": "Un coup vif visant à prendre de vitesse l’ennemi.",
+                "Effet": "Dégâts",
+                "Degat": 2,
+                "Cout": 7,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Découpe",
+                "Description": "Une attaque précise qui provoque une coupure.",
+                "Effet": "dot saignement 2t",
+                "Degat": "1 + 1",
+                "Cout": 8,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Estocade",
+                "Description": "Une percée vers l’avant.",
+                "Effet": "Dégâts + dash avant",
+                "Degat": 1,
+                "Cout": 9,
+                "Portee": "distance courte"
+            },
+            {
+                "Nom": "Frappe",
+                "Description": "Un coup standard maîtrisé.",
+                "Effet": "Dégâts",
+                "Degat": 2,
+                "Cout": 8,
+                "Portee": "corps à corps"
+            }
+        ],
+        "Distance physique": [
+            {
+                "Nom": "Tir assuré",
+                "Description": "D'une main assurée et ferme envoyez votre projectile sur l'ennemi",
+                "Effet": "Dégâts",
+                "Degat": 3,
+                "Cout": 12,
+                "Portee": "distance longue"
+            },
+            {
+                "Nom": "Tir barbelé",
+                "Description": "Chargez un projectile barbelé pour lacérer votre cible.",
+                "Effet": "dot saignement 2t",
+                "Degat": "0 + 1",
+                "Cout": 10,
+                "Portee": "distance moyenne"
+            },
+            {
+                "Nom": "Rapidité elfique",
+                "Description": "Grâce à vos entraînements vous pouvez pousser vos muscles pour bénéficier d'une grande rapidité de mouvement.",
+                "Effet": "double action 2t",
+                "Degat": null,
+                "Cout": 9,
+                "Portee": "lanceur"
+            },
+            {
+                "Nom": "Fumigène",
+                "Description": "Usez d'un petit artifice bien pratique pour aveugler les personnes alentour.",
+                "Effet": "AOE aveuglement",
+                "Degat": null,
+                "Cout": 8,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Saut arrière",
+                "Description": "Grâce à un habile saut en arrière vous pouvez prendre de la distance et vous sortir de situations complexes.",
+                "Effet": "esquive saut arrière",
+                "Degat": null,
+                "Cout": 5,
+                "Portee": "lanceur"
+            },
+            {
+                "Nom": "Pas léger",
+                "Description": "Vos long entraînement vous ont permis d'améliorer votre agilité.",
+                "Effet": "buff agilité +3 (passif)",
+                "Degat": null,
+                "Cout": null,
+                "Portee": "lanceur"
+            },
+            {
+                "Nom": "Tir critique",
+                "Description": "Effectuez un tir parfait sur les points vitaux de votre cible",
+                "Effet": "Coups critique",
+                "Degat": 0,
+                "Cout": 20,
+                "Portee": "distance longue"
+            }
+        ],
+        "Magie": [
+            {
+                "Nom": "Luménite",
+                "Description": "Faites apparaître une petite boule lumineuse qui éclaire faiblement autour de vous.",
+                "Effet": "Éclaire la zone",
+                "Degat": null,
+                "Cout": 2,
+                "Portee": "distance courte"
+            },
+            {
+                "Nom": "Soin léger",
+                "Description": "Améliorez la régénération des blessures légères de la cible.",
+                "Effet": "soigne +2",
+                "Degat": null,
+                "Cout": 15,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Flambois",
+                "Description": "Faites apparaître une petite flamme pour brûler une cible.",
+                "Effet": "dégâts",
+                "Degat": 3,
+                "Cout": 12,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Grimmel",
+                "Description": "Envoyez une décharge sur une cible.",
+                "Effet": "dégâts",
+                "Degat": 2,
+                "Cout": 13,
+                "Portee": "distance courte"
+            },
+            {
+                "Nom": "Yral Ogla",
+                "Description": "Créez un brouillard autour de vous pour réduire la visibilité.",
+                "Effet": "enfume la zone",
+                "Degat": null,
+                "Cout": 10,
+                "Portee": "distance moyenne"
+            },
+            {
+                "Nom": "Talbot",
+                "Description": "Placez vos mains au-dessus d'un liquide pour le geler, l'effet reste assez faible sur les gros objets.",
+                "Effet": "gel un liquide, peu d'effet sur des gros objets",
+                "Degat": null,
+                "Cout": 8,
+                "Portee": "distance courte"
+            },
+            {
+                "Nom": "Difosse konarim",
+                "Description": "Connectez votre esprit à celui de votre cible pour lui parler à distance.",
+                "Effet": "permet à l'utilisateur de dire quelque chose à sa cible",
+                "Degat": null,
+                "Cout": 7,
+                "Portee": "distance moyenne"
+            },
+            {
+                "Nom": "Vock",
+                "Description": "Utilisez la magie pour attirer une cible à vous.",
+                "Effet": "attire",
+                "Degat": null,
+                "Cout": 5,
+                "Portee": "distance courte"
+            },
+            {
+                "Nom": "Dabrem sirel valon",
+                "Description": "Projetez votre magie pour créer un bouclier protecteur devant vous pour vous protéger de ce qui est physique.",
+                "Effet": "buff armure +2 1t",
+                "Degat": null,
+                "Cout": 13,
+                "Portee": "corps à corps"
+            },
+            {
+                "Nom": "Salono dak",
+                "Description": "Transférez votre énergie à une cible.",
+                "Effet": "mana de la cible +7",
+                "Degat": null,
+                "Cout": 15,
+                "Portee": "distance courte"
+            }
+        ]
+    },
+    "Classe": {
+        "Avant garde": [
+            {
+                "Nom": "Position defensive",
+                "Description": "Passer en position de garde prêt à bloquer les coups, mais peu pratique pour attaquer. La position dure tant qu'elle n'est pas supprimée.",
+                "Effet": "buff def debuff dégats",
+                "Degats": { "def": 2, "dmg": -2 },
+                "Cout": 2,
+                "Portee": "corps à corps",
+                "Amelioration": "def +1 / dmg +1"
+            },
+            {
+                "Nom": "Provocation",
+                "Description": "Provocation de l'ennemi pour attirer son attention.",
+                "Effet": "taunt 3t",
+                "Degats": null,
+                "Cout": 3,
+                "Portee": "distance moyenne",
+                "Amelioration": "tours +1 / distance longue"
+            },
+            {
+                "Nom": "Coup de pied",
+                "Description": "THIS IS SPARTA !",
+                "Effet": "degat + déséquilibre",
+                "Degats": 2,
+                "Cout": 5,
+                "Portee": "corps à corps",
+                "Amelioration": "recule / chute"
+            },
+            {
+                "Nom": "Fauchage",
+                "Description": "Frappe avec l'arme sur 180°.",
+                "Effet": "aoe",
+                "Degats": 2,
+                "Cout": 8,
+                "Portee": "corps à corps",
+                "Amelioration": "cout -1 / cout -2"
+            },
+            {
+                "Nom": "Eya",
+                "Description": "Inscrivez une rune sur une arme pour l'enflammer et lui permettre d'infliger des dégâts magiques.",
+                "Effet": "buff de dégât magique sur l'arme 2t",
+                "Degats": 1,
+                "Cout": 4,
+                "Portee": "corps à corps",
+                "Amelioration": "tours +1 / dmg +1"
+            },
+            {
+                "Nom": "Toremsim",
+                "Description": "Projetez des petits éclairs sur une cible proche.",
+                "Effet": "dégât",
+                "Degats": 3,
+                "Cout": 9,
+                "Portee": "distance courte",
+                "Amelioration": "cout -2 / dmg +1"
+            }
+        ],
+        "Ecuyer": [
+            {
+                "Nom": "Frappe hardie",
+                "Description": "Un bon coup direct.",
+                "Effet": "degat",
+                "Degats": "1d6",
+                "Cout": 6,
+                "Portee": "corps à corps",
+                "Amelioration": "dmg +1 / dmg +1"
+            },
+            {
+                "Nom": "Attaque cyclone",
+                "Description": "Une attaque circulaire qui touche tout le monde à 360°",
+                "Effet": "aoe en cercle",
+                "Degats": 2,
+                "Cout": 8,
+                "Portee": "corps à corps",
+                "Amelioration": "cout -1 / dmg +1"
+            },
+            {
+                "Nom": "Entaille",
+                "Description": "Taillade l'ennemi et déclenche des saignements.",
+                "Effet": "degat + dot 2 t",
+                "Degats": "2 + 1",
+                "Cout": 4,
+                "Portee": "corps à corps",
+                "Amelioration": "tours +1 / dmg +1"
+            },
+            {
+                "Nom": "Revers",
+                "Description": "Une attaque qui ne peut pas être bloquée.",
+                "Effet": "degat imparrable",
+                "Degats": 2,
+                "Cout": 4,
+                "Portee": "corps à corps",
+                "Amelioration": "dmg +1 / inesquivable"
+            },
+            {
+                "Nom": "Ireith sira rim",
+                "Description": "Enchantez une arme pour augmenter son tranchant.",
+                "Effet": "buff arme tranchante 1t",
+                "Degats": "+1d6",
+                "Cout": 12,
+                "Portee": "corps à corps",
+                "Amelioration": "cout -1 / cout -2"
+            },
+            {
+                "Nom": "Lancer",
+                "Description": "Lance l'arme sur un ennemi à courte portée.",
+                "Effet": "dégât",
+                "Degats": null,
+                "Cout": 3,
+                "Portee": "distance courte",
+                "Amelioration": "dmg +2 / distance moyenne"
+            }
+        ],
+        "Apprenti sorcier": [
+            {
+                "Nom": "Ireith sil",
+                "Description": "Envoyez une boule de feu causant une brûlure.",
+                "Effet": "dégâts + dot 3t",
+                "Degats": "2 + 1",
+                "Cout": 9,
+                "Portee": "distance moyenne",
+                "Amelioration": "dmg +1 / cout -2"
+            },
+            {
+                "Nom": "Bar solem",
+                "Description": "Contrôlez la terre pour saisir et immobiliser une cible.",
+                "Effet": "dégâts + root 1t",
+                "Degats": 2,
+                "Cout": 7,
+                "Portee": "distance courte",
+                "Amelioration": "distance moyenne / déséquilibre"
+            },
+            {
+                "Nom": "Ireith volta",
+                "Description": "Envoyez une puissante onde d'énergie pour causer des dégâts et repousser une cible.",
+                "Effet": "dégâts + repousse",
+                "Degats": 2,
+                "Cout": 15,
+                "Portee": "distance courte",
+                "Amelioration": "cout -4 / déséquilibre"
+            },
+            {
+                "Nom": "Dabrem a fii",
+                "Description": "Créez une couche d'air sous pression pour repousser les projectiles physiques.",
+                "Effet": "repousse les projectiles physiques",
+                "Degats": null,
+                "Cout": 5,
+                "Portee": "corps à corps",
+                "Amelioration": "distance courte / projectiles semi physiques"
+            },
+            {
+                "Nom": "Arli a erem",
+                "Description": "Attire un filet d'eau pour s'en servir comme fouet",
+                "Effet": "dégâts",
+                "Degats": "1d6",
+                "Cout": 6,
+                "Portee": "distance courte",
+                "Amelioration": "cout -1 / pas de désavantage sans eau"
+            },
+            {
+                "Nom": "Uritoris Genven",
+                "Description": "Permet une télépathie à double sens entre plusieurs personnes.",
+                "Effet": "permet la discussion télépathique entre le lanceur et les cibles",
+                "Degats": null,
+                "Cout": "1/cible",
+                "Portee": "distance moyenne",
+                "Amelioration": "distance longue / cout -50 %"
+            }
+        ],
+        "Apprenti soigneur": [
+            {
+                "Nom": "Ireith luménite",
+                "Description": "Puisez dans la lumière prismatique pour frapper l'ennemi d'un rayon lumineux.",
+                "Effet": "dégât",
+                "Degats": 2,
+                "Cout": 4,
+                "Portee": "distance courte",
+                "Amelioration": "distance moyenne / aveuglement 1t"
+            },
+            {
+                "Nom": "Arous merid",
+                "Description": "Utilisez un soin pour les blessures légères.",
+                "Effet": "soin",
+                "Degats": 3,
+                "Cout": 3,
+                "Portee": "corps à corps",
+                "Amelioration": "distance courte / soin +1"
+            },
+            {
+                "Nom": "Inère",
+                "Description": "Utilisez un puissant vent pour repousser la cible.",
+                "Effet": "repousse",
+                "Degats": null,
+                "Cout": 6,
+                "Portee": "distance courte",
+                "Amelioration": "déséquilibre / distance moyenne"
+            },
+            {
+                "Nom": "Alio",
+                "Description": "Frappez directement dans l'esprit de la cible.",
+                "Effet": "dégât",
+                "Degats": "1d6",
+                "Cout": 9,
+                "Portee": "distance courte",
+                "Amelioration": "cout -1 / distance moyenne"
+            },
+            {
+                "Nom": "Vanos ireith sila",
+                "Description": "Concentrez votre pouvoir pour rendre vos mains brûlantes.",
+                "Effet": "dégât",
+                "Degats": "1d6",
+                "Cout": 7,
+                "Portee": "corps à corps",
+                "Amelioration": "dmg +1 / dot +1 2t"
+            },
+            {
+                "Nom": "Areb arous",
+                "Description": "Faites apparaître un cercle de 3 pas autour de vous, soignant toute personne à l'intérieur sur la durée.",
+                "Effet": "soin aoe 3 tours",
+                "Degats": 1,
+                "Cout": 8,
+                "Portee": "corps à corps",
+                "Amelioration": "taille +50 % / choix des cibles"
+            }
+        ]
+    }
+}

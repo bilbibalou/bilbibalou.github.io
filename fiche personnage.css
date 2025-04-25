@@ -1,0 +1,865 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #31105c; /* violet profond */
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ####################################################################################################### */
+
+/* Partie sur l'entête */
+.fiche-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.left-panel {
+    margin-right: 30px;
+}
+
+.photo-frame {
+    width: 180px;
+    height: 260px;
+    background: rgb(60, 20, 100);
+    border: 3px solid #a286f5;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.photo-text {
+    color: #bdafff;
+    text-align: center;
+    font-size: 1em;
+}
+.photo-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Bonton pour supprimer l'image */
+#removePhotoBtn {
+    display: none;
+    margin-top: 5px;
+}
+
+.right-panel {
+    width: 440px;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.name-xp-container {
+    display: flex;
+    align-items: center;
+}
+
+.name-block {
+    flex-grow: 2;
+}
+
+.name-input {
+    width: 240px;
+    font-size: 1.3em;
+    padding: 8px 14px;
+    border-radius: 7px;
+    border: none;
+    background: rgba(220, 205, 255, 0.15);
+    color: #fff;
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.xp-block {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.level-input, .xp-input {
+    width: 65px;
+    font-size: 1em;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(220, 205, 255, 0.12);
+    color: #fff;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.biography-block {
+    background: rgba(40, 0, 60, 0.45);
+    margin-top: 6px;
+    border-radius: 9px;
+    padding: 12px;
+    height: 205px;
+    box-sizing: border-box;
+    display: flex;
+}
+
+.bio-input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    color: #ece5ff;
+    border: none;
+    resize: none;
+    font-size: 1em;
+    font-family: inherit;
+    outline: none;
+}
+
+/* ####################################################################################################### */
+
+/* Partie pour les onglets */
+.tabs-section {
+    margin-top: 24px;
+    max-width: 1000px; /* Limite la largeur de l'espace générale des onglets */
+    min-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center; /* <--- centre les onglets */
+    border-radius: 13px 13px 0 0;
+    overflow: hidden;
+    box-shadow: 0 3px 6px rgba(30, 10, 10, 0);
+    margin: 0 auto;
+}
+
+.tab {
+    background: #ffa900;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: background 0.18s;
+    border-right: 1px solid #fdc464;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px 13px 0 0;
+    min-width: 80px;
+}
+
+.tab:last-child {
+    border-right: none;
+}
+
+.tab-icon {
+    width: 28px;
+    height: 28px;
+    filter: brightness(0) invert(1); /* Icône blanche */
+}
+
+.tab.active {
+    background: #363638;
+}
+
+.tab.active .tab-icon {
+    filter: brightness(1) invert(0.7) sepia(1) hue-rotate(230deg); /* Accent violet */
+}
+
+.tab:hover:not(.active) {
+    background: #ffc43c;
+}
+
+.tab-contents {
+    width: 100%; /* prend toute la largeur du parent */
+    background: #363638;
+    padding: 32px 24px;
+    border-radius: 0 0 13px 13px;
+    min-height: 110px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tab-content {
+    display: none;
+    color: #f3eaff;
+    font-size: 1em;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ####################################################################################################### */
+
+/* Partie pour l'onglet Infos */
+/* Style des jauges */
+.gauges {
+    display: flex;
+    flex-direction: column;
+    gap: 34px;                        /* Plus d'espace entre les jauges */
+    margin-bottom: 32px;
+}
+
+.gauge {
+    display: flex;
+    align-items: center;
+    gap: 14px;                        /* Plus d'espace horizontal */
+    min-height: 54px;                 /* Plus haut */
+}
+
+.gauge-label {
+    min-width: 120px;                 /* Plus large et meilleure lisibilité */
+    font-size: 1.35em;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px #2226;
+    flex-shrink: 0;
+}
+
+.gauge-arrow {
+    background: #444;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;                      /* Plus gros boutons flèches */
+    height: 36px;
+    font-size: 1.3em;
+    cursor: pointer;
+    margin: 0 2px;
+    box-shadow: 0 0 3px #222e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.gauge-arrow:hover {
+    background: #666;
+}
+
+.gauge-arrow:active {
+    background: #222;
+}
+
+.gauge-value {
+    font-size: 1.3em;                /* Plus gros chiffres */
+    font-weight: bold;
+    color: #fff;
+    min-width: 90px;                 /* Plus large */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gauge-current,
+.gauge-max {
+    width: 38px;                     /* Champs plus larges */
+    font-size: 1.15em;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #ccc;
+    color: #fff;
+    text-align: center;
+    outline: none;
+    margin: 0 2px;
+    transition: border 0.2s;
+}
+.gauge-current:focus,
+.gauge-max:focus {
+    border-color: #fff;
+}
+
+.gauge-bar {
+    flex: 1;
+    margin-left: 25px;               /* Décalage plus important */
+    height: 23px;                    /* Barres plus épaisses */
+    background: #8885;
+    border-radius: 13px;
+    min-width: 160px;
+    max-width: 500px;
+    box-shadow: 0 1px 2px #111a;
+    position: relative;
+    overflow: hidden;
+    margin-right: 10px;
+}
+
+.gauge-fill {
+    height: 100%;
+    border-radius: 13px;
+    width: 50%;
+    transition: width 0.2s;
+}
+
+/* Style des caractéristiques */
+.competence-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 24px;
+    justify-content: center;
+}
+
+.competence-box {
+    background: #666;
+    border-radius: 12px;
+    padding: 12px;
+    width: 130px;
+    text-align: center;
+    border: 3px solid #888;
+    box-sizing: border-box;
+}
+
+.competence-title {
+    color: #fff;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+}
+
+.competence-middle {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 10px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.competence-icon {
+    width: 54px;
+    height: 54px;
+    display: block;
+}
+
+.competence-value {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 2em;
+    pointer-events: none; /* ne gêne pas l'image */
+    z-index: 1;
+}
+
+.competence-bar {
+    background: #555;
+    border-radius: 8px;
+    padding: 6px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.2em;
+    color: #fff;
+}
+
+.competence-bar input {
+    width: 32px;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid #999;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+
+/* Retirer les petites flèches des champs de type number */
+/* Pour Chrome, Safari, Edge */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Pour Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* ####################################################################################################### */
+
+/* Partie pour l'onglet Profil */
+/* Partie pour la ligne race classe age */
+.profile-line {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 16px 18px 13px 18px;
+    border-radius: 7px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    justify-content: center;
+}
+
+.profile-entry {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.profile-entry label {
+    color: #b7a7e0;
+    font-weight: 500;
+    font-size: 0.97em;
+    margin-bottom: 2px;
+    margin-left: 3px;
+    letter-spacing: 0.01em;
+}
+
+.profile-input {
+    font-size: 1.08em;
+    padding: 7px 11px;
+    border-radius: 7px;
+    border: none;
+    background: rgba(220, 205, 255, 0.15);
+    color: #fff;
+    font-weight: bold;
+    width: 250px;
+    text-align: center;
+    outline: none;
+    transition: box-shadow 0.18s;
+    box-shadow: 0 1px 0 0 #dccdff15;
+}
+
+/* Style ONLY les select, pas les input */
+select.profile-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: rgba(220,205,255,0.17);
+    color: #fff;
+    font-size: 1.08em;
+    font-weight: bold;
+    padding: 7px 38px 7px 13px; /* espace à droite pour la flèche */
+    border-radius: 7px;
+    border: none;
+    width: 250px;
+    text-align: center; /* label centré */
+    outline: none;
+    box-shadow: 0 1px 0 0 #dccdff15;
+    cursor: pointer;
+    transition: box-shadow 0.18s, background 0.18s;
+    position: relative;
+    background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' fill='none' stroke='white' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 10l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 22px;
+}
+
+select.profile-input:focus {
+    box-shadow: 0 2px 9px 0 #a286f533;
+    background: rgba(220,205,255,0.23);
+}
+
+select.profile-input option {
+    color: #494751;
+    background: #f9f8ff;
+    font-weight: bold;
+    text-align: left;
+}
+
+/* Désactive la première option "Choisir une..." */
+select.profile-input option:disabled {
+    color: #cac5da;
+    background: #f7f2ff;
+}
+
+/* Enlève les petites flèches supplémentaires sur Edge */
+select.profile-input::-ms-expand {
+    display: none;
+}
+
+/* Pour éviter la flèche sur mobile Chrome en plus de l’icône custom */
+@media (max-width: 600px){
+    select.profile-input {
+        background-position: right 8px center;
+        padding-right: 28px;
+    }
+}
+
+.profile-input:focus {
+    box-shadow: 0 2px 9px 0 #a286f533;
+    background: rgba(220,205,255,0.23);
+}
+
+/* Partie Histoire et Spécificitée */
+.story-block {
+    margin-top: 15px;
+    padding: 12px;
+    min-height: 300px;
+    background: rgba(220, 205, 255, 0.05);
+    box-shadow: 0 3px 7px rgba(60,20,100,0.08);
+    border-radius: 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.story-label {
+    color: #ece5ff;
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 1.05em;
+    align-self: flex-start;
+}
+
+.story-input {
+    width: 100%;
+    min-height: 300px;
+    background: transparent;
+    color: #ece5ff;
+    border: none;
+    resize: vertical;
+    font-size: 1em;
+    font-family: inherit;
+    outline: none;
+    padding: 5px 0;
+}
+
+/* ####################################################################################################### */
+
+/* Partie pour l'onglet Skills */
+/* Partie pour les passifs */
+.capacitees-inputs {
+    display: flex;
+    justify-content: center;
+    margin: 22px 0 18px 0;
+}
+
+.capacitee-input {
+    width: 900px;
+    min-height: 100px;
+    padding: 12px 18px;
+    border-radius: 18px;
+    border: 2px solid #fff2;
+    background: #faf6ff10;
+    color: #fafafa;
+    font-family: inherit;
+    font-size: medium;
+    resize: none;
+    text-align: left;
+    outline: none;
+    transition: border 0.18s, background 0.23s;
+    box-sizing: border-box;
+    font-weight: 500;
+    overflow-y: hidden;
+}
+
+.capacitee-input:focus {
+    border-color: #ffa900;
+    background: #fff1;
+}
+
+.add-spell-btn {
+    margin: 30px auto 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #ffa900;
+    color: #ffffff;
+    padding: 12px 32px;
+    border: none;
+    border-radius: 9px;
+    font-size: 1.12em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.17s;
+    box-shadow: 0 2px 8px #0002;
+}
+.add-spell-btn:hover {
+    background: #ffc43c;
+}
+
+/* Popin de choix du type de sort */
+.sort-modal {
+    display: none; /* cachée */
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1200;
+    background: rgba(40, 19, 70, 0.64);
+    align-items: center;
+    justify-content: center;
+}
+.sort-modal.active { display: flex; }
+
+.sort-modal-content {
+    background: #241d32;
+    color: #fff7e6;
+    border-radius: 15px;
+    padding: 28px 36px 22px 36px;
+    min-width: 220px;
+    max-width: 98vw;
+    text-align: center;
+    box-shadow: 0 5px 26px #4c367940;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 11px; right: 16px;
+    font-size: 1.5em;
+    color: #ecececaa;
+    cursor: pointer;
+    line-height: 1;
+    font-weight: bold;
+    transition: color 0.18s;
+}
+.close-modal:hover { color: #ffc43c; }
+
+.sort-btn-group {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.sort-type-btn {
+    background: #ffa900;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 30px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 1px 6px #0001;
+    transition: background 0.14s, color 0.17s;
+}
+
+.sort-type-btn:hover, .sort-type-btn:focus {
+    background: #ffc43c;
+    color: #332142;
+    outline: none;
+}
+
+/* Partie pour les cartes de sort */
+
+#my-spells-list {
+    margin: 12px 0 32px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.my-spell-card {
+    background: #241d32;
+    padding: 13px 19px;
+    border-radius: 11px;
+    color: #fff7e6;
+    border: 1.5px solid #fff3;
+    font-size: 1em;
+    box-shadow: 0 3px 12px #0002;
+}
+
+.spell-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #2b2540;
+    border-radius: 9px;
+    padding: 10px 18px;
+    margin-bottom: 12px;
+    border: 1px solid #ffffff22;
+    box-shadow: 0 1px 4px #0001;
+    text-align: center;
+    justify-content: center;
+}
+
+.spell-card > div {
+    flex: 1 1 auto;              /* Le contenu prend toute la largeur disponible */
+}
+
+.spells-cards-list {
+    max-height: 60vh;    /* Ou ajuste selon ta taille modale */
+    overflow-y: auto;
+}
+
+.spell-info {
+    font-size: 0.95em;
+    color: #e5dbfa;
+    margin-top: 3px;
+    justify-content: center;
+}
+
+.spell-info span {
+    color: #ffa900;
+    font-weight: 500;
+}
+
+.add-spell-plus-btn {
+    background: #ffa900;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.45em;
+    width: 38px;
+    height: 38px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.18s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.add-spell-plus-btn:hover { background: #ffc43c; color: #32204c; }
+
+/* Partie Inventaire */
+
+.inventory-section-title {
+    color: #ffa900;
+    font-weight: 600;
+    font-size: 1.15em;
+    margin-bottom: 6px;
+    margin-left: 4px;
+    letter-spacing: 0.01em;
+}
+
+.inv-fieldset {
+    border: 2px solid rgb(83, 83, 83);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    background: #faf6ff10;
+    padding: 18px 17px 10px 17px;
+    box-shadow: 0 2px 8px #0004;
+}
+
+.inv-fieldset legend {
+    color: rgb(185, 185, 185);
+    font-size: 1.15em;
+    font-weight: bold;
+    padding: 0 10px;
+    letter-spacing: 0.02em;
+}
+
+.inv-input-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 20px;
+    margin-top: 7px;
+}
+
+.inv-input-row label {
+    color: rgb(185, 185, 185);
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.99em;
+    max-width: 500px; /* ici le max de longueur  */
+    flex: 1 1 0px;
+}
+
+.inv-input {
+    width: 100%;
+    background: #faf6ff10;
+    color: #fafafa;
+    padding: 7px 10px;
+    border-radius: 5px;
+    border: 1.5px solid #fff3;
+    margin-top: 2px;
+    font-size: 1.03em;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    transition: border 0.17s, background 0.22s;
+    box-sizing: border-box;
+    /* Ajouté pour les textarea seulement (mais ne gêne pas les input) */
+    resize: none; /* POUR BLOQUER le redimensionnement manuel */
+    overflow: hidden; /* cache toute barre de scroll */
+    line-height: 1.3;     /* ajuste la lisibilité du texte multi-lignes */
+}
+
+.inv-input-effet {
+    width: 100%;
+    background: #faf6ff10;
+    color: #fafafa;
+    padding: 7px 10px;
+    border-radius: 5px;
+    border: 1.5px solid #fff3;
+    margin-top: 2px;
+    font-size: 1.03em;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    transition: border 0.17s, background 0.22s;
+    box-sizing: border-box;
+    /* Ajouté pour les textarea seulement (mais ne gêne pas les input) */
+    resize: none; /* POUR BLOQUER le redimensionnement manuel */
+    overflow: hidden; /* cache toute barre de scroll */
+    line-height: 1.3;     /* ajuste la lisibilité du texte multi-lignes */
+}
+
+.inv-input:focus {
+    border-color: #ffa900;
+    background: #faf6ff10;
+}
+
+input[type=number].inv-input {
+    width: 82px;
+}
+
+#po-block {
+    margin-top: 20px;
+    background: #faf6ff10;
+    padding: 12px 18px;
+    border-radius: 7px;
+    width: fit-content;
+    min-width: 220px;
+    font-weight: bold;
+    font-size: 1.09em;
+    color: #fafafa;
+    border: 1.5px solid #fff3;
+}
+
+/* Partie Notes */
+.notes-block {
+    margin-top: 15px;
+    padding: 12px;
+    min-height: 300px;
+    background: rgba(220, 205, 255, 0.05);
+    box-shadow: 0 3px 7px rgba(60,20,100,0.08);
+    border-radius: 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.notes-label {
+    color: #ece5ff;
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 1.05em;
+    align-self: flex-start;
+}
+
+.notes-input {
+    width: 100%;
+    min-height: 300px;
+    background: transparent;
+    color: #ece5ff;
+    border: none;
+    resize: vertical;
+    font-size: 1em;
+    font-family: inherit;
+    outline: none;
+    padding: 5px 0;
+}
