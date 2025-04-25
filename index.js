@@ -2,32 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/fireba
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 import { ref as storageRef, deleteObject } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
-// Suppression complète d'une fiche
-async function supprimerFiche(nom) {
-    if (!confirm(`Supprimer définitivement la fiche "${nom}" ?`)) return;
-    
-    // 🔥 1. Supprimer la fiche du Firestore
-    await deleteDoc(doc(db, "fiches", nom));
-    
-    // 🖼 2. Supprimer la photo dans Firebase Storage (si elle existe)
-    const imageRef = storageRef(storage, `photos/${nom}.jpg`);
-    try {
-        await deleteObject(imageRef);
-        console.log("Image supprimée.");
-    } catch (e) {
-        console.warn("Pas de photo trouvée ou déjà supprimée.");
-    }
-    
-    alert("Fiche supprimée !");
-    location.reload(); // Recharge la page pour mettre à jour la liste
-}
-
-document.getElementById('deleteBtn').addEventListener('click', async () => {
-    const nom = document.getElementById('ficheSelect').value;
-    if (!nom) return alert("Merci de sélectionner une fiche à supprimer !");
-    await supprimerFiche(nom);
-});
-
 const firebaseConfig = {
     apiKey: "AIzaSyA4WU_ZrpfrGUm0jECl5TKeD196CC7bMwo",
     authDomain: "fiches-jdr.firebaseapp.com",
@@ -56,24 +30,36 @@ async function chargerFiches() {
 
 // ✔️ Créer une fiche
 document.getElementById('createBtn').addEventListener('click', async () => {
-    const nom = prompt("Nom du personnage ?");
-    if (!nom) return;
-
-    // Crée une fiche vide dans Firestore
-    await setDoc(doc(db, "fiches", nom), {
-        classe: '',
-        race: '',
-        age: '',
-        histoire: '',
-        notes: '',
-        capacity: '',
-        photo: '',
-        jauges: {},
-        competences: {},
-        inventaire: {}
-    });
-
-    window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
+    const nom = prompt("Entrez le nom du personnage :").trim();
+    
+    if (!nom) return alert("Nom invalide ou vide.");
+    
+    try {
+      // Crée une fiche vide
+        await setDoc(doc(db, "fiches", nom), {
+            nom: nom,
+            classe: '',
+            race: '',
+            age: '',
+            niveau: '',
+            xp: '',
+            bio: '',
+            histoire: '',
+            notes: '',
+            capacities: '',
+            photo: '',
+            jauges: {},
+            competences: {},
+            inventaire: {},
+            sorts: []
+        });
+        
+      // Redirige vers la fiche
+        window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
+    } catch (error) {
+        console.error("Erreur création de la fiche :", error);
+        alert("Erreur lors de la création de la fiche.");
+    }
 });
 
 // ✔️ Ouvrir une fiche existante
@@ -89,3 +75,29 @@ document.getElementById('testBtn').addEventListener('click', () => {
 });
 
 chargerFiches();
+
+// Suppression complète d'une fiche
+async function supprimerFiche(nom) {
+    if (!confirm(`Supprimer définitivement la fiche "${nom}" ?`)) return;
+    
+    // 🔥 1. Supprimer la fiche du Firestore
+    await deleteDoc(doc(db, "fiches", nom));
+    
+    // 🖼 2. Supprimer la photo dans Firebase Storage (si elle existe)
+    const imageRef = storageRef(storage, `photos/${nom}.jpg`);
+    try {
+        await deleteObject(imageRef);
+        console.log("Image supprimée.");
+    } catch (e) {
+        console.warn("Pas de photo trouvée ou déjà supprimée.");
+    }
+    
+    alert("Fiche supprimée !");
+    location.reload(); // Recharge la page pour mettre à jour la liste
+}
+
+document.getElementById('deleteBtn').addEventListener('click', async () => {
+    const nom = document.getElementById('ficheSelect').value;
+    if (!nom) return alert("Merci de sélectionner une fiche à supprimer !");
+    await supprimerFiche(nom);
+});
