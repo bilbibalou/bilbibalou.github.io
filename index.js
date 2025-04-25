@@ -1,5 +1,32 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { ref as storageRef, deleteObject } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
+
+// Suppression complète d'une fiche
+async function supprimerFiche(nom) {
+    if (!confirm(`Supprimer définitivement la fiche "${nom}" ?`)) return;
+    
+    // 🔥 1. Supprimer la fiche du Firestore
+    await deleteDoc(doc(db, "fiches", nom));
+    
+    // 🖼 2. Supprimer la photo dans Firebase Storage (si elle existe)
+    const imageRef = storageRef(storage, `photos/${nom}.jpg`);
+    try {
+        await deleteObject(imageRef);
+        console.log("Image supprimée.");
+    } catch (e) {
+        console.warn("Pas de photo trouvée ou déjà supprimée.");
+    }
+    
+    alert("Fiche supprimée !");
+    location.reload(); // Recharge la page pour mettre à jour la liste
+}
+
+document.getElementById('deleteBtn').addEventListener('click', async () => {
+    const nom = document.getElementById('ficheSelect').value;
+    if (!nom) return alert("Merci de sélectionner une fiche à supprimer !");
+    await supprimerFiche(nom);
+});
 
 const firebaseConfig = {
     apiKey: "AIzaSyA4WU_ZrpfrGUm0jECl5TKeD196CC7bMwo",

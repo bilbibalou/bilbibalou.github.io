@@ -101,3 +101,19 @@ h1 {
     width: 250px;
     margin-top: 10px;
 }
+
+.boutonsuppr button {
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 18px;
+    border: none;
+    border-radius: 10px;
+    background-color: #e74c3c; /* rouge foncé */
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.boutonsuppr button:hover {
+    background-color: #ff4e4e; /* rouge clair au survol */
+}
