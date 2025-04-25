@@ -6,7 +6,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyA4WU_ZrpfrGUm0jECl5TKeD196CC7bMwo",
     authDomain: "fiches-jdr.firebaseapp.com",
     projectId: "fiches-jdr",
-    storageBucket: "fiches-jdr.firebasestorage.app",
+    storageBucket: "fiches-jdr.appspot.com",
     messagingSenderId: "983380454481",
     appId: "1:983380454481:web:f86d83528cf90bbc0f1c70"
 };
