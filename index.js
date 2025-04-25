@@ -4,12 +4,12 @@ import { getFirestore, collection, getDocs } from "https://www.gstatic.com/fireb
 
 // Configuration Firebase
 const firebaseConfig = {
-    apiKey: "TON_API_KEY",
-    authDomain: "TON_DOMAINE.firebaseapp.com",
-    projectId: "TON_PROJECT_ID",
-    storageBucket: "TON_BUCKET.appspot.com",
-    messagingSenderId: "TON_SENDER_ID",
-    appId: "TON_APP_ID"
+    apiKey: "AIzaSyA4WU_ZrpfrGUm0jECl5TKeD196CC7bMwo",
+    authDomain: "fiches-jdr.firebaseapp.com",
+    projectId: "fiches-jdr",
+    storageBucket: "fiches-jdr.firebasestorage.app",
+    messagingSenderId: "983380454481",
+    appId: "1:983380454481:web:f86d83528cf90bbc0f1c70"
 };
 
 // Init Firebase
