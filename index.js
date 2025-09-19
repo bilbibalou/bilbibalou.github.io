@@ -1,101 +1,99 @@
+// index.js sans Firebase — stockage local dans le navigateur
 
-const firebaseConfig = {
-    apiKey: "AIzaSyA4WU_ZrpfrGUm0jECl5TKeD196CC7bMwo",
-    authDomain: "fiches-jdr.firebaseapp.com",
-    projectId: "fiches-jdr",
-    storageBucket: "fiches-jdr.firebasestorage.app",
-    messagingSenderId: "983380454481",
-    appId: "1:983380454481:web:f86d83528cf90bbc0f1c70"
-};
-
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Récupère les fiches existantes
-async function chargerFiches() {
-    const ficheSelect = document.getElementById('ficheSelect');
-    const fichesSnapshot = await getDocs(collection(db, "fiches"));
-
-    fichesSnapshot.forEach(doc => {
-        const nom = doc.id;
-        const option = document.createElement('option');
-        option.value = nom;
-        option.textContent = nom;
-        ficheSelect.appendChild(option);
-    });
+// Récupération de toutes les fiches depuis localStorage
+function getAllFiches() {
+  const fiches = localStorage.getItem("fiches");
+  return fiches ? JSON.parse(fiches) : {};
 }
 
-// ✔️ Créer une fiche
-document.getElementById('createBtn').addEventListener('click', async () => {
-    const nom = prompt("Entrez le nom du personnage :").trim();
-    
-    if (!nom) return alert("Nom invalide ou vide.");
-    
-    try {
-      // Crée une fiche vide
-        await setDoc(doc(db, "fiches", nom), {
-            nom: nom,
-            classe: '',
-            race: '',
-            age: '',
-            niveau: '',
-            xp: '',
-            bio: '',
-            histoire: '',
-            notes: '',
-            capacities: '',
-            photo: '',
-            jauges: {},
-            competences: {},
-            inventaire: {},
-            sorts: []
-        });
-        
-      // Redirige vers la fiche
-        window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
-    } catch (error) {
-        console.error("Erreur création de la fiche :", error);
-        alert("Erreur lors de la création de la fiche.");
-    }
-});
+// Sauvegarde d'un dictionnaire de fiches dans localStorage
+function saveAllFiches(fiches) {
+  localStorage.setItem("fiches", JSON.stringify(fiches));
+}
 
-// ✔️ Ouvrir une fiche existante
-document.getElementById('openBtn').addEventListener('click', () => {
-    const nom = document.getElementById('ficheSelect').value;
-    if (!nom) return alert("Merci de sélectionner une fiche !");
-    window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
-});
+// Création d'une nouvelle fiche
+function creerNouvelleFiche() {
+  const nom = prompt("Nom de la nouvelle fiche :");
+  if (!nom) return;
 
-// ✔️ Page test
-document.getElementById('testBtn').addEventListener('click', () => {
-    window.location.href = 'test.html';
-});
+  let fiches = getAllFiches();
 
+  if (fiches[nom]) {
+    alert("Une fiche avec ce nom existe déjà !");
+    return;
+  }
+
+  fiches[nom] = {
+    nom: nom,
+    classe: "",
+    race: "",
+    age: "",
+    niveau: 1,
+    xp: 0,
+    bio: "",
+    histoire: "",
+    notes: "",
+    capacities: [],
+    photo: "",
+    jauges: {},
+    competences: {},
+    inventaire: [],
+    sorts: []
+  };
+
+  saveAllFiches(fiches);
+
+  // Redirection vers fiche.html
+  window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
+}
+
+// Charger les fiches dans le select
+function chargerFiches() {
+  const ficheSelect = document.getElementById("ficheSelect");
+  ficheSelect.innerHTML = "";
+
+  const fiches = getAllFiches();
+  Object.keys(fiches).forEach((nom) => {
+    const option = document.createElement("option");
+    option.value = nom;
+    option.textContent = nom;
+    ficheSelect.appendChild(option);
+  });
+}
+
+// Ouvrir une fiche depuis la liste
+function ouvrirFiche() {
+  const ficheSelect = document.getElementById("ficheSelect");
+  const nom = ficheSelect.value;
+  if (!nom) {
+    alert("Sélectionnez une fiche !");
+    return;
+  }
+  window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
+}
+
+// Supprimer une fiche
+function supprimerFiche() {
+  const ficheSelect = document.getElementById("ficheSelect");
+  const nom = ficheSelect.value;
+  if (!nom) {
+    alert("Sélectionnez une fiche !");
+    return;
+  }
+
+  if (!confirm(`Supprimer la fiche "${nom}" ?`)) return;
+
+  let fiches = getAllFiches();
+  delete fiches[nom];
+  saveAllFiches(fiches);
+
+  chargerFiches();
+}
+
+// Brancher les boutons
+document.getElementById("newBtn").addEventListener("click", creerNouvelleFiche);
+document.getElementById("openBtn").addEventListener("click", ouvrirFiche);
+document.getElementById("deleteBtn").addEventListener("click", supprimerFiche);
+
+// Chargement initial
 chargerFiches();
-
-// Suppression complète d'une fiche
-async function supprimerFiche(nom) {
-    if (!confirm(`Supprimer définitivement la fiche "${nom}" ?`)) return;
-    
-    // 🔥 1. Supprimer la fiche du Firestore
-    await deleteDoc(doc(db, "fiches", nom));
-    
-    // 🖼 2. Supprimer la photo dans Firebase Storage (si elle existe)
-    const imageRef = storageRef(storage, `photos/${nom}.jpg`);
-    try {
-        await deleteObject(imageRef);
-        console.log("Image supprimée.");
-    } catch (e) {
-        console.warn("Pas de photo trouvée ou déjà supprimée.");
-    }
-    
-    alert("Fiche supprimée !");
-    location.reload(); // Recharge la page pour mettre à jour la liste
-}
-
-document.getElementById('deleteBtn').addEventListener('click', async () => {
-    const nom = document.getElementById('ficheSelect').value;
-    if (!nom) return alert("Merci de sélectionner une fiche à supprimer !");
-    await supprimerFiche(nom);
-});
