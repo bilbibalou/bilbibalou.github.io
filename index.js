@@ -98,7 +98,7 @@ document.getElementById("deleteBtn").addEventListener("click", supprimerFiche);
 // Chargement initial
 chargerFiches();
 
-// Exporter une fiche au format JSON
+// Exporter une fiche complète
 function exporterFiche() {
   const ficheSelect = document.getElementById("ficheSelect");
   const nom = ficheSelect.value;
@@ -107,24 +107,24 @@ function exporterFiche() {
     return;
   }
 
-  // Récupère les données locales de cette fiche (tout ce qui a été sauvegardé avec le préfixe)
-  const allKeys = Object.keys(localStorage);
   const prefix = `fiche_${nom}_`;
   let data = {};
 
-  allKeys.forEach(key => {
+  // On prend absolument toutes les clés commençant par ce prefix
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
     if (key.startsWith(prefix)) {
       data[key] = localStorage.getItem(key);
     }
-  });
+  }
 
   if (Object.keys(data).length === 0) {
     alert("Aucune donnée trouvée pour cette fiche !");
     return;
   }
 
-  // Création du fichier JSON
-  const blob = new Blob([JSON.stringify({nom, data}, null, 2)], {type: "application/json"});
+  // Téléchargement du JSON (inclut base64 de l’image si présente)
+  const blob = new Blob([JSON.stringify({ nom, data }, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -133,10 +133,10 @@ function exporterFiche() {
   URL.revokeObjectURL(url);
 }
 
-// Importer une fiche depuis un JSON
+// Importer une fiche complète
 function importerFiche(file) {
   const reader = new FileReader();
-  reader.onload = function(event) {
+  reader.onload = function (event) {
     try {
       const imported = JSON.parse(event.target.result);
       const nom = imported.nom;
@@ -147,14 +147,14 @@ function importerFiche(file) {
         return;
       }
 
-      // Sauvegarde des métadonnées dans la liste des fiches
+      // Mets à jour la liste des fiches
       let fiches = getAllFiches();
       if (!fiches[nom]) {
-        fiches[nom] = {nom: nom};
+        fiches[nom] = { nom: nom };
         saveAllFiches(fiches);
       }
 
-      // Stocke toutes les données dans localStorage
+      // Restaure toutes les clés de la fiche
       Object.keys(data).forEach(key => {
         localStorage.setItem(key, data[key]);
       });
@@ -167,15 +167,3 @@ function importerFiche(file) {
   };
   reader.readAsText(file);
 }
-
-// Boutons exporter/importer
-document.getElementById("exportBtn").addEventListener("click", exporterFiche);
-document.getElementById("importBtn").addEventListener("click", () => {
-  document.getElementById("importFile").click();
-});
-document.getElementById("importFile").addEventListener("change", function() {
-  if (this.files.length > 0) {
-    importerFiche(this.files[0]);
-    this.value = ""; // reset pour permettre de réimporter le même fichier
-  }
-});
