@@ -91,7 +91,7 @@ function supprimerFiche() {
 }
 
 // Brancher les boutons
-document.getElementById("newBtn").addEventListener("click", creerNouvelleFiche);
+document.getElementById("createBtn").addEventListener("click", creerNouvelleFiche);
 document.getElementById("openBtn").addEventListener("click", ouvrirFiche);
 document.getElementById("deleteBtn").addEventListener("click", supprimerFiche);
 
