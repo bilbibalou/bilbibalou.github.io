@@ -167,3 +167,15 @@ function importerFiche(file) {
   };
   reader.readAsText(file);
 }
+
+// Boutons exporter/importer
+document.getElementById("exportBtn").addEventListener("click", exporterFiche);
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", function() {
+  if (this.files.length > 0) {
+    importerFiche(this.files[0]);
+    this.value = ""; // reset pour permettre de réimporter le même fichier
+  }
+});
