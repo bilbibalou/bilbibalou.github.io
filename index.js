@@ -43,8 +43,8 @@ function creerNouvelleFiche() {
 
   saveAllFiches(fiches);
 
-  // Redirection vers fiche.html
-  window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
+  // Redirection vers fiche_personnage.html
+  window.location.href = `fiche_personnage.html?nom=${encodeURIComponent(nom)}`;
 }
 
 // Charger les fiches dans le select
@@ -69,7 +69,7 @@ function ouvrirFiche() {
     alert("Sélectionnez une fiche !");
     return;
   }
-  window.location.href = `fiche.html?nom=${encodeURIComponent(nom)}`;
+  window.location.href = `fiche_personnage.html?nom=${encodeURIComponent(nom)}`;
 }
 
 // Supprimer une fiche
