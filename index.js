@@ -156,7 +156,13 @@ function importerFiche(file) {
 
       // Restaure toutes les clés de la fiche
       Object.keys(data).forEach(key => {
-        localStorage.setItem(key, data[key]);
+        // Ancien préfixe du fichier importé
+        const oldPrefix = key.split("_")[1]; // ex: "Aragorn"
+        const parts = key.split("_");
+        parts[1] = nom; // on remplace par le nouveau nom choisi dans le JSON
+        const newKey = parts.join("_");
+
+        localStorage.setItem(newKey, data[key]);
       });
 
       chargerFiches();
