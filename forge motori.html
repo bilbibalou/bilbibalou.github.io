@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flipbook - La Forge</title>
+    <link rel="stylesheet" href="forge motori.css">
+    <!-- PDF.js depuis CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Turn.js (effet flip) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"></script>
+</head>
+<body>
+
+    <!-- Écran de chargement -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <p>Chargement ...</p>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span id="progressText">0%</span>
+    </div>
+
+    <!-- Container principal -->
+    <div id="flipbook-container">
+
+        <!-- Barre du haut -->
+        <div class="toolbar">
+            <button id="btnFirst" title="Première page">⏮</button>
+            <button id="btnPrev" title="Page précédente">◀</button>
+            <span id="pageIndicator">Page 1 / ?</span>
+            <button id="btnNext" title="Page suivante">▶</button>
+            <button id="btnLast" title="Dernière page">⏭</button>
+            <div class="toolbar-right">
+                <button id="btnZoomOut" title="Dézoomer">➖</button>
+                <button id="btnZoomIn" title="Zoomer">➕</button>
+                <button id="btnFullscreen" title="Plein écran">⛶</button>
+            </div>
+        </div>
+
+        <!-- Zone du flipbook -->
+        <div id="flipbook-wrapper">
+            <div id="flipbook"></div>
+        </div>
+
+        <!-- Navigation cliquable sur les côtés -->
+        <div id="nav-left" class="nav-zone" title="Page précédente"></div>
+        <div id="nav-right" class="nav-zone" title="Page suivante"></div>
+
+        <!-- Miniatures en bas -->
+        <div id="thumbnails-bar">
+            <div id="thumbnails"></div>
+        </div>
+
+    </div>
+
+    <script src="forge motori.js"></script>
+</body>
+</html>

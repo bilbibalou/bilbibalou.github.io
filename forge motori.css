@@ -1,0 +1,292 @@
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #1a1a2e;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== LOADER ===== */
+#loader {
+    position: fixed;
+    inset: 0;
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    color: #e0e0e0;
+    gap: 15px;
+    transition: opacity 0.5s;
+}
+
+#loader.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255,255,255,0.1);
+    border-top: 4px solid #c9a227;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.progress-bar {
+    width: 250px;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #c9a227, #f0d060);
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+#progressText {
+    font-size: 14px;
+    color: #c9a227;
+}
+
+/* ===== CONTAINER ===== */
+#flipbook-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: #1a1a2e;
+}
+
+#flipbook-container.visible {
+    display: flex;
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(201,162,39,0.3);
+    width: 100%;
+    justify-content: center;
+    z-index: 100;
+}
+
+.toolbar button {
+    background: rgba(201,162,39,0.15);
+    border: 1px solid rgba(201,162,39,0.3);
+    color: #c9a227;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.toolbar button:hover {
+    background: rgba(201,162,39,0.35);
+    transform: scale(1.05);
+}
+
+#pageIndicator {
+    color: #e0e0e0;
+    font-size: 14px;
+    min-width: 120px;
+    text-align: center;
+}
+
+.toolbar-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
+
+/* ===== FLIPBOOK ZONE ===== */
+#flipbook-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+#flipbook {
+    /* Dimensions définies dynamiquement par JS */
+}
+
+/* Pages du flipbook */
+#flipbook .page {
+    background: white;
+    overflow: hidden;
+}
+
+#flipbook .page canvas,
+#flipbook .page img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+    display: block;
+}
+
+/* Ombrage réaliste des pages */
+#flipbook .page.odd {
+    background: linear-gradient(to right, #f7f7f7 0%, #fff 10%, #fff 100%);
+    box-shadow: inset -3px 0 8px rgba(0,0,0,0.1);
+}
+
+#flipbook .page.even {
+    background: linear-gradient(to left, #f7f7f7 0%, #fff 10%, #fff 100%);
+    box-shadow: inset 3px 0 8px rgba(0,0,0,0.1);
+}
+
+/* Couverture */
+#flipbook .page.hard {
+    background: #2a2a3e !important;
+    border: 2px solid #c9a227;
+}
+
+/* Ombre portée globale du livre */
+#flipbook {
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.5),
+        0 0 80px rgba(0,0,0,0.2);
+}
+
+/* ===== ZONES DE NAVIGATION CLIQUABLES ===== */
+.nav-zone {
+    position: absolute;
+    top: 60px;
+    bottom: 80px;
+    width: 15%;
+    cursor: pointer;
+    z-index: 50;
+    transition: background 0.2s;
+}
+
+#nav-left {
+    left: 0;
+}
+
+#nav-right {
+    right: 0;
+}
+
+.nav-zone:hover {
+    background: rgba(201,162,39,0.05);
+}
+
+/* ===== MINIATURES ===== */
+#thumbnails-bar {
+    width: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(201,162,39,0.3);
+    padding: 8px 10px;
+    overflow-x: auto;
+    z-index: 100;
+}
+
+#thumbnails {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    min-width: min-content;
+}
+
+.thumbnail {
+    width: 60px;
+    height: 80px;
+    border: 2px solid rgba(201,162,39,0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.thumbnail:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    border-color: #c9a227;
+}
+
+.thumbnail.active {
+    opacity: 1;
+    border-color: #c9a227;
+    box-shadow: 0 0 10px rgba(201,162,39,0.4);
+}
+
+.thumbnail canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ===== PLEIN ECRAN ===== */
+body.fullscreen #flipbook-container {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .toolbar {
+        padding: 8px 10px;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    .toolbar button {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    .toolbar-right {
+        margin-left: 0;
+    }
+
+    #pageIndicator {
+        font-size: 12px;
+        min-width: 90px;
+    }
+
+    .thumbnail {
+        width: 45px;
+        height: 60px;
+    }
+
+    .nav-zone {
+        width: 10%;
+    }
+}
