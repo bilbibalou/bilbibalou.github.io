@@ -94,6 +94,9 @@ function supprimerFiche() {
 document.getElementById("createBtn").addEventListener("click", creerNouvelleFiche);
 document.getElementById("openBtn").addEventListener("click", ouvrirFiche);
 document.getElementById("deleteBtn").addEventListener("click", supprimerFiche);
+document.getElementById("testBtn").addEventListener("click", () => {
+  window.location.href = "test.html";
+});
 
 // Chargement initial
 chargerFiches();
