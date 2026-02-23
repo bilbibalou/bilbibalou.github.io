@@ -1,5 +1,5 @@
 // ===== CONFIG =====
-const PDF_PATH = "ressources/forge_motori.pdf";
+const PDF_PATH = "ressources/flipbook/forge_motori.pdf";
 const RENDER_SCALE = 1.5;
 
 // ===== STATE =====
