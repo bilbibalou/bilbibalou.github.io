@@ -2,183 +2,87 @@
     "use strict";
 
     // ===== CONFIG =====
-    var PDF_PATH = "ressources/flipbook/forge_motori.pdf";
+    var PDF_PATH = "ressources/forge.pdf";
     var RENDER_SCALE = 2;
 
-    // ===== ÉLÉMENTS =====
+    // ===== ÉLÉMENTS (correspondant exactement à ton HTML) =====
     var els = {
         loader: document.getElementById("loader"),
-        loaderMsg: document.getElementById("loader-msg"),
-        progressFill: document.getElementById("progress-fill"),
-        progressText: document.getElementById("progress-text"),
-        app: document.getElementById("app"),
-        pageInfo: document.getElementById("page-info"),
-        imgLeft: document.getElementById("img-left"),
-        imgRight: document.getElementById("img-right"),
-        numLeft: document.getElementById("num-left"),
-        numRight: document.getElementById("num-right"),
+        loaderMsg: document.getElementById("loaderMsg"),
+        progressFill: document.getElementById("progressFill"),
+        progressText: document.getElementById("progressText"),
+        container: document.getElementById("flipbook-container"),
+        pageIndicator: document.getElementById("pageIndicator"),
+        imgLeft: document.getElementById("pageLeftImg"),
+        imgRight: document.getElementById("pageRightImg"),
+        numLeft: document.getElementById("pageLeftNum"),
+        numRight: document.getElementById("pageRightNum"),
         book: document.getElementById("book"),
-        viewport: document.getElementById("viewport"),
-        leftSlot: document.querySelector(".left-slot"),
-        rightSlot: document.querySelector(".right-slot"),
-        spine: document.querySelector(".spine"),
-        zoneLeft: document.getElementById("zone-left"),
-        zoneRight: document.getElementById("zone-right"),
-        thumbsCtn: document.getElementById("thumbs"),
-        btnFirst: document.getElementById("btn-first"),
-        btnPrev: document.getElementById("btn-prev"),
-        btnNext: document.getElementById("btn-next"),
-        btnLast: document.getElementById("btn-last"),
-        btnZin: document.getElementById("btn-zin"),
-        btnZout: document.getElementById("btn-zout"),
-        btnZreset: document.getElementById("btn-zreset"),
-        btnFs: document.getElementById("btn-fs")
+        viewport: document.getElementById("book-viewport"),
+        wrapper: document.getElementById("book-wrapper"),
+        pageLeft: document.querySelector(".page-left"),
+        pageRight: document.querySelector(".page-right"),
+        spine: document.querySelector(".book-spine"),
+        zoneLeft: document.getElementById("click-left"),
+        zoneRight: document.getElementById("click-right"),
+        thumbsCtn: document.getElementById("thumbnails"),
+        btnFirst: document.getElementById("btnFirst"),
+        btnPrev: document.getElementById("btnPrev"),
+        btnNext: document.getElementById("btnNext"),
+        btnLast: document.getElementById("btnLast"),
+        btnZin: document.getElementById("btnZoomIn"),
+        btnZout: document.getElementById("btnZoomOut"),
+        btnZreset: document.getElementById("btnZoomReset"),
+        btnFs: document.getElementById("btnFullscreen"),
+        flipOverlay: document.getElementById("flip-overlay"),
+        flipPage: document.getElementById("flip-page"),
+        flipFrontImg: document.getElementById("flipFrontImg"),
+        flipBackImg: document.getElementById("flipBackImg")
     };
 
     // Vérification
-    var ok = true;
     Object.keys(els).forEach(function (k) {
-        if (!els[k]) {
-            console.error("Élément manquant :", k);
-            ok = false;
-        }
+        if (!els[k]) console.warn("Élément manquant :", k);
     });
-    if (!ok) return;
 
-    // ===== VARIABLES =====
-    var pages = [];        // tableau d'images (data URLs)
+    // ===== ÉTAT =====
+    var pdfDoc = null;
     var totalPages = 0;
-    var spread = 0;        // spread courant
-    var maxSpread = 0;
+    var pageImages = [];    // dataURL par page (index 0 = page 1)
+    var thumbImages = [];
+    var currentSpread = 0;  // spread courant
+    var totalSpreads = 0;
     var zoom = 1;
-    var pageRatio = 1;
+    var isAnimating = false;
 
-    // ===== LOGIQUE DES SPREADS =====
-    // Spread 0 : page 1 seule (couverture)
-    // Spread 1 : pages 2-3
-    // Spread 2 : pages 4-5
-    // ...
-    // Si nombre pair de pages : dernier spread = dernière page seule
+    // ===== SPREADS =====
+    // Spread 0 = couverture (page 1 seule)
+    // Spread 1 = pages 2-3
+    // Spread 2 = pages 4-5
+    // etc.
+    // Si nombre pair de pages, dernier spread = dernière page seule
 
-    function getMaxSpread() {
-        if (totalPages <= 1) return 0;
-        // Pages restantes après la couverture
-        var rest = totalPages - 1;
-        var spreads = Math.ceil(rest / 2);
+    function buildSpreadMap() {
+        // Retourne tableau de spreads : chaque élément = [pageNum] ou [pageNum, pageNum]
+        var spreads = [];
+        // Spread 0 : couverture
+        spreads.push([1]);
+        // Spreads suivants : par paires
+        var p = 2;
+        while (p <= totalPages) {
+            if (p + 1 <= totalPages) {
+                spreads.push([p, p + 1]);
+                p += 2;
+            } else {
+                // Dernière page seule
+                spreads.push([p]);
+                p++;
+            }
+        }
         return spreads;
     }
 
-    function getSpreadPages(s) {
-        // Spread 0 = couverture (page index 0, seule)
-        if (s === 0) {
-            return { left: -1, right: 0, single: true };
-        }
-
-        // Spread s >= 1
-        // Page gauche = 1 + (s-1)*2 = index dans le tableau pages
-        var leftIdx = 1 + (s - 1) * 2;
-        var rightIdx = leftIdx + 1;
-
-        if (leftIdx >= totalPages) {
-            return { left: -1, right: -1, single: false };
-        }
-
-        if (rightIdx >= totalPages) {
-            // Dernière page seule
-            return { left: leftIdx, right: -1, single: true };
-        }
-
-        return { left: leftIdx, right: rightIdx, single: false };
-    }
-
-    // ===== AFFICHAGE =====
-    function show() {
-        var sp = getSpreadPages(spread);
-
-        if (sp.single) {
-            // Mode page seule (couverture ou dernière)
-            els.leftSlot.style.display = "none";
-            els.spine.style.display = "none";
-            els.rightSlot.style.display = "flex";
-            els.rightSlot.style.borderRadius = "8px";
-            els.rightSlot.querySelector(".shadow-inner").style.display = "none";
-
-            var pageIdx = (sp.right >= 0) ? sp.right : sp.left;
-            els.imgRight.src = pages[pageIdx];
-            els.imgRight.style.display = "block";
-            els.numRight.textContent = (pageIdx + 1);
-
-            els.imgLeft.style.display = "none";
-            els.numLeft.textContent = "";
-
-            // Centrer la page unique
-            els.book.style.justifyContent = "center";
-
-            // Page info
-            els.pageInfo.textContent = "Page " + (pageIdx + 1) + " / " + totalPages;
-        } else {
-            // Mode double page
-            els.leftSlot.style.display = "flex";
-            els.spine.style.display = "block";
-            els.rightSlot.style.display = "flex";
-            els.rightSlot.style.borderRadius = "0 8px 8px 0";
-            els.leftSlot.querySelector(".shadow-inner").style.display = "block";
-            els.rightSlot.querySelector(".shadow-inner").style.display = "block";
-
-            els.book.style.justifyContent = "center";
-
-            // Gauche
-            if (sp.left >= 0) {
-                els.imgLeft.src = pages[sp.left];
-                els.imgLeft.style.display = "block";
-                els.numLeft.textContent = (sp.left + 1);
-            } else {
-                els.imgLeft.style.display = "none";
-                els.numLeft.textContent = "";
-            }
-
-            // Droite
-            if (sp.right >= 0) {
-                els.imgRight.src = pages[sp.right];
-                els.imgRight.style.display = "block";
-                els.numRight.textContent = (sp.right + 1);
-            } else {
-                els.imgRight.style.display = "none";
-                els.numRight.textContent = "";
-            }
-
-            // Page info
-            var leftNum = (sp.left >= 0) ? (sp.left + 1) : "";
-            var rightNum = (sp.right >= 0) ? (sp.right + 1) : "";
-            if (leftNum && rightNum) {
-                els.pageInfo.textContent = "Pages " + leftNum + " – " + rightNum + " / " + totalPages;
-            } else {
-                els.pageInfo.textContent = "Page " + (leftNum || rightNum) + " / " + totalPages;
-            }
-        }
-
-        fitSize();
-        highlightThumbs();
-    }
-
-    // ===== NAVIGATION =====
-    function go(s) {
-        spread = Math.max(0, Math.min(maxSpread, s));
-        show();
-    }
-
-    function next() { go(spread + 1); }
-    function prev() { go(spread - 1); }
-    function first() { go(0); }
-    function last() { go(maxSpread); }
-
-    function goToPage(pageNum) {
-        // pageNum = 1-indexed
-        if (pageNum === 1) { go(0); return; }
-        // Pour les pages après la couverture
-        var s = Math.ceil((pageNum - 1) / 2);
-        go(s);
-    }
+    var spreadMap = [];
 
     // ===== CHARGEMENT PDF =====
     function load() {
@@ -187,143 +91,252 @@
             "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         pdfjsLib.getDocument(PDF_PATH).promise.then(function (pdf) {
+            pdfDoc = pdf;
             totalPages = pdf.numPages;
-            maxSpread = getMaxSpread();
-            console.log("PDF ouvert :", totalPages, "pages,", maxSpread + 1, "spreads");
-
-            var done = 0;
-            var chain = Promise.resolve();
-
-            for (var i = 1; i <= totalPages; i++) {
-                (function (num) {
-                    chain = chain.then(function () {
-                        return pdf.getPage(num).then(function (page) {
-                            var vp = page.getViewport({ scale: RENDER_SCALE });
-                            if (num === 1) pageRatio = vp.width / vp.height;
-
-                            var canvas = document.createElement("canvas");
-                            canvas.width = vp.width;
-                            canvas.height = vp.height;
-                            var ctx = canvas.getContext("2d");
-
-                            return page.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
-                                pages.push(canvas.toDataURL("image/jpeg", 0.92));
-                                done++;
-                                var pct = Math.round((done / totalPages) * 100);
-                                els.progressFill.style.width = pct + "%";
-                                els.progressText.textContent = pct + "%";
-                                els.loaderMsg.textContent = "Rendu page " + done + " / " + totalPages;
-                            });
-                        });
-                    });
-                })(i);
-            }
-
-            chain.then(function () {
-                console.log("Toutes les pages rendues ✓");
-                els.loader.style.display = "none";
-                els.app.style.display = "flex";
-                buildThumbs();
-                spread = 0;
-                show();
-            });
+            spreadMap = buildSpreadMap();
+            totalSpreads = spreadMap.length;
+            els.loaderMsg.textContent = "Rendu des pages…";
+            renderAllPages();
         }).catch(function (err) {
-            console.error("Erreur PDF :", err);
             els.loaderMsg.textContent = "Erreur : " + err.message;
+            console.error(err);
         });
     }
 
-    // ===== TAILLE =====
-    function fitSize() {
-        var sp = getSpreadPages(spread);
-        var wrapRect = els.viewport.parentElement.getBoundingClientRect();
-        var maxW = wrapRect.width * 0.95;
-        var maxH = wrapRect.height * 0.95;
+    function renderAllPages() {
+        var done = 0;
+        pageImages = new Array(totalPages);
+        thumbImages = new Array(totalPages);
 
-        var pageW, pageH;
+        function renderPage(num) {
+            return pdfDoc.getPage(num).then(function (page) {
+                // Grande image
+                var vp = page.getViewport({ scale: RENDER_SCALE });
+                var canvas = document.createElement("canvas");
+                canvas.width = vp.width;
+                canvas.height = vp.height;
+                var ctx = canvas.getContext("2d");
 
-        if (sp.single) {
-            // Page seule : une seule largeur
-            pageH = maxH;
-            pageW = pageH * pageRatio;
-            if (pageW > maxW * 0.6) {
-                pageW = maxW * 0.6;
-                pageH = pageW / pageRatio;
-            }
-            els.rightSlot.style.width = pageW + "px";
-            els.rightSlot.style.height = pageH + "px";
-            els.leftSlot.style.width = "0px";
-            els.leftSlot.style.height = pageH + "px";
+                return page.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
+                    pageImages[num - 1] = canvas.toDataURL("image/jpeg", 0.92);
+
+                    // Thumbnail
+                    var svp = page.getViewport({ scale: 0.3 });
+                    var sc = document.createElement("canvas");
+                    sc.width = svp.width;
+                    sc.height = svp.height;
+                    var sctx = sc.getContext("2d");
+                    return page.render({ canvasContext: sctx, viewport: svp }).promise.then(function () {
+                        thumbImages[num - 1] = sc.toDataURL("image/jpeg", 0.7);
+                        done++;
+                        var pct = Math.round((done / totalPages) * 100);
+                        els.progressFill.style.width = pct + "%";
+                        els.progressText.textContent = pct + "%";
+                    });
+                });
+            });
+        }
+
+        // Chaîner les rendus séquentiellement
+        var chain = Promise.resolve();
+        for (var i = 1; i <= totalPages; i++) {
+            (function (num) {
+                chain = chain.then(function () { return renderPage(num); });
+            })(i);
+        }
+
+        chain.then(function () {
+            init();
+        });
+    }
+
+    // ===== INIT =====
+    function init() {
+        els.loader.classList.add("hidden");
+        els.container.classList.remove("hidden");
+        buildThumbnails();
+        currentSpread = 0;
+        showSpread(currentSpread);
+        fitSize();
+    }
+
+    // ===== AFFICHAGE SPREAD =====
+    function showSpread(idx) {
+        if (idx < 0 || idx >= totalSpreads) return;
+        currentSpread = idx;
+        var spread = spreadMap[idx];
+
+        if (spread.length === 1) {
+            // Page seule → centrée
+            var pg = spread[0];
+            els.imgLeft.src = pageImages[pg - 1];
+            els.numLeft.textContent = pg;
+            els.imgRight.src = "";
+            els.numRight.textContent = "";
+
+            els.pageLeft.style.display = "flex";
+            els.pageRight.style.display = "none";
+            els.spine.style.display = "none";
+
+            // Centrer la page unique
+            els.book.classList.add("single-page");
         } else {
             // Double page
-            pageH = maxH;
-            pageW = pageH * pageRatio;
-            if (pageW * 2 + 6 > maxW) {
-                pageW = (maxW - 6) / 2;
-                pageH = pageW / pageRatio;
+            var pgL = spread[0];
+            var pgR = spread[1];
+            els.imgLeft.src = pageImages[pgL - 1];
+            els.numLeft.textContent = pgL;
+            els.imgRight.src = pageImages[pgR - 1];
+            els.numRight.textContent = pgR;
+
+            els.pageLeft.style.display = "flex";
+            els.pageRight.style.display = "flex";
+            els.spine.style.display = "block";
+
+            els.book.classList.remove("single-page");
+        }
+
+        // Indicateur
+        if (spread.length === 1) {
+            els.pageIndicator.textContent = "Page " + spread[0] + " / " + totalPages;
+        } else {
+            els.pageIndicator.textContent = "Pages " + spread[0] + "-" + spread[1] + " / " + totalPages;
+        }
+
+        // Boutons
+        els.btnFirst.disabled = (currentSpread === 0);
+        els.btnPrev.disabled = (currentSpread === 0);
+        els.btnNext.disabled = (currentSpread >= totalSpreads - 1);
+        els.btnLast.disabled = (currentSpread >= totalSpreads - 1);
+
+        // Highlight thumbnail
+        highlightThumb();
+    }
+
+    // ===== ANIMATION FLIP =====
+    function flipTo(newIdx, direction) {
+        if (isAnimating) return;
+        if (newIdx < 0 || newIdx >= totalSpreads) return;
+        isAnimating = true;
+
+        var oldSpread = spreadMap[currentSpread];
+        var newSpread = spreadMap[newIdx];
+
+        // Images pour l'animation
+        if (direction === "next") {
+            // Front = page droite actuelle, Back = page gauche suivante
+            var frontPage = oldSpread.length === 2 ? oldSpread[1] : oldSpread[0];
+            var backPage = newSpread[0];
+
+            els.flipFrontImg.src = pageImages[frontPage - 1];
+            els.flipBackImg.src = pageImages[backPage - 1];
+
+            els.flipOverlay.classList.remove("flip-hidden");
+            els.flipPage.classList.remove("flip-reverse");
+            els.flipPage.classList.add("flip-forward");
+        } else {
+            // Prev: Front = page gauche actuelle, Back = page droite précédente
+            var frontPageP = oldSpread[0];
+            var backPageP = newSpread.length === 2 ? newSpread[1] : newSpread[0];
+
+            els.flipFrontImg.src = pageImages[frontPageP - 1];
+            els.flipBackImg.src = pageImages[backPageP - 1];
+
+            els.flipOverlay.classList.remove("flip-hidden");
+            els.flipPage.classList.remove("flip-forward");
+            els.flipPage.classList.add("flip-reverse");
+        }
+
+        setTimeout(function () {
+            showSpread(newIdx);
+            els.flipOverlay.classList.add("flip-hidden");
+            els.flipPage.classList.remove("flip-forward", "flip-reverse");
+            isAnimating = false;
+        }, 500);
+    }
+
+    // ===== NAVIGATION =====
+    function next() {
+        if (currentSpread < totalSpreads - 1) {
+            flipTo(currentSpread + 1, "next");
+        }
+    }
+    function prev() {
+        if (currentSpread > 0) {
+            flipTo(currentSpread - 1, "prev");
+        }
+    }
+    function first() { showSpread(0); }
+    function last() { showSpread(totalSpreads - 1); }
+
+    function goToPage(pageNum) {
+        // Trouver le spread contenant cette page
+        for (var i = 0; i < spreadMap.length; i++) {
+            if (spreadMap[i].indexOf(pageNum) !== -1) {
+                showSpread(i);
+                return;
             }
-            pageW = Math.floor(pageW);
-            pageH = Math.floor(pageH);
-            els.leftSlot.style.width = pageW + "px";
-            els.leftSlot.style.height = pageH + "px";
-            els.rightSlot.style.width = pageW + "px";
-            els.rightSlot.style.height = pageH + "px";
+        }
+    }
+
+    // ===== THUMBNAILS =====
+    function buildThumbnails() {
+        els.thumbsCtn.innerHTML = "";
+        for (var i = 0; i < totalPages; i++) {
+            (function (idx) {
+                var div = document.createElement("div");
+                div.className = "thumb";
+                div.title = "Page " + (idx + 1);
+                var img = document.createElement("img");
+                img.src = thumbImages[idx];
+                img.draggable = false;
+                var lbl = document.createElement("span");
+                lbl.textContent = idx + 1;
+                div.appendChild(img);
+                div.appendChild(lbl);
+                div.addEventListener("click", function () {
+                    goToPage(idx + 1);
+                });
+                els.thumbsCtn.appendChild(div);
+            })(i);
+        }
+    }
+
+    function highlightThumb() {
+        var spread = spreadMap[currentSpread];
+        var thumbs = els.thumbsCtn.querySelectorAll(".thumb");
+        thumbs.forEach(function (t, i) {
+            if (spread.indexOf(i + 1) !== -1) {
+                t.classList.add("active");
+            } else {
+                t.classList.remove("active");
+            }
+        });
+
+        // Scroll vers la miniature active
+        var activeThumb = els.thumbsCtn.querySelector(".thumb.active");
+        if (activeThumb) {
+            activeThumb.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
         }
     }
 
     // ===== ZOOM =====
     function setZoom(z) {
-        zoom = Math.max(0.4, Math.min(3, z));
-        els.viewport.style.transform = "scale(" + zoom + ")";
+        zoom = Math.max(0.5, Math.min(3, z));
+        els.book.style.transform = "scale(" + zoom + ")";
         els.btnZreset.textContent = Math.round(zoom * 100) + "%";
     }
 
-    // ===== THUMBNAILS =====
-    function buildThumbs() {
-        els.thumbsCtn.innerHTML = "";
-        for (var i = 0; i < totalPages; i++) {
-            var div = document.createElement("div");
-            div.className = "thumb";
-            div.dataset.p = i + 1;
-
-            var img = document.createElement("img");
-            img.src = pages[i];
-            img.draggable = false;
-            div.appendChild(img);
-
-            div.addEventListener("click", (function (pNum) {
-                return function () {
-                    goToPage(pNum);
-                };
-            })(i + 1));
-
-            els.thumbsCtn.appendChild(div);
-        }
+    // ===== TAILLE =====
+    function fitSize() {
+        // Le CSS gère le responsive, on reset le zoom
+        setZoom(1);
     }
 
-    function highlightThumbs() {
-        var sp = getSpreadPages(spread);
-        var activePages = [];
-        if (sp.left >= 0) activePages.push(sp.left + 1);
-        if (sp.right >= 0) activePages.push(sp.right + 1);
-
-        document.querySelectorAll(".thumb").forEach(function (t) {
-            var p = parseInt(t.dataset.p);
-            if (activePages.indexOf(p) >= 0) {
-                t.classList.add("on");
-            } else {
-                t.classList.remove("on");
-            }
-        });
-
-        var active = document.querySelector(".thumb.on");
-        if (active) active.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    }
-
-    // ===== ÉVÉNEMENTS =====
-    els.btnNext.addEventListener("click", next);
-    els.btnPrev.addEventListener("click", prev);
+    // ===== EVENTS =====
     els.btnFirst.addEventListener("click", first);
+    els.btnPrev.addEventListener("click", prev);
+    els.btnNext.addEventListener("click", next);
     els.btnLast.addEventListener("click", last);
     els.btnZin.addEventListener("click", function () { setZoom(zoom + 0.15); });
     els.btnZout.addEventListener("click", function () { setZoom(zoom - 0.15); });
