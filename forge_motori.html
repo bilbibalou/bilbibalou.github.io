@@ -9,6 +9,7 @@
 </head>
 <body>
 
+    <!-- Loader -->
     <div id="loader">
         <div class="spinner"></div>
         <p id="loaderMsg">Chargement …</p>
@@ -18,22 +19,50 @@
         <span id="progressText">0%</span>
     </div>
 
+    <!-- Flipbook -->
     <div id="flipbook-container" class="hidden">
+
+        <!-- Zone livre -->
         <div id="book-wrapper">
             <div id="book-viewport">
+
+                <!-- Flèche gauche -->
                 <div id="click-left" class="nav-arrow" title="Page précédente">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </div>
+
                 <div id="book">
-                    <canvas id="pageCanvas"></canvas>
+                    <div class="book-page page-left">
+                        <div class="page-content">
+                            <img id="pageLeftImg" draggable="false">
+                        </div>
+                    </div>
+                    <div class="book-page page-right">
+                        <div class="page-content">
+                            <img id="pageRightImg" draggable="false">
+                        </div>
+                    </div>
+                    <div class="book-spine"></div>
                 </div>
+
+                <!-- Flèche droite -->
                 <div id="click-right" class="nav-arrow" title="Page suivante">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 6 15 12 9 18"></polyline>
+                    </svg>
                 </div>
+
             </div>
         </div>
+
+        <!-- Barre du bas -->
         <div id="bottom-bar">
             <div class="bar-left">
+                <button id="btnGrid" class="bar-btn" title="Miniatures">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                </button>
                 <button id="btnAutoplay" class="bar-btn" title="Lecture auto">
                     <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                 </button>
@@ -44,13 +73,23 @@
             <div class="bar-right">
                 <button id="btnFullscreen" class="bar-btn" title="Plein écran">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="15 3 21 3 21 9"></polyline>
-                        <polyline points="9 21 3 21 3 15"></polyline>
-                        <line x1="21" y1="3" x2="14" y2="10"></line>
-                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
                     </svg>
                 </button>
             </div>
+        </div>
+
+        <!-- Animation flip -->
+        <div id="flip-overlay" class="flip-hidden">
+            <div id="flip-page">
+                <div class="flip-front"><img id="flipFrontImg" draggable="false"></div>
+                <div class="flip-back"><img id="flipBackImg" draggable="false"></div>
+            </div>
+        </div>
+
+        <!-- Miniatures cachées -->
+        <div id="thumbnails-bar" style="display:none;">
+            <div id="thumbnails"></div>
         </div>
     </div>
 
