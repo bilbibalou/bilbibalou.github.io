@@ -5,28 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flipbook - La Forge</title>
     <link rel="stylesheet" href="forge motori.css">
-    <!-- PDF.js depuis CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- Turn.js (effet flip) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"></script>
 </head>
 <body>
 
-    <!-- Écran de chargement -->
+    <!-- Loader -->
     <div id="loader">
         <div class="spinner"></div>
-        <p>Chargement ...</p>
+        <p id="loaderMsg">Chargement …</p>
         <div class="progress-bar">
             <div class="progress-fill" id="progressFill"></div>
         </div>
         <span id="progressText">0%</span>
     </div>
 
-    <!-- Container principal -->
-    <div id="flipbook-container">
-
-        <!-- Barre du haut -->
+    <!-- Flipbook -->
+    <div id="flipbook-container" class="hidden">
+        <!-- Toolbar -->
         <div class="toolbar">
             <button id="btnFirst" title="Première page">⏮</button>
             <button id="btnPrev" title="Page précédente">◀</button>
@@ -34,26 +29,61 @@
             <button id="btnNext" title="Page suivante">▶</button>
             <button id="btnLast" title="Dernière page">⏭</button>
             <div class="toolbar-right">
-                <button id="btnZoomOut" title="Dézoomer">➖</button>
-                <button id="btnZoomIn" title="Zoomer">➕</button>
-                <button id="btnFullscreen" title="Plein écran">⛶</button>
+                <button id="btnZoomOut">➖</button>
+                <button id="btnZoomReset">100%</button>
+                <button id="btnZoomIn">➕</button>
+                <button id="btnFullscreen">⛶</button>
             </div>
         </div>
 
-        <!-- Zone du flipbook -->
-        <div id="flipbook-wrapper">
-            <div id="flipbook"></div>
+        <!-- Zone livre -->
+        <div id="book-wrapper">
+            <div id="book-viewport">
+                <div id="book">
+                    <!-- Page gauche -->
+                    <div class="book-page page-left">
+                        <div class="page-content">
+                            <img id="pageLeftImg" draggable="false">
+                            <div class="page-number" id="pageLeftNum"></div>
+                        </div>
+                        <div class="page-shadow shadow-left"></div>
+                    </div>
+
+                    <!-- Page droite -->
+                    <div class="book-page page-right">
+                        <div class="page-content">
+                            <img id="pageRightImg" draggable="false">
+                            <div class="page-number" id="pageRightNum"></div>
+                        </div>
+                        <div class="page-shadow shadow-right"></div>
+                    </div>
+
+                    <!-- Reliure centrale -->
+                    <div class="book-spine"></div>
+                </div>
+            </div>
+
+            <!-- Zones cliquables -->
+            <div id="click-left" class="click-zone" title="Page précédente"></div>
+            <div id="click-right" class="click-zone" title="Page suivante"></div>
         </div>
 
-        <!-- Navigation cliquable sur les côtés -->
-        <div id="nav-left" class="nav-zone" title="Page précédente"></div>
-        <div id="nav-right" class="nav-zone" title="Page suivante"></div>
+        <!-- Animation de flip (overlay) -->
+        <div id="flip-overlay" class="flip-hidden">
+            <div id="flip-page">
+                <div class="flip-front">
+                    <img id="flipFrontImg" draggable="false">
+                </div>
+                <div class="flip-back">
+                    <img id="flipBackImg" draggable="false">
+                </div>
+            </div>
+        </div>
 
-        <!-- Miniatures en bas -->
+        <!-- Miniatures -->
         <div id="thumbnails-bar">
             <div id="thumbnails"></div>
         </div>
-
     </div>
 
     <script src="forge motori.js"></script>
