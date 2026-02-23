@@ -22,7 +22,6 @@
     <!-- Flipbook -->
     <div id="flipbook-container" class="hidden">
 
-        <!-- Zone livre -->
         <div id="book-wrapper">
             <div id="book-viewport">
 
@@ -34,17 +33,8 @@
                 </div>
 
                 <div id="book">
-                    <div class="book-page page-left">
-                        <div class="page-content">
-                            <img id="pageLeftImg" draggable="false">
-                        </div>
-                    </div>
-                    <div class="book-page page-right">
-                        <div class="page-content">
-                            <img id="pageRightImg" draggable="false">
-                        </div>
-                    </div>
-                    <div class="book-spine"></div>
+                    <!-- Canvas pour le rendu interactif -->
+                    <canvas id="pageCanvas"></canvas>
                 </div>
 
                 <!-- Flèche droite -->
@@ -60,9 +50,6 @@
         <!-- Barre du bas -->
         <div id="bottom-bar">
             <div class="bar-left">
-                <button id="btnGrid" class="bar-btn" title="Miniatures">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                </button>
                 <button id="btnAutoplay" class="bar-btn" title="Lecture auto">
                     <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                 </button>
@@ -79,18 +66,6 @@
             </div>
         </div>
 
-        <!-- Animation flip -->
-        <div id="flip-overlay" class="flip-hidden">
-            <div id="flip-page">
-                <div class="flip-front"><img id="flipFrontImg" draggable="false"></div>
-                <div class="flip-back"><img id="flipBackImg" draggable="false"></div>
-            </div>
-        </div>
-
-        <!-- Miniatures cachées -->
-        <div id="thumbnails-bar" style="display:none;">
-            <div id="thumbnails"></div>
-        </div>
     </div>
 
     <script src="forge_motori.js"></script>
