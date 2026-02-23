@@ -21,54 +21,44 @@
 
     <!-- Flipbook -->
     <div id="flipbook-container" class="hidden">
-        <!-- Toolbar -->
-        <div class="toolbar">
-            <button id="btnFirst" title="Première page">⏮</button>
-            <button id="btnPrev" title="Page précédente">◀</button>
-            <span id="pageIndicator">Page 1 / ?</span>
-            <button id="btnNext" title="Page suivante">▶</button>
-            <button id="btnLast" title="Dernière page">⏭</button>
-            <div class="toolbar-right">
-                <button id="btnZoomOut">➖</button>
-                <button id="btnZoomReset">100%</button>
-                <button id="btnZoomIn">➕</button>
-                <button id="btnFullscreen">⛶</button>
-            </div>
-        </div>
 
         <!-- Zone livre -->
         <div id="book-wrapper">
             <div id="book-viewport">
                 <div id="book">
-                    <!-- Page gauche -->
                     <div class="book-page page-left">
                         <div class="page-content">
                             <img id="pageLeftImg" draggable="false">
-                            <div class="page-number" id="pageLeftNum"></div>
                         </div>
-                        <div class="page-shadow shadow-left"></div>
                     </div>
-
-                    <!-- Page droite -->
                     <div class="book-page page-right">
                         <div class="page-content">
                             <img id="pageRightImg" draggable="false">
-                            <div class="page-number" id="pageRightNum"></div>
                         </div>
-                        <div class="page-shadow shadow-right"></div>
                     </div>
-
-                    <!-- Reliure centrale -->
                     <div class="book-spine"></div>
                 </div>
             </div>
 
-            <!-- Zones cliquables -->
-            <div id="click-left" class="click-zone" title="Page précédente"></div>
-            <div id="click-right" class="click-zone" title="Page suivante"></div>
+            <!-- Flèche gauche -->
+            <div id="click-left" class="click-zone" title="Page précédente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </div>
+
+            <!-- Flèche droite -->
+            <div id="click-right" class="click-zone" title="Page suivante">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 6 15 12 9 18"></polyline>
+                </svg>
+            </div>
+
+            <!-- Indicateur page -->
+            <div id="pageIndicator">Page 1 / ?</div>
         </div>
 
-        <!-- Animation de flip (overlay) -->
+        <!-- Animation flip -->
         <div id="flip-overlay" class="flip-hidden">
             <div id="flip-page">
                 <div class="flip-front">
@@ -80,8 +70,8 @@
             </div>
         </div>
 
-        <!-- Miniatures -->
-        <div id="thumbnails-bar">
+        <!-- Miniatures cachées -->
+        <div id="thumbnails-bar" style="display:none;">
             <div id="thumbnails"></div>
         </div>
     </div>

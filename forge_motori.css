@@ -84,206 +84,137 @@ body {
     pointer-events: none;
 }
 
-/* ===== TOOLBAR ===== */
-.toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 20px;
-    background: #16213e;
-    border-bottom: 1px solid #0f3460;
-    flex-shrink: 0;
-    z-index: 100;
-    height: 48px;
-}
-
-.toolbar button {
-    background: #0f3460;
-    color: #e0e0e0;
-    border: 1px solid #1a4a8a;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.2s;
-}
-
-.toolbar button:hover {
-    background: #f0a500;
-    color: #1a1a2e;
-    border-color: #f0a500;
-}
-
-.toolbar button:active {
-    transform: scale(0.95);
-}
-
-#pageIndicator {
-    color: #e0e0e0;
-    font-size: 0.95rem;
-    min-width: 120px;
-    text-align: center;
-}
-
-.toolbar-right {
-    margin-left: auto;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-/* ===== BOOK WRAPPER ===== */
+/* ===== BOOK WRAPPER — prend tout l'écran ===== */
 #book-wrapper {
-    flex: 1;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
     background: #1a1a2e;
-    min-height: 0;
 }
 
 #book-viewport {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.3s ease;
-    transform-origin: center center;
+    overflow: hidden;
 }
 
-/* ===== BOOK ===== */
 #book {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    transform-origin: center center;
     position: relative;
-    height: calc(100vh - 48px);  /* toute la hauteur moins la toolbar */
-    max-height: calc(100vh - 48px);
 }
 
+/* ===== PAGES ===== */
 .book-page {
+    height: 100vh;
+    width: 50vw;
     position: relative;
     overflow: hidden;
-    background: #fff;
-    height: 100%;
-}
-
-/* Chaque page prend exactement la moitié de la largeur écran */
-.page-left,
-.page-right {
-    width: 50vw;
-    height: calc(100vh - 48px);
-}
-
-.page-left {
-    border-radius: 0;
-}
-
-.page-right {
-    border-radius: 0;
 }
 
 .page-content {
     width: 100%;
     height: 100%;
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
 }
 
-/* ===== CLÉ : l'image remplit TOUTE la page, coupée si nécessaire ===== */
 .page-content img {
     width: 100%;
     height: 100%;
-    object-fit: cover;      /* COVER au lieu de contain = remplit tout */
+    object-fit: contain;
     display: block;
-    background: #000;
 }
 
-/* Ombres intérieures pour effet réaliste */
-.page-shadow {
-    position: absolute;
-    top: 0;
-    width: 40px;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.shadow-left {
-    right: 0;
-    background: linear-gradient(to left,
-        rgba(0, 0, 0, 0.2) 0%,
-        rgba(0, 0, 0, 0.08) 30%,
-        transparent 100%);
-}
-
-.shadow-right {
-    left: 0;
-    background: linear-gradient(to right,
-        rgba(0, 0, 0, 0.2) 0%,
-        rgba(0, 0, 0, 0.08) 30%,
-        transparent 100%);
-}
-
-/* Reliure */
+/* ===== RELIURE ===== */
 .book-spine {
     position: absolute;
     left: 50%;
+    top: 0;
     transform: translateX(-50%);
-    width: 8px;
+    width: 6px;
     height: 100%;
-    background: linear-gradient(to right,
-        rgba(0, 0, 0, 0.4),
-        rgba(0, 0, 0, 0.15) 25%,
-        rgba(255, 255, 255, 0.05) 50%,
-        rgba(0, 0, 0, 0.15) 75%,
-        rgba(0, 0, 0, 0.4));
-    z-index: 5;
+    background: linear-gradient(90deg,
+        rgba(0,0,0,0.4),
+        rgba(0,0,0,0.1),
+        rgba(0,0,0,0.4));
+    z-index: 10;
     pointer-events: none;
 }
 
-/* Numéro de page */
-.page-number {
-    position: absolute;
-    bottom: 8px;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.6);
-    z-index: 3;
-    pointer-events: none;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+/* ===== PAGE UNIQUE (couverture / dernière) ===== */
+#book.single-page {
+    justify-content: center;
 }
 
-.page-left .page-number {
-    left: 12px;
+#book.single-page .page-left {
+    width: 50vw;
 }
 
-.page-right .page-number {
-    right: 12px;
+#book.single-page .page-right {
+    display: none;
 }
 
-/* ===== ZONES CLIQUABLES ===== */
+/* ===== FLÈCHES DE NAVIGATION ===== */
 .click-zone {
     position: absolute;
     top: 0;
-    width: 25%;
+    width: 60px;
     height: 100%;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    z-index: 10;
+    transition: background 0.2s, opacity 0.2s;
+    opacity: 0;
+}
+
+.click-zone:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.click-zone svg {
+    width: 36px;
+    height: 36px;
+    color: #fff;
+    filter: drop-shadow(0 0 4px rgba(0,0,0,0.6));
 }
 
 #click-left {
     left: 0;
-    cursor: w-resize;
+    border-radius: 0 8px 8px 0;
 }
 
 #click-right {
     right: 0;
-    cursor: e-resize;
+    border-radius: 8px 0 0 8px;
 }
 
-.click-zone:hover {
-    background: rgba(255, 255, 255, 0.02);
+/* ===== INDICATEUR DE PAGE ===== */
+#pageIndicator {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    z-index: 20;
+    pointer-events: none;
+    transition: opacity 0.3s;
 }
 
 /* ===== ANIMATION FLIP ===== */
@@ -324,8 +255,8 @@ body {
 .flip-front img, .flip-back img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    background: #000;
+    object-fit: contain;
+    background: #fff;
 }
 
 .flip-back {
@@ -342,75 +273,14 @@ body {
     100% { transform: rotateY(180deg); }
 }
 
-/* ===== MINIATURES - CACHÉES PAR DÉFAUT ===== */
-#thumbnails-bar {
-    display: none;  /* CACHÉ */
-}
-
-#thumbnails {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    min-width: min-content;
-}
-
-.thumbnail {
-    flex-shrink: 0;
-    width: 60px;
-    height: 80px;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    overflow: hidden;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: all 0.2s;
-}
-
-.thumbnail:hover {
-    opacity: 0.8;
-    border-color: #f0a500;
-}
-
-.thumbnail.active {
-    opacity: 1;
-    border-color: #f0a500;
-    box-shadow: 0 0 10px rgba(240, 165, 0, 0.5);
-}
-
-.thumbnail img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* ===== PAGE UNIQUE (couverture) ===== */
-#book.single-page {
-    justify-content: center;
-}
-
-#book.single-page .page-left {
-    width: 50vw;
-}
-
-#book.single-page .page-right {
-    display: none;
-}
-
 /* ===== RESPONSIVE ===== */
 @media (max-width: 700px) {
-    .toolbar {
-        flex-wrap: wrap;
-        gap: 4px;
-        padding: 6px 10px;
-        height: auto;
+    .click-zone {
+        width: 44px;
     }
 
-    .toolbar button {
-        padding: 6px 10px;
-        font-size: 0.85rem;
-    }
-
-    .toolbar-right {
-        margin-left: 0;
+    .click-zone svg {
+        width: 28px;
+        height: 28px;
     }
 }
