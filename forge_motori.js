@@ -2,7 +2,7 @@
     "use strict";
 
     // ===== CONFIG =====
-    var PDF_PATH = "ressources/forge.pdf";
+    var PDF_PATH = "ressources/forge_motori.pdf";
     var RENDER_SCALE = 2;
 
     // ===== ÉLÉMENTS (correspondant exactement à ton HTML) =====
