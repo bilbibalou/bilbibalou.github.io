@@ -1,372 +1,374 @@
-// ===== CONFIG =====
-const PDF_PATH = "ressources/flipbook/forge_motori.pdf";
-const RENDER_SCALE = 1.5;
+(function () {
+    "use strict";
 
-// ===== STATE =====
-let totalPages = 0;
-let pageImages = [];
-let currentSpread = 0;       // index de la double-page actuelle (0 = pages 1-2)
-let isAnimating = false;
-let currentZoom = 1;
-let pageWidth = 0;
-let pageHeight = 0;
+    // ===== CONFIG =====
+    var PDF_PATH = "ressources/flipbook/forge_motori.pdf";
+    var RENDER_SCALE = 2;
 
-// ===== PDF.JS =====
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    // ===== ÉLÉMENTS =====
+    var els = {
+        loader: document.getElementById("loader"),
+        loaderMsg: document.getElementById("loader-msg"),
+        progressFill: document.getElementById("progress-fill"),
+        progressText: document.getElementById("progress-text"),
+        app: document.getElementById("app"),
+        pageInfo: document.getElementById("page-info"),
+        imgLeft: document.getElementById("img-left"),
+        imgRight: document.getElementById("img-right"),
+        numLeft: document.getElementById("num-left"),
+        numRight: document.getElementById("num-right"),
+        book: document.getElementById("book"),
+        viewport: document.getElementById("viewport"),
+        leftSlot: document.querySelector(".left-slot"),
+        rightSlot: document.querySelector(".right-slot"),
+        spine: document.querySelector(".spine"),
+        zoneLeft: document.getElementById("zone-left"),
+        zoneRight: document.getElementById("zone-right"),
+        thumbsCtn: document.getElementById("thumbs"),
+        btnFirst: document.getElementById("btn-first"),
+        btnPrev: document.getElementById("btn-prev"),
+        btnNext: document.getElementById("btn-next"),
+        btnLast: document.getElementById("btn-last"),
+        btnZin: document.getElementById("btn-zin"),
+        btnZout: document.getElementById("btn-zout"),
+        btnZreset: document.getElementById("btn-zreset"),
+        btnFs: document.getElementById("btn-fs")
+    };
 
-// ===== CHARGEMENT =====
-async function loadPDF() {
-    const progressFill = document.getElementById("progressFill");
-    const progressText = document.getElementById("progressText");
-    const loaderMsg = document.getElementById("loaderMsg");
-    const loader = document.getElementById("loader");
-    const container = document.getElementById("flipbook-container");
-
-    try {
-        loaderMsg.textContent = "Vérification du fichier…";
-
-        // Vérifier que le PDF existe
-        let resp;
-        try {
-            resp = await fetch(PDF_PATH, { method: "HEAD" });
-        } catch (e) {
-            throw new Error("Impossible d'accéder au fichier : " + PDF_PATH);
+    // Vérification
+    var ok = true;
+    Object.keys(els).forEach(function (k) {
+        if (!els[k]) {
+            console.error("Élément manquant :", k);
+            ok = false;
         }
+    });
+    if (!ok) return;
 
-        if (!resp.ok) {
-            throw new Error("Fichier introuvable : " + PDF_PATH);
-        }
+    // ===== VARIABLES =====
+    var pages = [];        // tableau d'images (data URLs)
+    var totalPages = 0;
+    var spread = 0;        // spread courant
+    var maxSpread = 0;
+    var zoom = 1;
+    var pageRatio = 1;
 
-        // Charger le PDF
-        loaderMsg.textContent = "Ouverture du PDF…";
-        const pdfDoc = await pdfjsLib.getDocument(PDF_PATH).promise;
-        totalPages = pdfDoc.numPages;
-        console.log(`PDF chargé : ${totalPages} pages`);
+    // ===== LOGIQUE DES SPREADS =====
+    // Spread 0 : page 1 seule (couverture)
+    // Spread 1 : pages 2-3
+    // Spread 2 : pages 4-5
+    // ...
+    // Si nombre pair de pages : dernier spread = dernière page seule
 
-        // Dimensions
-        const firstPage = await pdfDoc.getPage(1);
-        const vp = firstPage.getViewport({ scale: 1 });
-        pageWidth = vp.width;
-        pageHeight = vp.height;
-
-        // Rendu de toutes les pages
-        for (let i = 1; i <= totalPages; i++) {
-            loaderMsg.textContent = `Rendu page ${i} / ${totalPages}`;
-            progressText.textContent = `${Math.round((i / totalPages) * 100)}%`;
-            progressFill.style.width = `${Math.round((i / totalPages) * 100)}%`;
-
-            const page = await pdfDoc.getPage(i);
-            const viewport = page.getViewport({ scale: RENDER_SCALE });
-
-            const canvas = document.createElement("canvas");
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            await page.render({
-                canvasContext: canvas.getContext("2d"),
-                viewport: viewport
-            }).promise;
-
-            pageImages.push(canvas.toDataURL("image/jpeg", 0.9));
-        }
-
-        // Tout prêt !
-        initBook();
-        buildThumbnails();
-
-        loader.classList.add("hidden");
-        container.classList.remove("hidden");
-
-    } catch (err) {
-        console.error(err);
-        loaderMsg.textContent = "Erreur de chargement !";
-        progressText.textContent = err.message;
-        progressText.style.color = "#ff4444";
-        progressFill.style.width = "100%";
-        progressFill.style.background = "#ff4444";
+    function getMaxSpread() {
+        if (totalPages <= 1) return 0;
+        // Pages restantes après la couverture
+        var rest = totalPages - 1;
+        var spreads = Math.ceil(rest / 2);
+        return spreads;
     }
-}
 
-// ===== INIT BOOK =====
-function initBook() {
-    resizeBook();
-    showSpread(0);
+    function getSpreadPages(s) {
+        // Spread 0 = couverture (page index 0, seule)
+        if (s === 0) {
+            return { left: -1, right: 0, single: true };
+        }
 
-    // Boutons
-    document.getElementById("btnPrev").addEventListener("click", prevSpread);
-    document.getElementById("btnNext").addEventListener("click", nextSpread);
-    document.getElementById("btnFirst").addEventListener("click", () => goToSpread(0));
-    document.getElementById("btnLast").addEventListener("click", () => goToSpread(getMaxSpread()));
+        // Spread s >= 1
+        // Page gauche = 1 + (s-1)*2 = index dans le tableau pages
+        var leftIdx = 1 + (s - 1) * 2;
+        var rightIdx = leftIdx + 1;
 
-    // Zones cliquables
-    document.getElementById("click-left").addEventListener("click", prevSpread);
-    document.getElementById("click-right").addEventListener("click", nextSpread);
+        if (leftIdx >= totalPages) {
+            return { left: -1, right: -1, single: false };
+        }
 
-    // Zoom
-    document.getElementById("btnZoomIn").addEventListener("click", () => setZoom(currentZoom + 0.15));
-    document.getElementById("btnZoomOut").addEventListener("click", () => setZoom(currentZoom - 0.15));
-    document.getElementById("btnZoomReset").addEventListener("click", () => setZoom(1));
+        if (rightIdx >= totalPages) {
+            // Dernière page seule
+            return { left: leftIdx, right: -1, single: true };
+        }
 
-    // Plein écran
-    document.getElementById("btnFullscreen").addEventListener("click", toggleFullscreen);
+        return { left: leftIdx, right: rightIdx, single: false };
+    }
 
-    // Clavier
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); nextSpread(); }
-        else if (e.key === "ArrowLeft") { e.preventDefault(); prevSpread(); }
-        else if (e.key === "Home") { goToSpread(0); }
-        else if (e.key === "End") { goToSpread(getMaxSpread()); }
-        else if (e.key === "+" || e.key === "=") { setZoom(currentZoom + 0.15); }
-        else if (e.key === "-") { setZoom(currentZoom - 0.15); }
-        else if (e.key === "0") { setZoom(1); }
+    // ===== AFFICHAGE =====
+    function show() {
+        var sp = getSpreadPages(spread);
+
+        if (sp.single) {
+            // Mode page seule (couverture ou dernière)
+            els.leftSlot.style.display = "none";
+            els.spine.style.display = "none";
+            els.rightSlot.style.display = "flex";
+            els.rightSlot.style.borderRadius = "8px";
+            els.rightSlot.querySelector(".shadow-inner").style.display = "none";
+
+            var pageIdx = (sp.right >= 0) ? sp.right : sp.left;
+            els.imgRight.src = pages[pageIdx];
+            els.imgRight.style.display = "block";
+            els.numRight.textContent = (pageIdx + 1);
+
+            els.imgLeft.style.display = "none";
+            els.numLeft.textContent = "";
+
+            // Centrer la page unique
+            els.book.style.justifyContent = "center";
+
+            // Page info
+            els.pageInfo.textContent = "Page " + (pageIdx + 1) + " / " + totalPages;
+        } else {
+            // Mode double page
+            els.leftSlot.style.display = "flex";
+            els.spine.style.display = "block";
+            els.rightSlot.style.display = "flex";
+            els.rightSlot.style.borderRadius = "0 8px 8px 0";
+            els.leftSlot.querySelector(".shadow-inner").style.display = "block";
+            els.rightSlot.querySelector(".shadow-inner").style.display = "block";
+
+            els.book.style.justifyContent = "center";
+
+            // Gauche
+            if (sp.left >= 0) {
+                els.imgLeft.src = pages[sp.left];
+                els.imgLeft.style.display = "block";
+                els.numLeft.textContent = (sp.left + 1);
+            } else {
+                els.imgLeft.style.display = "none";
+                els.numLeft.textContent = "";
+            }
+
+            // Droite
+            if (sp.right >= 0) {
+                els.imgRight.src = pages[sp.right];
+                els.imgRight.style.display = "block";
+                els.numRight.textContent = (sp.right + 1);
+            } else {
+                els.imgRight.style.display = "none";
+                els.numRight.textContent = "";
+            }
+
+            // Page info
+            var leftNum = (sp.left >= 0) ? (sp.left + 1) : "";
+            var rightNum = (sp.right >= 0) ? (sp.right + 1) : "";
+            if (leftNum && rightNum) {
+                els.pageInfo.textContent = "Pages " + leftNum + " – " + rightNum + " / " + totalPages;
+            } else {
+                els.pageInfo.textContent = "Page " + (leftNum || rightNum) + " / " + totalPages;
+            }
+        }
+
+        fitSize();
+        highlightThumbs();
+    }
+
+    // ===== NAVIGATION =====
+    function go(s) {
+        spread = Math.max(0, Math.min(maxSpread, s));
+        show();
+    }
+
+    function next() { go(spread + 1); }
+    function prev() { go(spread - 1); }
+    function first() { go(0); }
+    function last() { go(maxSpread); }
+
+    function goToPage(pageNum) {
+        // pageNum = 1-indexed
+        if (pageNum === 1) { go(0); return; }
+        // Pour les pages après la couverture
+        var s = Math.ceil((pageNum - 1) / 2);
+        go(s);
+    }
+
+    // ===== CHARGEMENT PDF =====
+    function load() {
+        els.loaderMsg.textContent = "Chargement du PDF…";
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+        pdfjsLib.getDocument(PDF_PATH).promise.then(function (pdf) {
+            totalPages = pdf.numPages;
+            maxSpread = getMaxSpread();
+            console.log("PDF ouvert :", totalPages, "pages,", maxSpread + 1, "spreads");
+
+            var done = 0;
+            var chain = Promise.resolve();
+
+            for (var i = 1; i <= totalPages; i++) {
+                (function (num) {
+                    chain = chain.then(function () {
+                        return pdf.getPage(num).then(function (page) {
+                            var vp = page.getViewport({ scale: RENDER_SCALE });
+                            if (num === 1) pageRatio = vp.width / vp.height;
+
+                            var canvas = document.createElement("canvas");
+                            canvas.width = vp.width;
+                            canvas.height = vp.height;
+                            var ctx = canvas.getContext("2d");
+
+                            return page.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
+                                pages.push(canvas.toDataURL("image/jpeg", 0.92));
+                                done++;
+                                var pct = Math.round((done / totalPages) * 100);
+                                els.progressFill.style.width = pct + "%";
+                                els.progressText.textContent = pct + "%";
+                                els.loaderMsg.textContent = "Rendu page " + done + " / " + totalPages;
+                            });
+                        });
+                    });
+                })(i);
+            }
+
+            chain.then(function () {
+                console.log("Toutes les pages rendues ✓");
+                els.loader.style.display = "none";
+                els.app.style.display = "flex";
+                buildThumbs();
+                spread = 0;
+                show();
+            });
+        }).catch(function (err) {
+            console.error("Erreur PDF :", err);
+            els.loaderMsg.textContent = "Erreur : " + err.message;
+        });
+    }
+
+    // ===== TAILLE =====
+    function fitSize() {
+        var sp = getSpreadPages(spread);
+        var wrapRect = els.viewport.parentElement.getBoundingClientRect();
+        var maxW = wrapRect.width * 0.95;
+        var maxH = wrapRect.height * 0.95;
+
+        var pageW, pageH;
+
+        if (sp.single) {
+            // Page seule : une seule largeur
+            pageH = maxH;
+            pageW = pageH * pageRatio;
+            if (pageW > maxW * 0.6) {
+                pageW = maxW * 0.6;
+                pageH = pageW / pageRatio;
+            }
+            els.rightSlot.style.width = pageW + "px";
+            els.rightSlot.style.height = pageH + "px";
+            els.leftSlot.style.width = "0px";
+            els.leftSlot.style.height = pageH + "px";
+        } else {
+            // Double page
+            pageH = maxH;
+            pageW = pageH * pageRatio;
+            if (pageW * 2 + 6 > maxW) {
+                pageW = (maxW - 6) / 2;
+                pageH = pageW / pageRatio;
+            }
+            pageW = Math.floor(pageW);
+            pageH = Math.floor(pageH);
+            els.leftSlot.style.width = pageW + "px";
+            els.leftSlot.style.height = pageH + "px";
+            els.rightSlot.style.width = pageW + "px";
+            els.rightSlot.style.height = pageH + "px";
+        }
+    }
+
+    // ===== ZOOM =====
+    function setZoom(z) {
+        zoom = Math.max(0.4, Math.min(3, z));
+        els.viewport.style.transform = "scale(" + zoom + ")";
+        els.btnZreset.textContent = Math.round(zoom * 100) + "%";
+    }
+
+    // ===== THUMBNAILS =====
+    function buildThumbs() {
+        els.thumbsCtn.innerHTML = "";
+        for (var i = 0; i < totalPages; i++) {
+            var div = document.createElement("div");
+            div.className = "thumb";
+            div.dataset.p = i + 1;
+
+            var img = document.createElement("img");
+            img.src = pages[i];
+            img.draggable = false;
+            div.appendChild(img);
+
+            div.addEventListener("click", (function (pNum) {
+                return function () {
+                    goToPage(pNum);
+                };
+            })(i + 1));
+
+            els.thumbsCtn.appendChild(div);
+        }
+    }
+
+    function highlightThumbs() {
+        var sp = getSpreadPages(spread);
+        var activePages = [];
+        if (sp.left >= 0) activePages.push(sp.left + 1);
+        if (sp.right >= 0) activePages.push(sp.right + 1);
+
+        document.querySelectorAll(".thumb").forEach(function (t) {
+            var p = parseInt(t.dataset.p);
+            if (activePages.indexOf(p) >= 0) {
+                t.classList.add("on");
+            } else {
+                t.classList.remove("on");
+            }
+        });
+
+        var active = document.querySelector(".thumb.on");
+        if (active) active.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+
+    // ===== ÉVÉNEMENTS =====
+    els.btnNext.addEventListener("click", next);
+    els.btnPrev.addEventListener("click", prev);
+    els.btnFirst.addEventListener("click", first);
+    els.btnLast.addEventListener("click", last);
+    els.btnZin.addEventListener("click", function () { setZoom(zoom + 0.15); });
+    els.btnZout.addEventListener("click", function () { setZoom(zoom - 0.15); });
+    els.btnZreset.addEventListener("click", function () { setZoom(1); });
+    els.btnFs.addEventListener("click", function () {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
     });
 
-    // Swipe
-    let touchStartX = 0;
-    const wrapper = document.getElementById("book-wrapper");
+    els.zoneLeft.addEventListener("click", prev);
+    els.zoneRight.addEventListener("click", next);
 
-    wrapper.addEventListener("touchstart", (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); next(); }
+        else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
+        else if (e.key === "Home") { first(); }
+        else if (e.key === "End") { last(); }
+        else if (e.key === "+" || e.key === "=") { setZoom(zoom + 0.15); }
+        else if (e.key === "-") { setZoom(zoom - 0.15); }
+    });
 
-    wrapper.addEventListener("touchend", (e) => {
-        const diff = touchStartX - e.changedTouches[0].screenX;
-        if (Math.abs(diff) > 50) {
-            diff > 0 ? nextSpread() : prevSpread();
-        }
+    // Swipe tactile
+    var touchStartX = 0;
+    els.viewport.addEventListener("touchstart", function (e) {
+        touchStartX = e.changedTouches[0].clientX;
     }, { passive: true });
+    els.viewport.addEventListener("touchend", function (e) {
+        var dx = e.changedTouches[0].clientX - touchStartX;
+        if (dx < -50) next();
+        else if (dx > 50) prev();
+    });
 
     // Resize
-    window.addEventListener("resize", debounce(resizeBook, 200));
-}
+    window.addEventListener("resize", debounce(function () { fitSize(); }, 200));
 
-// ===== NAVIGATION =====
-function getMaxSpread() {
-    // spread 0 = pages 1-2, spread 1 = pages 3-4, etc.
-    return Math.ceil(totalPages / 2) - 1;
-}
-
-function getSpreadPages(spread) {
-    const left = spread * 2;       // index 0-based
-    const right = spread * 2 + 1;
-    return {
-        leftIdx: left,
-        rightIdx: right < totalPages ? right : -1
-    };
-}
-
-function showSpread(spread, animate = false, direction = "right") {
-    const { leftIdx, rightIdx } = getSpreadPages(spread);
-
-    const leftImg = document.getElementById("pageLeftImg");
-    const rightImg = document.getElementById("pageRightImg");
-    const leftNum = document.getElementById("pageLeftNum");
-    const rightNum = document.getElementById("pageRightNum");
-
-    if (animate) {
-        animateFlip(direction, () => {
-            setImages(leftImg, rightImg, leftNum, rightNum, leftIdx, rightIdx);
-        });
-    } else {
-        setImages(leftImg, rightImg, leftNum, rightNum, leftIdx, rightIdx);
+    function debounce(fn, ms) {
+        var t;
+        return function () { clearTimeout(t); t = setTimeout(fn, ms); };
     }
 
-    currentSpread = spread;
-    updateIndicator();
-    updateActiveThumbnail();
-}
+    // ===== GO =====
+    console.log("Flipbook JS chargé ✓");
+    load();
 
-function setImages(leftImg, rightImg, leftNum, rightNum, leftIdx, rightIdx) {
-    if (leftIdx >= 0 && leftIdx < totalPages) {
-        leftImg.src = pageImages[leftIdx];
-        leftImg.style.visibility = "visible";
-        leftNum.textContent = leftIdx + 1;
-    } else {
-        leftImg.style.visibility = "hidden";
-        leftNum.textContent = "";
-    }
-
-    if (rightIdx >= 0 && rightIdx < totalPages) {
-        rightImg.src = pageImages[rightIdx];
-        rightImg.style.visibility = "visible";
-        rightNum.textContent = rightIdx + 1;
-    } else {
-        rightImg.style.visibility = "hidden";
-        rightNum.textContent = "";
-    }
-}
-
-function nextSpread() {
-    if (isAnimating) return;
-    if (currentSpread >= getMaxSpread()) return;
-    showSpread(currentSpread + 1, true, "right");
-}
-
-function prevSpread() {
-    if (isAnimating) return;
-    if (currentSpread <= 0) return;
-    showSpread(currentSpread - 1, true, "left");
-}
-
-function goToSpread(spread) {
-    if (isAnimating) return;
-    spread = Math.max(0, Math.min(spread, getMaxSpread()));
-    if (spread === currentSpread) return;
-    const dir = spread > currentSpread ? "right" : "left";
-    showSpread(spread, true, dir);
-}
-
-function goToPage(pageNum) {
-    const spread = Math.floor((pageNum - 1) / 2);
-    goToSpread(spread);
-}
-
-// ===== ANIMATION =====
-function animateFlip(direction, onComplete) {
-    isAnimating = true;
-
-    const book = document.getElementById("book");
-    const className = direction === "right" ? "flip-right-anim" : "flip-left-anim";
-
-    book.classList.add(className);
-
-    setTimeout(() => {
-        onComplete();
-        book.classList.remove(className);
-        isAnimating = false;
-    }, 350);
-}
-
-// Ajouter les keyframes dynamiquement
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-    @keyframes bookFlipRight {
-        0%   { transform: perspective(1500px) rotateY(0deg); }
-        40%  { transform: perspective(1500px) rotateY(-4deg); }
-        100% { transform: perspective(1500px) rotateY(0deg); }
-    }
-    @keyframes bookFlipLeft {
-        0%   { transform: perspective(1500px) rotateY(0deg); }
-        40%  { transform: perspective(1500px) rotateY(4deg); }
-        100% { transform: perspective(1500px) rotateY(0deg); }
-    }
-    #book.flip-right-anim {
-        animation: bookFlipRight 0.35s ease-in-out;
-    }
-    #book.flip-left-anim {
-        animation: bookFlipLeft 0.35s ease-in-out;
-    }
-`;
-document.head.appendChild(styleSheet);
-
-// ===== INDICATOR =====
-function updateIndicator() {
-    const { leftIdx, rightIdx } = getSpreadPages(currentSpread);
-    let text;
-    if (rightIdx >= 0 && rightIdx < totalPages) {
-        text = `Pages ${leftIdx + 1}-${rightIdx + 1} / ${totalPages}`;
-    } else {
-        text = `Page ${leftIdx + 1} / ${totalPages}`;
-    }
-    document.getElementById("pageIndicator").textContent = text;
-}
-
-// ===== RESIZE =====
-function resizeBook() {
-    const wrapper = document.getElementById("book-wrapper");
-    const book = document.getElementById("book");
-    const pageLeft = book.querySelector(".page-left");
-    const pageRight = book.querySelector(".page-right");
-
-    const availH = wrapper.clientHeight - 30;
-    const availW = wrapper.clientWidth - 30;
-    const ratio = pageWidth / pageHeight;
-
-    let pH = availH;
-    let pW = pH * ratio;
-
-    // Deux pages côte à côte
-    if (pW * 2 > availW) {
-        pW = availW / 2;
-        pH = pW / ratio;
-    }
-
-    pW = Math.floor(pW);
-    pH = Math.floor(pH);
-
-    pageLeft.style.width = pW + "px";
-    pageLeft.style.height = pH + "px";
-    pageRight.style.width = pW + "px";
-    pageRight.style.height = pH + "px";
-}
-
-// ===== ZOOM =====
-function setZoom(z) {
-    currentZoom = Math.max(0.4, Math.min(3, z));
-    document.getElementById("book-viewport").style.transform = `scale(${currentZoom})`;
-    document.getElementById("btnZoomReset").textContent = Math.round(currentZoom * 100) + "%";
-}
-
-// ===== FULLSCREEN =====
-function toggleFullscreen() {
-    const el = document.getElementById("flipbook-container");
-    if (!document.fullscreenElement) {
-        el.requestFullscreen().catch(() => {});
-    } else {
-        document.exitFullscreen();
-    }
-}
-
-// ===== MINIATURES =====
-function buildThumbnails() {
-    const container = document.getElementById("thumbnails");
-    container.innerHTML = "";
-
-    for (let i = 0; i < totalPages; i++) {
-        const div = document.createElement("div");
-        div.className = "thumbnail";
-        div.dataset.page = i + 1;
-
-        const img = document.createElement("img");
-        img.src = pageImages[i];
-        img.draggable = false;
-
-        div.appendChild(img);
-        div.addEventListener("click", () => goToPage(i + 1));
-        container.appendChild(div);
-    }
-
-    updateActiveThumbnail();
-}
-
-function updateActiveThumbnail() {
-    const { leftIdx, rightIdx } = getSpreadPages(currentSpread);
-
-    document.querySelectorAll(".thumbnail").forEach(t => {
-        t.classList.remove("active");
-        const p = parseInt(t.dataset.page);
-        if (p === leftIdx + 1 || (rightIdx >= 0 && p === rightIdx + 1)) {
-            t.classList.add("active");
-        }
-    });
-
-    // Scroll vers la miniature active
-    const active = document.querySelector(".thumbnail.active");
-    if (active) {
-        active.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    }
-}
-
-// ===== DEBOUNCE =====
-function debounce(fn, delay) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), delay);
-    };
-}
-
-// ===== GO =====
-console.log("Flipbook JS chargé, démarrage…");
-loadPDF();
+})();
