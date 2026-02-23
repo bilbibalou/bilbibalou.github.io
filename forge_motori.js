@@ -1,90 +1,78 @@
 (function () {
     "use strict";
 
-    /* ===== CONFIG ===== */
     var PDF_PATH = "ressources/flipbook/forge_motori.pdf";
     var RENDER_SCALE = 2;
-    var FLIP_DURATION = 600;
+    var FLIP_DURATION = 800;
 
-    /* ===== ÉLÉMENTS ===== */
-    var canvas = document.getElementById("pageCanvas");
-    var ctx = canvas.getContext("2d");
-    var bookEl = document.getElementById("book");
+    /* ===== DOM ===== */
+    var canvas, ctx, bookEl;
+    var loader, loaderMsg, progressFill, progressText;
+    var container, pageIndicator, wrapper, viewport;
+    var zoneLeft, zoneRight, btnFullscreen, btnAutoplay;
 
-    var loader      = document.getElementById("loader");
-    var loaderMsg   = document.getElementById("loaderMsg");
-    var progressFill = document.getElementById("progressFill");
-    var progressText = document.getElementById("progressText");
-    var container   = document.getElementById("flipbook-container");
-    var pageIndicator = document.getElementById("pageIndicator");
-    var wrapper     = document.getElementById("book-wrapper");
-    var viewport    = document.getElementById("book-viewport");
-    var zoneLeft    = document.getElementById("click-left");
-    var zoneRight   = document.getElementById("click-right");
-    var btnFullscreen = document.getElementById("btnFullscreen");
-    var btnAutoplay = document.getElementById("btnAutoplay");
+    canvas        = document.getElementById("pageCanvas");
+    ctx           = canvas.getContext("2d");
+    bookEl        = document.getElementById("book");
+    loader        = document.getElementById("loader");
+    loaderMsg     = document.getElementById("loaderMsg");
+    progressFill  = document.getElementById("progressFill");
+    progressText  = document.getElementById("progressText");
+    container     = document.getElementById("flipbook-container");
+    pageIndicator = document.getElementById("pageIndicator");
+    wrapper       = document.getElementById("book-wrapper");
+    viewport      = document.getElementById("book-viewport");
+    zoneLeft      = document.getElementById("click-left");
+    zoneRight     = document.getElementById("click-right");
+    btnFullscreen = document.getElementById("btnFullscreen");
+    btnAutoplay   = document.getElementById("btnAutoplay");
 
-    /* ===== VÉRIFICATION ===== */
     if (!canvas || !bookEl || !loader || !container || !zoneLeft || !zoneRight || !btnFullscreen || !btnAutoplay) {
-        console.error("Flipbook: élément(s) DOM manquant(s) !");
-        console.log("canvas:", canvas);
-        console.log("bookEl:", bookEl);
-        console.log("zoneLeft:", zoneLeft);
-        console.log("zoneRight:", zoneRight);
-        console.log("btnFullscreen:", btnFullscreen);
-        console.log("btnAutoplay:", btnAutoplay);
-        return;
+        console.error("DOM manquant"); return;
     }
 
-    /* ===== ÉTAT ===== */
-    var pdfDoc = null;
-    var totalPages = 0;
-    var pageImgs = [];
-    var currentSpread = 0;
-    var totalSpreads = 0;
+    /* ===== STATE ===== */
+    var pdfDoc = null, totalPages = 0;
+    var pageImgs = [];         // Image objects
+    var pageCanvases = [];     // offscreen canvases pour clipping
+    var currentSpread = 0, totalSpreads = 0;
     var spreadMap = [];
+    var bookW = 0, bookH = 0; // taille CSS du livre
+    var cW = 0, cH = 0;       // taille canvas pixels
 
-    var W = 0, H = 0;
-    var pageW = 0, pageH = 0;
-
-    /* Drag */
+    /* Drag / Curl */
     var dragging = false;
-    var dragSide = null;
-    var dragStartX = 0;
-    var dragX = 0;
-    var dragProgress = 0;
+    var dragCorner = null;     // "br", "tr", "bl", "tl"
+    var dragSide = null;       // "right" ou "left"
+    var mouse = { x: 0, y: 0 };
+    var cornerOrigin = { x: 0, y: 0 };
 
     /* Animation */
     var animating = false;
-    var animStartTime = 0;
-    var animDirection = null;
-    var animDragStart = 0;
+    var animStart = 0;
+    var animFrom = { x: 0, y: 0 };
+    var animTo = { x: 0, y: 0 };
+    var animSide = null;
+    var animComplete = false; // true = va compléter le flip
 
     /* Autoplay */
-    var autoplayTimer = null;
-    var autoplayActive = false;
+    var autoplayTimer = null, autoplayActive = false;
 
-    /* ===== SPREADS ===== */
+    /* ===== SPREAD MAP ===== */
     function buildSpreadMap() {
-        var spreads = [];
-        spreads.push([1]);            // couverture seule
+        var s = [];
+        s.push([1]);
         var p = 2;
         while (p <= totalPages) {
-            if (p + 1 <= totalPages) {
-                spreads.push([p, p + 1]);
-                p += 2;
-            } else {
-                spreads.push([p]);
-                p++;
-            }
+            if (p + 1 <= totalPages) { s.push([p, p + 1]); p += 2; }
+            else { s.push([p]); p++; }
         }
-        return spreads;
+        return s;
     }
 
-    /* ===== CHARGEMENT PDF ===== */
+    /* ===== PDF LOADING ===== */
     function load() {
         loaderMsg.textContent = "Chargement du PDF…";
-
         pdfjsLib.GlobalWorkerOptions.workerSrc =
             "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
@@ -97,540 +85,681 @@
             renderAllPages();
         }).catch(function (err) {
             loaderMsg.textContent = "Erreur : " + err.message;
-            console.error(err);
         });
     }
 
     function renderAllPages() {
-        var rendered = 0;
-
-        function renderPage(num) {
+        var done = 0;
+        function renderOne(num) {
             return pdfDoc.getPage(num).then(function (page) {
                 var vp = page.getViewport({ scale: RENDER_SCALE });
                 var c = document.createElement("canvas");
-                c.width = vp.width;
-                c.height = vp.height;
+                c.width = vp.width; c.height = vp.height;
                 var cx = c.getContext("2d");
-
                 return page.render({ canvasContext: cx, viewport: vp }).promise.then(function () {
+                    pageCanvases[num - 1] = c;
                     var img = new Image();
-                    var dataUrl = c.toDataURL("image/jpeg", 0.92);
-                    img.src = dataUrl;
+                    img.src = c.toDataURL("image/jpeg", 0.92);
                     pageImgs[num - 1] = img;
-
-                    rendered++;
-                    var pct = Math.round((rendered / totalPages) * 100);
+                    done++;
+                    var pct = Math.round((done / totalPages) * 100);
                     progressFill.style.width = pct + "%";
-                    progressText.textContent = rendered + " / " + totalPages;
-
-                    return new Promise(function (res) {
-                        img.onload = res;
-                        img.onerror = res; // ne pas bloquer
-                    });
+                    progressText.textContent = done + " / " + totalPages;
+                    return new Promise(function (r) { img.onload = r; img.onerror = r; });
                 });
             });
         }
-
         var chain = Promise.resolve();
         for (var i = 1; i <= totalPages; i++) {
-            (function (n) {
-                chain = chain.then(function () { return renderPage(n); });
-            })(i);
+            (function (n) { chain = chain.then(function () { return renderOne(n); }); })(i);
         }
-        chain.then(startFlipbook).catch(function (e) {
-            console.error("Erreur rendu:", e);
-            loaderMsg.textContent = "Erreur de rendu";
-        });
+        chain.then(startFlipbook);
     }
 
-    /* ===== DÉMARRAGE ===== */
+    /* ===== START ===== */
     function startFlipbook() {
         loader.classList.add("hidden");
         container.classList.remove("hidden");
         doResize();
         updateUI();
         window.addEventListener("resize", doResize);
-        requestAnimationFrame(drawLoop);
-        console.log("Flipbook démarré ✓", totalPages, "pages,", totalSpreads, "spreads");
+        requestAnimationFrame(loop);
     }
 
     /* ===== RESIZE ===== */
     function doResize() {
-        var wrapRect = wrapper.getBoundingClientRect();
-        var availW = wrapRect.width - 120;
-        var availH = wrapRect.height - 20;
+        var rect = wrapper.getBoundingClientRect();
+        var availW = rect.width - 120;
+        var availH = rect.height - 20;
 
         var img0 = pageImgs[0];
-        var pageRatio = img0 ? (img0.naturalWidth / img0.naturalHeight) : (210 / 297);
-
+        var pr = img0 ? (img0.naturalWidth / img0.naturalHeight) : (210 / 297);
         var spread = spreadMap[currentSpread];
-        var isSingle = spread.length === 1;
-        var bookRatio = isSingle ? pageRatio : (pageRatio * 2);
+        var single = spread.length === 1;
+        var br = single ? pr : pr * 2;
 
-        var bw = availH * bookRatio;
+        var bw = availH * br;
         var bh = availH;
-        if (bw > availW) {
-            bw = availW;
-            bh = bw / bookRatio;
-        }
+        if (bw > availW) { bw = availW; bh = bw / br; }
 
-        bw = Math.round(bw);
-        bh = Math.round(bh);
+        bookW = Math.round(bw);
+        bookH = Math.round(bh);
 
-        bookEl.style.width = bw + "px";
-        bookEl.style.height = bh + "px";
+        bookEl.style.width = bookW + "px";
+        bookEl.style.height = bookH + "px";
 
-        canvas.width = bw * 2;
-        canvas.height = bh * 2;
-        canvas.style.width = bw + "px";
-        canvas.style.height = bh + "px";
-
-        W = canvas.width;
-        H = canvas.height;
-        pageW = isSingle ? W : Math.round(W / 2);
-        pageH = H;
+        var dpr = window.devicePixelRatio || 1;
+        cW = Math.round(bookW * dpr);
+        cH = Math.round(bookH * dpr);
+        canvas.width = cW;
+        canvas.height = cH;
+        canvas.style.width = bookW + "px";
+        canvas.style.height = bookH + "px";
     }
 
-    /* ===== BOUCLE DE DESSIN ===== */
-    function drawLoop() {
-        if (animating) updateAnimation();
+    /* ===== MAIN LOOP ===== */
+    function loop() {
+        update();
         draw();
-        requestAnimationFrame(drawLoop);
+        requestAnimationFrame(loop);
     }
 
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
+    /* ===== UPDATE ===== */
+    function update() {
+        if (!animating) return;
 
-        var spread = spreadMap[currentSpread];
-        var isSingle = spread.length === 1;
-        var pw = isSingle ? W : Math.round(W / 2);
+        var elapsed = Date.now() - animStart;
+        var t = Math.min(1, elapsed / FLIP_DURATION);
+        t = easeInOut(t);
 
-        if (dragging || animating) {
-            drawWithFlip(spread, isSingle, pw);
-        } else {
-            drawStatic(spread, isSingle, pw);
-        }
+        var cx = animFrom.x + (animTo.x - animFrom.x) * t;
+        var cy = animFrom.y + (animTo.y - animFrom.y) * t;
+        mouse.x = cx;
+        mouse.y = cy;
 
-        if (!isSingle) {
-            drawSpine();
-        }
-    }
-
-    /* ===== DESSIN STATIQUE ===== */
-    function drawStatic(spread, isSingle, pw) {
-        drawPageImg(pageImgs[spread[0] - 1], 0, 0, pw, H);
-
-        if (!isSingle && spread[1]) {
-            drawPageImg(pageImgs[spread[1] - 1], pw, 0, pw, H);
-        }
-
-        if (!isSingle) drawInnerShadow(pw);
-    }
-
-    function drawPageImg(img, x, y, w, h) {
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(x, y, w, h);
-        if (!img || !img.naturalWidth) return;
-
-        var imgR = img.naturalWidth / img.naturalHeight;
-        var boxR = w / h;
-        var dw, dh, dx, dy;
-        if (imgR > boxR) {
-            dw = w; dh = w / imgR;
-            dx = x; dy = y + (h - dh) / 2;
-        } else {
-            dh = h; dw = h * imgR;
-            dx = x + (w - dw) / 2; dy = y;
-        }
-        ctx.drawImage(img, dx, dy, dw, dh);
-    }
-
-    function drawSpine() {
-        var cx = Math.round(W / 2);
-        var grad = ctx.createLinearGradient(cx - 10, 0, cx + 10, 0);
-        grad.addColorStop(0, "rgba(0,0,0,0.3)");
-        grad.addColorStop(0.35, "rgba(0,0,0,0.05)");
-        grad.addColorStop(0.5, "rgba(0,0,0,0)");
-        grad.addColorStop(0.65, "rgba(0,0,0,0.05)");
-        grad.addColorStop(1, "rgba(0,0,0,0.3)");
-        ctx.fillStyle = grad;
-        ctx.fillRect(cx - 10, 0, 20, H);
-    }
-
-    function drawInnerShadow(pw) {
-        var cx = Math.round(W / 2);
-        var g1 = ctx.createLinearGradient(cx - 50, 0, cx, 0);
-        g1.addColorStop(0, "rgba(0,0,0,0)");
-        g1.addColorStop(1, "rgba(0,0,0,0.06)");
-        ctx.fillStyle = g1;
-        ctx.fillRect(cx - 50, 0, 50, H);
-
-        var g2 = ctx.createLinearGradient(cx, 0, cx + 50, 0);
-        g2.addColorStop(0, "rgba(0,0,0,0.06)");
-        g2.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = g2;
-        ctx.fillRect(cx, 0, 50, H);
-    }
-
-    /* ===== DESSIN AVEC FLIP ===== */
-    function drawWithFlip(spread, isSingle, pw) {
-        var t = dragging ? dragProgress : getAnimProgress();
-        t = Math.max(0, Math.min(1, t));
-
-        var goingNext = (dragging && dragSide === "right") || (!dragging && animDirection === "next");
-        var targetIdx = goingNext ? currentSpread + 1 : currentSpread - 1;
-
-        if (targetIdx < 0 || targetIdx >= totalSpreads) {
-            drawStatic(spread, isSingle, pw);
-            return;
-        }
-
-        var targetSpread = spreadMap[targetIdx];
-
-        if (goingNext) {
-            drawFlipForward(spread, targetSpread, isSingle, pw, t);
-        } else {
-            drawFlipBackward(spread, targetSpread, isSingle, pw, t);
-        }
-    }
-
-    function drawFlipForward(curSpread, nextSpread, curSingle, pw, t) {
-        // Fond : page gauche actuelle reste
-        drawPageImg(pageImgs[curSpread[0] - 1], 0, 0, pw, H);
-
-        // Fond droite : prochaine page droite (ou gauche si single)
-        var nextRight = nextSpread.length > 1 ? pageImgs[nextSpread[1] - 1] : pageImgs[nextSpread[0] - 1];
-        drawPageImg(nextRight, pw, 0, pw, H);
-
-        // La page qui tourne : page droite actuelle
-        var frontImg = curSingle ? pageImgs[curSpread[0] - 1] : (curSpread[1] ? pageImgs[curSpread[1] - 1] : null);
-        // Le dos : page gauche du prochain spread
-        var backImg = pageImgs[nextSpread[0] - 1];
-
-        drawFlippingPage(frontImg, backImg, t, true, pw);
-        drawInnerShadow(pw);
-    }
-
-    function drawFlipBackward(curSpread, prevSpread, curSingle, pw, t) {
-        // Fond gauche : previous spread gauche
-        drawPageImg(pageImgs[prevSpread[0] - 1], 0, 0, pw, H);
-
-        // Fond droite : page droite actuelle reste
-        if (!curSingle && curSpread[1]) {
-            drawPageImg(pageImgs[curSpread[1] - 1], pw, 0, pw, H);
-        } else {
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(pw, 0, pw, H);
-        }
-
-        // La page qui tourne : page gauche actuelle
-        var frontImg = pageImgs[curSpread[0] - 1];
-        // Le dos : previous spread page droite
-        var backImg = prevSpread.length > 1 ? (prevSpread[1] ? pageImgs[prevSpread[1] - 1] : null) : pageImgs[prevSpread[0] - 1];
-
-        drawFlippingPage(frontImg, backImg, t, false, pw);
-        drawInnerShadow(pw);
-    }
-
-    function drawFlippingPage(frontImg, backImg, t, goingRight, pw) {
-        if (t <= 0) return;
-
-        var angle = t * Math.PI;
-        var foldX, clipX, clipW;
-
-        if (goingRight) {
-            foldX = pw + pw * (1 - t);
-            clipX = pw;
-            clipW = pw;
-        } else {
-            foldX = pw * t;
-            clipX = 0;
-            clipW = pw;
-        }
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(clipX, 0, clipW, H);
-        ctx.clip();
-
-        // Ombre portée
-        var shadowSize = Math.sin(t * Math.PI) * 60;
-        if (shadowSize > 1) {
-            if (goingRight) {
-                var sg = ctx.createLinearGradient(foldX - shadowSize, 0, foldX, 0);
-                sg.addColorStop(0, "rgba(0,0,0,0)");
-                sg.addColorStop(1, "rgba(0,0,0,0.18)");
-                ctx.fillStyle = sg;
-                ctx.fillRect(foldX - shadowSize, 0, shadowSize, H);
-            } else {
-                var sg2 = ctx.createLinearGradient(foldX, 0, foldX + shadowSize, 0);
-                sg2.addColorStop(0, "rgba(0,0,0,0.18)");
-                sg2.addColorStop(1, "rgba(0,0,0,0)");
-                ctx.fillStyle = sg2;
-                ctx.fillRect(foldX, 0, shadowSize, H);
-            }
-        }
-
-        // Page qui tourne
-        var showBack = t > 0.5;
-        var drawImg = showBack ? backImg : frontImg;
-        var cosA = Math.cos(angle);
-        var scaleAbs = Math.abs(cosA);
-        var scaleX = Math.max(0.005, scaleAbs);
-
-        ctx.save();
-        ctx.translate(foldX, 0);
-
-        if (goingRight) {
-            ctx.scale(-scaleX, 1);
-        } else {
-            ctx.scale(scaleX, 1);
-        }
-
-        // Fond blanc
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, pw, H);
-
-        // Image
-        if (drawImg && drawImg.naturalWidth) {
-            drawPageImgDirect(drawImg, 0, 0, pw, H);
-        }
-
-        // Highlight/ombre courbure
-        var intensity = Math.sin(t * Math.PI);
-        var hl = ctx.createLinearGradient(0, 0, pw, 0);
-        if (goingRight) {
-            hl.addColorStop(0, "rgba(255,255,255," + (0.12 * intensity) + ")");
-            hl.addColorStop(0.4, "rgba(0,0,0," + (0.06 * intensity) + ")");
-            hl.addColorStop(1, "rgba(0,0,0,0)");
-        } else {
-            hl.addColorStop(0, "rgba(0,0,0,0)");
-            hl.addColorStop(0.6, "rgba(0,0,0," + (0.06 * intensity) + ")");
-            hl.addColorStop(1, "rgba(255,255,255," + (0.12 * intensity) + ")");
-        }
-        ctx.fillStyle = hl;
-        ctx.fillRect(0, 0, pw, H);
-
-        ctx.restore();
-        ctx.restore();
-    }
-
-    function drawPageImgDirect(img, x, y, w, h) {
-        if (!img || !img.naturalWidth) return;
-        var imgR = img.naturalWidth / img.naturalHeight;
-        var boxR = w / h;
-        var dw, dh, dx, dy;
-        if (imgR > boxR) {
-            dw = w; dh = w / imgR;
-            dx = x; dy = y + (h - dh) / 2;
-        } else {
-            dh = h; dw = h * imgR;
-            dx = x + (w - dw) / 2; dy = y;
-        }
-        ctx.drawImage(img, dx, dy, dw, dh);
-    }
-
-    /* ===== ANIMATION AUTO ===== */
-    function getAnimProgress() {
-        if (!animating) return 0;
-        var elapsed = Date.now() - animStartTime;
-        var duration = FLIP_DURATION;
-        // Easing: ease-in-out
-        var t = Math.min(1, elapsed / duration);
-        return easeInOutCubic(t);
-    }
-
-    function easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    function updateAnimation() {
-        var elapsed = Date.now() - animStartTime;
-        if (elapsed >= FLIP_DURATION) {
+        if (t >= 1) {
             animating = false;
-            if (animDirection === "next" && currentSpread < totalSpreads - 1) {
-                currentSpread++;
-            } else if (animDirection === "prev" && currentSpread > 0) {
-                currentSpread--;
+            dragging = false;
+            if (animComplete) {
+                if (animSide === "right" && currentSpread < totalSpreads - 1) currentSpread++;
+                else if (animSide === "left" && currentSpread > 0) currentSpread--;
+                doResize();
             }
-            animDirection = null;
-            doResize();
             updateUI();
         }
     }
 
-    function startFlipAnim(dir) {
+    function easeInOut(t) {
+        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    }
+
+    /* ===== DRAW ===== */
+    function draw() {
+        ctx.clearRect(0, 0, cW, cH);
+
+        var spread = spreadMap[currentSpread];
+        var single = spread.length === 1;
+        var pw = single ? cW : Math.round(cW / 2);
+
+        // Si pas de drag, dessin statique
+        if (!dragging && !animating) {
+            drawStatic(spread, single, pw);
+            return;
+        }
+
+        // Avec curl
+        drawWithCurl(spread, single, pw);
+    }
+
+    /* ===== STATIC DRAW ===== */
+    function drawStatic(spread, single, pw) {
+        drawPageAt(spread[0] - 1, 0, 0, pw, cH);
+        if (!single && spread[1]) {
+            drawPageAt(spread[1] - 1, pw, 0, pw, cH);
+        }
+        if (!single) drawSpine(pw);
+    }
+
+    function drawPageAt(idx, x, y, w, h) {
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(x, y, w, h);
+        var img = pageImgs[idx];
+        if (!img || !img.naturalWidth) return;
+        var ir = img.naturalWidth / img.naturalHeight;
+        var br = w / h;
+        var dw, dh, dx, dy;
+        if (ir > br) { dw = w; dh = w / ir; dx = x; dy = y + (h - dh) / 2; }
+        else { dh = h; dw = h * ir; dx = x + (w - dw) / 2; dy = y; }
+        ctx.drawImage(img, dx, dy, dw, dh);
+    }
+
+    function drawSpine(pw) {
+        var cx = pw;
+        var g = ctx.createLinearGradient(cx - 15, 0, cx + 15, 0);
+        g.addColorStop(0, "rgba(0,0,0,0.25)");
+        g.addColorStop(0.4, "rgba(0,0,0,0.02)");
+        g.addColorStop(0.5, "rgba(255,255,255,0.03)");
+        g.addColorStop(0.6, "rgba(0,0,0,0.02)");
+        g.addColorStop(1, "rgba(0,0,0,0.25)");
+        ctx.fillStyle = g;
+        ctx.fillRect(cx - 15, 0, 30, cH);
+    }
+
+    /* ===== CURL DRAW ===== */
+    function drawWithCurl(spread, single, pw) {
+        var goRight = dragSide === "right" || animSide === "right";
+        var targetIdx = goRight ? currentSpread + 1 : currentSpread - 1;
+        if (targetIdx < 0 || targetIdx >= totalSpreads) {
+            drawStatic(spread, single, pw); return;
+        }
+
+        var tgtSpread = spreadMap[targetIdx];
+
+        // Coordonnées du coin qui se soulève (en pixels canvas)
+        var corner = cornerOrigin;
+        var m = { x: mouse.x, y: mouse.y };
+
+        // Limiter le mouvement pour que ça reste réaliste
+        m = clampCurl(m, corner, pw, goRight);
+
+        // Point milieu entre le coin et la souris
+        var mid = { x: (corner.x + m.x) / 2, y: (corner.y + m.y) / 2 };
+
+        // Vecteur perpendiculaire au pli
+        var dx = m.x - corner.x;
+        var dy = m.y - corner.y;
+
+        // Angle du pli
+        var foldAngle = Math.atan2(dy, dx);
+
+        // Ligne de pli passe par mid, perpendiculaire à (corner -> mouse)
+        // Direction du pli :
+        var perpX = -dy;
+        var perpY = dx;
+        var perpLen = Math.sqrt(perpX * perpX + perpY * perpY);
+        if (perpLen < 1) { drawStatic(spread, single, pw); return; }
+        perpX /= perpLen;
+        perpY /= perpLen;
+
+        // Calculer les intersections de la ligne de pli avec le rectangle de la page
+        var pageLeft, pageRight;
+        if (goRight) { pageLeft = pw; pageRight = cW; }
+        else { pageLeft = 0; pageRight = pw; }
+
+        var foldPts = getFoldIntersections(mid, perpX, perpY, pageLeft, 0, pageRight, cH);
+        if (foldPts.length < 2) { drawStatic(spread, single, pw); return; }
+
+        // Construire le polygone de la partie "soulevée" (côté souris)
+        var liftedPoly = getLiftedPolygon(foldPts, corner, m, pageLeft, 0, pageRight, cH, goRight);
+
+        // === 1) Dessiner la page sous-jacente (celle qu'on révèle) ===
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(goRight ? pw : 0, 0, pw, cH);
+        ctx.clip();
+
+        if (goRight) {
+            // On révèle la page gauche du prochain spread
+            drawPageAt(tgtSpread[0] - 1, pw, 0, pw, cH);
+        } else {
+            // On révèle la page droite du précédent spread
+            var prevRight = tgtSpread.length > 1 ? tgtSpread[1] - 1 : tgtSpread[0] - 1;
+            drawPageAt(prevRight, 0, 0, pw, cH);
+        }
+        ctx.restore();
+
+        // === 2) Dessiner la page non-tournée (l'autre côté) ===
+        if (goRight) {
+            drawPageAt(spread[0] - 1, 0, 0, pw, cH);
+        } else {
+            if (!single && spread[1]) {
+                drawPageAt(spread[1] - 1, pw, 0, pw, cH);
+            }
+        }
+
+        // === 3) Dessiner la partie NON soulevée de la page qui tourne ===
+        var pageIdx;
+        if (goRight) {
+            pageIdx = single ? spread[0] - 1 : (spread[1] ? spread[1] - 1 : spread[0] - 1);
+        } else {
+            pageIdx = spread[0] - 1;
+        }
+
+        ctx.save();
+        // Clip = zone de la page MINUS le polygone soulevé
+        clipNotLifted(foldPts, liftedPoly, pageLeft, 0, pageRight, cH, goRight, corner);
+        drawPageAt(pageIdx, goRight ? pw : 0, 0, pw, cH);
+        ctx.restore();
+
+        // === 4) Ombre sous le pli ===
+        drawFoldShadow(foldPts, mid, corner, m, goRight, pw);
+
+        // === 5) Dessiner la partie soulevée (reflétée par rapport au pli) ===
+        ctx.save();
+        // Clip au polygone soulevé ET au rectangle de la page sous-jacente
+        ctx.beginPath();
+        ctx.rect(goRight ? pw : 0, 0, pw, cH);
+        ctx.clip();
+
+        clipLiftedPoly(liftedPoly);
+
+        // Transformer : réflexion par rapport à la ligne de pli
+        applyFoldReflection(mid, foldAngle);
+
+        // Dessiner le dos de la page (= page suivante côté gauche ou précédente côté droit)
+        var backIdx;
+        if (goRight) {
+            backIdx = tgtSpread[0] - 1;
+        } else {
+            backIdx = tgtSpread.length > 1 ? (tgtSpread[1] ? tgtSpread[1] - 1 : tgtSpread[0] - 1) : tgtSpread[0] - 1;
+        }
+        drawPageAt(backIdx, goRight ? pw : 0, 0, pw, cH);
+
+        // Gradient d'ombre/lumière sur la page retournée
+        ctx.restore();
+
+        // === 6) Highlight sur la partie soulevée ===
+        drawCurlHighlight(liftedPoly, mid, perpX, perpY, foldAngle);
+
+        // Spine
+        if (!single) drawSpine(pw);
+    }
+
+    /* ===== CURL HELPERS ===== */
+
+    function clampCurl(m, corner, pw, goRight) {
+        // Garder la souris dans des limites raisonnables
+        var cx = m.x, cy = m.y;
+
+        if (goRight) {
+            // Le coin vient de la droite, la souris va vers la gauche
+            if (cx > corner.x - 5) cx = corner.x - 5;
+            // Ne pas dépasser le bord gauche du livre
+            if (cx < 0) cx = 0;
+        } else {
+            if (cx < corner.x + 5) cx = corner.x + 5;
+            if (cx > cW) cx = cW;
+        }
+
+        return { x: cx, y: cy };
+    }
+
+    function getFoldIntersections(mid, nx, ny, left, top, right, bottom) {
+        // Ligne : point mid, direction (nx, ny)
+        // Trouve les intersections avec le rectangle [left,top,right,bottom]
+        var pts = [];
+
+        // Haut (y = top)
+        if (Math.abs(ny) > 0.0001) {
+            var t = (top - mid.y) / ny;
+            var ix = mid.x + t * nx;
+            if (ix >= left - 1 && ix <= right + 1) pts.push({ x: ix, y: top });
+        }
+        // Bas (y = bottom)
+        if (Math.abs(ny) > 0.0001) {
+            var t2 = (bottom - mid.y) / ny;
+            var ix2 = mid.x + t2 * nx;
+            if (ix2 >= left - 1 && ix2 <= right + 1) pts.push({ x: ix2, y: bottom });
+        }
+        // Gauche (x = left)
+        if (Math.abs(nx) > 0.0001) {
+            var t3 = (left - mid.x) / nx;
+            var iy = mid.y + t3 * ny;
+            if (iy >= top - 1 && iy <= bottom + 1) pts.push({ x: left, y: iy });
+        }
+        // Droite (x = right)
+        if (Math.abs(nx) > 0.0001) {
+            var t4 = (right - mid.x) / nx;
+            var iy2 = mid.y + t4 * ny;
+            if (iy2 >= top - 1 && iy2 <= bottom + 1) pts.push({ x: right, y: iy2 });
+        }
+
+        // Déduplicate (points proches)
+        var unique = [pts[0]];
+        for (var i = 1; i < pts.length; i++) {
+            var dup = false;
+            for (var j = 0; j < unique.length; j++) {
+                if (Math.abs(pts[i].x - unique[j].x) < 2 && Math.abs(pts[i].y - unique[j].y) < 2) {
+                    dup = true; break;
+                }
+            }
+            if (!dup) unique.push(pts[i]);
+        }
+        return unique;
+    }
+
+    function getLiftedPolygon(foldPts, corner, mouse, left, top, right, bottom, goRight) {
+        // Le polygone soulevé = la partie du rectangle de la page qui est du côté de la souris
+        // par rapport à la ligne de pli
+        // On construit ça en partant des foldPts et en ajoutant les coins du côté du corner original
+
+        var rectCorners = [
+            { x: left, y: top },
+            { x: right, y: top },
+            { x: right, y: bottom },
+            { x: left, y: bottom }
+        ];
+
+        // Direction : quel côté de la ligne de pli est le corner ?
+        var mid = { x: (corner.x + mouse.x) / 2, y: (corner.y + mouse.y) / 2 };
+        var dx = mouse.x - corner.x;
+        var dy = mouse.y - corner.y;
+
+        function sideOf(p) {
+            return (p.x - mid.x) * (-dy) + (p.y - mid.y) * dx;
+        }
+
+        var cornerSide = sideOf(corner);
+
+        // Collecter les coins du rectangle du côté du corner
+        var sameSideCorners = [];
+        for (var i = 0; i < rectCorners.length; i++) {
+            if (sideOf(rectCorners[i]) * cornerSide > 0) {
+                sameSideCorners.push(rectCorners[i]);
+            }
+        }
+
+        // Construire le polygone : foldPts + coins du même côté, dans l'ordre
+        var poly = [];
+        for (var j = 0; j < foldPts.length; j++) poly.push(foldPts[j]);
+        // Trier les coins par angle
+        var cx = 0, cy2 = 0;
+        for (var k = 0; k < sameSideCorners.length; k++) {
+            cx += sameSideCorners[k].x; cy2 += sameSideCorners[k].y;
+        }
+        cx /= sameSideCorners.length || 1;
+        cy2 /= sameSideCorners.length || 1;
+
+        sameSideCorners.sort(function (a, b) {
+            return Math.atan2(a.y - cy2, a.x - cx) - Math.atan2(b.y - cy2, b.x - cx);
+        });
+
+        for (var l = 0; l < sameSideCorners.length; l++) poly.push(sameSideCorners[l]);
+
+        // Trier le polygone entier en ordre convexe
+        var pcx = 0, pcy = 0;
+        for (var ii = 0; ii < poly.length; ii++) { pcx += poly[ii].x; pcy += poly[ii].y; }
+        pcx /= poly.length; pcy /= poly.length;
+        poly.sort(function (a, b) {
+            return Math.atan2(a.y - pcy, a.x - pcx) - Math.atan2(b.y - pcy, b.x - pcx);
+        });
+
+        return poly;
+    }
+
+    function clipLiftedPoly(poly) {
+        if (poly.length < 3) return;
+        ctx.beginPath();
+        ctx.moveTo(poly[0].x, poly[0].y);
+        for (var i = 1; i < poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
+        ctx.closePath();
+        ctx.clip();
+    }
+
+    function clipNotLifted(foldPts, liftedPoly, left, top, right, bottom, goRight, corner) {
+        // Clip au rectangle de la page MINUS le polygone soulevé
+        // On utilise "evenodd" fill rule
+        ctx.beginPath();
+        // Rectangle extérieur
+        ctx.moveTo(left, top);
+        ctx.lineTo(right, top);
+        ctx.lineTo(right, bottom);
+        ctx.lineTo(left, bottom);
+        ctx.closePath();
+
+        // Polygone intérieur (trou) - en sens inverse
+        if (liftedPoly.length >= 3) {
+            ctx.moveTo(liftedPoly[liftedPoly.length - 1].x, liftedPoly[liftedPoly.length - 1].y);
+            for (var i = liftedPoly.length - 2; i >= 0; i--) {
+                ctx.lineTo(liftedPoly[i].x, liftedPoly[i].y);
+            }
+            ctx.closePath();
+        }
+        ctx.clip("evenodd");
+    }
+
+    function applyFoldReflection(mid, foldAngle) {
+        // Réflexion par rapport à la ligne de pli passant par mid
+        // avec angle perpendiculaire = foldAngle
+        var a = foldAngle;
+        ctx.translate(mid.x, mid.y);
+        ctx.transform(
+            Math.cos(2 * a), Math.sin(2 * a),
+            Math.sin(2 * a), -Math.cos(2 * a),
+            0, 0
+        );
+        ctx.translate(-mid.x, -mid.y);
+    }
+
+    function drawFoldShadow(foldPts, mid, corner, mouse, goRight, pw) {
+        if (foldPts.length < 2) return;
+
+        // Distance du pli au coin = intensité de l'ombre
+        var dx = mouse.x - corner.x;
+        var dy = mouse.y - corner.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        var maxDist = pw;
+        var intensity = Math.min(1, dist / maxDist) * 0.3;
+
+        // Direction perpendiculaire au pli, vers le côté non-soulevé
+        var px = -(foldPts[1].y - foldPts[0].y);
+        var py = foldPts[1].x - foldPts[0].x;
+        var pl = Math.sqrt(px * px + py * py);
+        if (pl < 1) return;
+        px /= pl; py /= pl;
+
+        // S'assurer que la direction va vers l'intérieur du livre
+        var testX = mid.x + px * 10;
+        var centerX = goRight ? pw + pw / 2 : pw / 2;
+        if (goRight) {
+            if (testX > mid.x) { px = -px; py = -py; }
+        } else {
+            if (testX < mid.x) { px = -px; py = -py; }
+        }
+
+        var shadowW = 40 * intensity / 0.3;
+        var g = ctx.createLinearGradient(
+            mid.x, mid.y,
+            mid.x + px * shadowW, mid.y + py * shadowW
+        );
+        g.addColorStop(0, "rgba(0,0,0," + intensity + ")");
+        g.addColorStop(1, "rgba(0,0,0,0)");
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(goRight ? pw : 0, 0, pw, cH);
+        ctx.clip();
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, cW, cH);
+        ctx.restore();
+    }
+
+    function drawCurlHighlight(poly, mid, perpX, perpY, foldAngle) {
+        if (poly.length < 3) return;
+        ctx.save();
+        clipLiftedPoly(poly);
+
+        var g = ctx.createLinearGradient(
+            mid.x - perpX * 30, mid.y - perpY * 30,
+            mid.x + perpX * 30, mid.y + perpY * 30
+        );
+        g.addColorStop(0, "rgba(255,255,255,0.15)");
+        g.addColorStop(0.3, "rgba(0,0,0,0.03)");
+        g.addColorStop(0.7, "rgba(0,0,0,0.05)");
+        g.addColorStop(1, "rgba(255,255,255,0.1)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, cW, cH);
+        ctx.restore();
+    }
+
+    /* ===== POINTER / DRAG ===== */
+    function canvasXY(e) {
+        var rect = canvas.getBoundingClientRect();
+        var cx, cy;
+        if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+        else if (e.changedTouches && e.changedTouches.length > 0) { cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY; }
+        else { cx = e.clientX; cy = e.clientY; }
+        var dpr = window.devicePixelRatio || 1;
+        return {
+            x: (cx - rect.left) / rect.width * cW,
+            y: (cy - rect.top) / rect.height * cH
+        };
+    }
+
+    function nearCorner(pos) {
+        var spread = spreadMap[currentSpread];
+        var single = spread.length === 1;
+        var pw = single ? cW : Math.round(cW / 2);
+        var zone = pw * 0.25;
+        var zoneY = cH * 0.3;
+
+        // Coins droits (page qui tourne à droite)
+        if (currentSpread < totalSpreads - 1) {
+            if (pos.x > cW - zone) {
+                if (pos.y > cH - zoneY) return { side: "right", corner: "br", ox: cW, oy: cH };
+                if (pos.y < zoneY) return { side: "right", corner: "tr", ox: cW, oy: 0 };
+            }
+        }
+        // Coins gauches (page qui tourne à gauche)
+        if (currentSpread > 0) {
+            if (pos.x < zone) {
+                if (pos.y > cH - zoneY) return { side: "left", corner: "bl", ox: 0, oy: cH };
+                if (pos.y < zoneY) return { side: "left", corner: "tl", ox: 0, oy: 0 };
+            }
+        }
+        return null;
+    }
+
+    function onDown(e) {
+        if (animating) return;
+        var pos = canvasXY(e);
+        var info = nearCorner(pos);
+        if (!info) return;
+
+        dragging = true;
+        dragSide = info.side;
+        dragCorner = info.corner;
+        cornerOrigin = { x: info.ox, y: info.oy };
+        mouse.x = pos.x;
+        mouse.y = pos.y;
+        canvas.style.cursor = "grabbing";
+        e.preventDefault();
+    }
+
+    function onMove(e) {
+        if (!dragging && !animating) {
+            var pos = canvasXY(e);
+            var info = nearCorner(pos);
+            canvas.style.cursor = info ? "grab" : "default";
+            return;
+        }
+        if (!dragging) return;
+        e.preventDefault();
+        var pos2 = canvasXY(e);
+        mouse.x = pos2.x;
+        mouse.y = pos2.y;
+    }
+
+    function onUp(e) {
+        if (!dragging) return;
+        canvas.style.cursor = "default";
+
+        // Décider si on complète ou annule
+        var dist = Math.sqrt(
+            Math.pow(mouse.x - cornerOrigin.x, 2) +
+            Math.pow(mouse.y - cornerOrigin.y, 2)
+        );
+        var spread = spreadMap[currentSpread];
+        var single = spread.length === 1;
+        var pw = single ? cW : Math.round(cW / 2);
+        var threshold = pw * 0.35;
+
+        var complete = dist > threshold;
+
+        // Animation vers la fin
+        animating = true;
+        animStart = Date.now();
+        animFrom = { x: mouse.x, y: mouse.y };
+        animSide = dragSide;
+        animComplete = complete;
+
+        if (complete) {
+            // Aller vers le coin opposé
+            if (dragSide === "right") {
+                animTo = { x: 0, y: cornerOrigin.y };
+            } else {
+                animTo = { x: cW, y: cornerOrigin.y };
+            }
+        } else {
+            // Retour au coin d'origine
+            animTo = { x: cornerOrigin.x, y: cornerOrigin.y };
+        }
+
+        // Ne pas mettre dragging=false, on continue de dessiner le curl pendant l'anim
+        // dragging reste true mais animating aussi — update() gère la position
+    }
+
+    canvas.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    canvas.addEventListener("touchstart", onDown, { passive: false });
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onUp);
+
+    /* ===== NAVIGATION BOUTONS ===== */
+    function animFlip(dir) {
         if (animating || dragging) return;
         if (dir === "next" && currentSpread >= totalSpreads - 1) return;
         if (dir === "prev" && currentSpread <= 0) return;
 
+        var spread = spreadMap[currentSpread];
+        var single = spread.length === 1;
+        var pw = single ? cW : Math.round(cW / 2);
+
+        dragging = true;
         animating = true;
-        animDirection = dir;
-        animStartTime = Date.now();
-    }
+        animComplete = true;
+        animStart = Date.now();
+        animSide = dir === "next" ? "right" : "left";
+        dragSide = animSide;
 
-    /* ===== DRAG ===== */
-    function getCanvasXY(e) {
-        var rect = canvas.getBoundingClientRect();
-        var clientX, clientY;
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else if (e.changedTouches && e.changedTouches.length > 0) {
-            clientX = e.changedTouches[0].clientX;
-            clientY = e.changedTouches[0].clientY;
+        if (dir === "next") {
+            cornerOrigin = { x: cW, y: cH };
+            dragCorner = "br";
+            animFrom = { x: cW - 10, y: cH - 10 };
+            animTo = { x: 0, y: cH };
         } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
+            cornerOrigin = { x: 0, y: cH };
+            dragCorner = "bl";
+            animFrom = { x: 10, y: cH - 10 };
+            animTo = { x: cW, y: cH };
         }
-        return {
-            x: (clientX - rect.left) / rect.width * W,
-            y: (clientY - rect.top) / rect.height * H
-        };
+        mouse.x = animFrom.x;
+        mouse.y = animFrom.y;
     }
 
-    function onPointerDown(e) {
-        if (animating) return;
-        var pos = getCanvasXY(e);
-
-        var spread = spreadMap[currentSpread];
-        var isSingle = spread.length === 1;
-        var pw = isSingle ? W : Math.round(W / 2);
-        var grabZone = pw * 0.3;
-
-        if (pos.x > W - grabZone && currentSpread < totalSpreads - 1) {
-            dragSide = "right";
-            dragging = true;
-        } else if (pos.x < grabZone && currentSpread > 0) {
-            dragSide = "left";
-            dragging = true;
-        }
-
-        if (dragging) {
-            dragStartX = pos.x;
-            dragX = pos.x;
-            dragProgress = 0;
-            canvas.style.cursor = "grabbing";
-            e.preventDefault();
-        }
-    }
-
-    function onPointerMove(e) {
-        if (!dragging) {
-            // Changer le curseur
-            var pos = getCanvasXY(e);
-            var spread = spreadMap[currentSpread];
-            var isSingle = spread.length === 1;
-            var pw = isSingle ? W : Math.round(W / 2);
-            var grabZone = pw * 0.3;
-
-            if ((pos.x > W - grabZone && currentSpread < totalSpreads - 1) ||
-                (pos.x < grabZone && currentSpread > 0)) {
-                canvas.style.cursor = "grab";
-            } else {
-                canvas.style.cursor = "default";
-            }
-            return;
-        }
-
-        e.preventDefault();
-        var pos = getCanvasXY(e);
-        dragX = pos.x;
-
-        var spread = spreadMap[currentSpread];
-        var isSingle = spread.length === 1;
-        var pw = isSingle ? W : Math.round(W / 2);
-
-        if (dragSide === "right") {
-            dragProgress = Math.max(0, Math.min(1, (dragStartX - dragX) / pw));
-        } else {
-            dragProgress = Math.max(0, Math.min(1, (dragX - dragStartX) / pw));
-        }
-    }
-
-    function onPointerUp(e) {
-        if (!dragging) return;
-
-        var completed = dragProgress > 0.3;
-        var savedProgress = dragProgress;
-        var savedSide = dragSide;
-
-        dragging = false;
-        canvas.style.cursor = "default";
-
-        if (completed) {
-            // Compléter l'animation
-            animating = true;
-            animDirection = savedSide === "right" ? "next" : "prev";
-            // Démarrer depuis la progression actuelle
-            var remaining = 1 - savedProgress;
-            var totalTime = FLIP_DURATION;
-            // Inverser le easing pour trouver le temps correspondant
-            animStartTime = Date.now() - (savedProgress * totalTime);
-        }
-
-        dragProgress = 0;
-        dragSide = null;
-    }
-
-    /* Events souris */
-    canvas.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("mousemove", onPointerMove);
-    window.addEventListener("mouseup", onPointerUp);
-
-    /* Events touch */
-    canvas.addEventListener("touchstart", onPointerDown, { passive: false });
-    window.addEventListener("touchmove", onPointerMove, { passive: false });
-    window.addEventListener("touchend", onPointerUp);
-
-    /* ===== NAVIGATION ===== */
-    function goNext() { startFlipAnim("next"); }
-    function goPrev() { startFlipAnim("prev"); }
-
-    zoneLeft.addEventListener("click", goPrev);
-    zoneRight.addEventListener("click", goNext);
+    zoneLeft.addEventListener("click", function () { animFlip("prev"); });
+    zoneRight.addEventListener("click", function () { animFlip("next"); });
 
     document.addEventListener("keydown", function (e) {
-        if (e.key === "ArrowRight" || e.key === " ") {
-            e.preventDefault();
-            goNext();
-        } else if (e.key === "ArrowLeft") {
-            e.preventDefault();
-            goPrev();
-        } else if (e.key === "Home") {
-            if (!animating) {
-                currentSpread = 0;
-                doResize();
-                updateUI();
-            }
-        } else if (e.key === "End") {
-            if (!animating) {
-                currentSpread = totalSpreads - 1;
-                doResize();
-                updateUI();
-            }
-        }
+        if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); animFlip("next"); }
+        else if (e.key === "ArrowLeft") { e.preventDefault(); animFlip("prev"); }
     });
 
-    /* Molette */
     wrapper.addEventListener("wheel", function (e) {
         e.preventDefault();
-        if (e.deltaY > 0 || e.deltaX > 0) goNext();
-        else goPrev();
+        if (e.deltaY > 0 || e.deltaX > 0) animFlip("next");
+        else animFlip("prev");
     }, { passive: false });
 
-    /* Fullscreen */
     btnFullscreen.addEventListener("click", function () {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().then(function () {
                 setTimeout(doResize, 150);
             });
-        } else {
-            document.exitFullscreen();
-        }
+        } else { document.exitFullscreen(); }
     });
 
-    /* Autoplay */
     btnAutoplay.addEventListener("click", function () {
         if (autoplayActive) {
             clearInterval(autoplayTimer);
@@ -644,9 +773,7 @@
                     clearInterval(autoplayTimer);
                     autoplayActive = false;
                     btnAutoplay.style.color = "";
-                } else {
-                    goNext();
-                }
+                } else { animFlip("next"); }
             }, 3000);
         }
     });
@@ -654,17 +781,13 @@
     /* ===== UI ===== */
     function updateUI() {
         var spread = spreadMap[currentSpread];
-        if (spread.length === 1) {
-            pageIndicator.textContent = spread[0] + " / " + totalPages;
-        } else {
-            pageIndicator.textContent = spread[0] + "-" + spread[1] + " / " + totalPages;
-        }
+        if (spread.length === 1) pageIndicator.textContent = spread[0] + " / " + totalPages;
+        else pageIndicator.textContent = spread[0] + "-" + spread[1] + " / " + totalPages;
         zoneLeft.classList.toggle("invisible", currentSpread <= 0);
         zoneRight.classList.toggle("invisible", currentSpread >= totalSpreads - 1);
     }
 
     /* ===== GO ===== */
-    console.log("Flipbook JS initialisé ✓");
     load();
 
 })();

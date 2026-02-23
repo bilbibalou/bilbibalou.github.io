@@ -9,7 +9,6 @@
 </head>
 <body>
 
-    <!-- Loader -->
     <div id="loader">
         <div class="spinner"></div>
         <p id="loaderMsg">Chargement …</p>
@@ -19,35 +18,20 @@
         <span id="progressText">0%</span>
     </div>
 
-    <!-- Flipbook -->
     <div id="flipbook-container" class="hidden">
-
         <div id="book-wrapper">
             <div id="book-viewport">
-
-                <!-- Flèche gauche -->
                 <div id="click-left" class="nav-arrow" title="Page précédente">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
-
-                <!-- Livre (canvas) -->
                 <div id="book">
                     <canvas id="pageCanvas"></canvas>
                 </div>
-
-                <!-- Flèche droite -->
                 <div id="click-right" class="nav-arrow" title="Page suivante">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="9 6 15 12 9 18"></polyline>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
                 </div>
-
             </div>
         </div>
-
-        <!-- Barre du bas -->
         <div id="bottom-bar">
             <div class="bar-left">
                 <button id="btnAutoplay" class="bar-btn" title="Lecture auto">
@@ -68,7 +52,6 @@
                 </button>
             </div>
         </div>
-
     </div>
 
     <script src="forge_motori.js"></script>
