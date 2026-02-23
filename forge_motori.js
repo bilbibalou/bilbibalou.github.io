@@ -24,6 +24,7 @@
         zoneLeft: document.getElementById("click-left"),
         zoneRight: document.getElementById("click-right"),
         thumbsCtn: document.getElementById("thumbnails"),
+        btnFullscreen: document.getElementById("btnFullscreen"),
         flipOverlay: document.getElementById("flip-overlay"),
         flipPage: document.getElementById("flip-page"),
         flipFrontImg: document.getElementById("flipFrontImg"),
@@ -34,15 +35,15 @@
     var pdfDoc = null;
     var totalPages = 0;
     var pageImages = [];
-    var thumbImages = [];
     var currentSpread = 0;
     var totalSpreads = 0;
     var isAnimating = false;
+    var spreadMap = [];
 
     // ===== SPREADS =====
     function buildSpreadMap() {
         var spreads = [];
-        spreads.push([1]);
+        spreads.push([1]); // couverture seule
         var p = 2;
         while (p <= totalPages) {
             if (p + 1 <= totalPages) {
@@ -55,8 +56,6 @@
         }
         return spreads;
     }
-
-    var spreadMap = [];
 
     // ===== CHARGEMENT PDF =====
     function load() {
@@ -90,14 +89,6 @@
 
                 return page.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
                     pageImages[num - 1] = canvas.toDataURL("image/jpeg", 0.92);
-
-                    // Miniature
-                    var tc = document.createElement("canvas");
-                    var ts = 0.15;
-                    tc.width = vp.width * ts;
-                    tc.height = vp.height * ts;
-                    tc.getContext("2d").drawImage(canvas, 0, 0, tc.width, tc.height);
-                    thumbImages[num - 1] = tc.toDataURL("image/jpeg", 0.6);
 
                     rendered++;
                     var pct = Math.round((rendered / totalPages) * 100);
@@ -154,15 +145,23 @@
     function updateIndicator() {
         var spread = spreadMap[currentSpread];
         if (spread.length === 1) {
-            els.pageIndicator.textContent = "Page " + spread[0] + " / " + totalPages;
+            els.pageIndicator.textContent = spread[0] + " / " + totalPages;
         } else {
-            els.pageIndicator.textContent = "Pages " + spread[0] + "-" + spread[1] + " / " + totalPages;
+            els.pageIndicator.textContent = spread[0] + "-" + spread[1] + " / " + totalPages;
         }
     }
 
     function updateArrows() {
-        els.zoneLeft.style.visibility = currentSpread > 0 ? "visible" : "hidden";
-        els.zoneRight.style.visibility = currentSpread < totalSpreads - 1 ? "visible" : "hidden";
+        if (currentSpread <= 0) {
+            els.zoneLeft.classList.add("invisible");
+        } else {
+            els.zoneLeft.classList.remove("invisible");
+        }
+        if (currentSpread >= totalSpreads - 1) {
+            els.zoneRight.classList.add("invisible");
+        } else {
+            els.zoneRight.classList.remove("invisible");
+        }
     }
 
     // ===== NAVIGATION =====
@@ -185,22 +184,29 @@
         var curSpread = spreadMap[currentSpread];
         var tgtSpread = spreadMap[targetSpread];
 
-        // Position du flip
         var bookRect = els.book.getBoundingClientRect();
         var pageW = bookRect.width / 2;
         var pageH = bookRect.height;
 
+        // Ajuster si page unique
+        if (curSpread.length === 1) {
+            pageW = bookRect.width;
+        }
+
         els.flipOverlay.classList.remove("flip-hidden");
 
         if (direction === "right") {
-            // Page qui tourne = page droite actuelle
             var frontPage = curSpread.length === 2 ? curSpread[1] : curSpread[0];
             var backPage = tgtSpread[0];
 
             els.flipFrontImg.src = pageImages[frontPage - 1] || "";
             els.flipBackImg.src = pageImages[backPage - 1] || "";
 
-            els.flipPage.style.left = (bookRect.left + pageW) + "px";
+            var flipLeft = curSpread.length === 2
+                ? bookRect.left + pageW
+                : bookRect.left;
+
+            els.flipPage.style.left = flipLeft + "px";
             els.flipPage.style.top = bookRect.top + "px";
             els.flipPage.style.width = pageW + "px";
             els.flipPage.style.height = pageH + "px";
@@ -226,21 +232,16 @@
             els.flipOverlay.classList.add("flip-hidden");
             showSpread(targetSpread);
             isAnimating = false;
-        }, 620);
-    }
-
-    function goToPage(pageNum) {
-        for (var i = 0; i < spreadMap.length; i++) {
-            if (spreadMap[i].indexOf(pageNum) !== -1) {
-                showSpread(i);
-                return;
-            }
-        }
+        }, 520);
     }
 
     // ===== EVENTS =====
     els.zoneLeft.addEventListener("click", prev);
     els.zoneRight.addEventListener("click", next);
+
+    // Clic sur le côté gauche/droit du livre aussi
+    els.pageLeft.addEventListener("click", prev);
+    els.pageRight.addEventListener("click", next);
 
     document.addEventListener("keydown", function (e) {
         if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); next(); }
@@ -260,14 +261,21 @@
         else if (dx > 50) prev();
     });
 
-    // Double-clic fullscreen
-    els.wrapper.addEventListener("dblclick", function () {
+    // Fullscreen
+    els.btnFullscreen.addEventListener("click", function () {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen();
         } else {
             document.exitFullscreen();
         }
     });
+
+    // Molette
+    els.wrapper.addEventListener("wheel", function (e) {
+        e.preventDefault();
+        if (e.deltaY > 0 || e.deltaX > 0) next();
+        else prev();
+    }, { passive: false });
 
     // ===== GO =====
     console.log("Flipbook JS chargé ✓");

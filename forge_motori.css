@@ -6,7 +6,7 @@
 }
 
 body {
-    background: #1a1a2e;
+    background: #4a4a4a;
     font-family: 'Segoe UI', Tahoma, sans-serif;
     overflow: hidden;
     height: 100vh;
@@ -18,7 +18,7 @@ body {
 #loader {
     position: fixed;
     inset: 0;
-    background: #1a1a2e;
+    background: #4a4a4a;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -36,16 +36,14 @@ body {
 .spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid rgba(255, 255, 255, 0.1);
+    border: 4px solid rgba(255,255,255,0.15);
     border-top-color: #f0a500;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-bottom: 20px;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .progress-bar {
     width: 250px;
@@ -84,42 +82,45 @@ body {
     pointer-events: none;
 }
 
-/* ===== BOOK WRAPPER — prend tout l'écran ===== */
+/* ===== BOOK WRAPPER ===== */
 #book-wrapper {
-    width: 100vw;
-    height: 100vh;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
     overflow: hidden;
-    background: #1a1a2e;
+    background: #4a4a4a;
+    padding: 20px;
 }
 
 #book-viewport {
-    width: 100%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    gap: 16px;
+    height: 100%;
+    max-height: 100%;
 }
 
+/* ===== BOOK ===== */
 #book {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    transform-origin: center center;
     position: relative;
+    /* La hauteur s'adapte au viewport moins la barre du bas et les marges */
+    height: calc(100vh - 80px);
+    max-height: calc(100vh - 80px);
+    box-shadow:
+        0 4px 20px rgba(0,0,0,0.5),
+        0 0 60px rgba(0,0,0,0.3);
+    border-radius: 2px;
 }
 
 /* ===== PAGES ===== */
 .book-page {
-    height: 100vh;
-    width: 50vw;
+    height: 100%;
     position: relative;
     overflow: hidden;
+    background: #fff;
 }
 
 .page-content {
@@ -138,83 +139,131 @@ body {
     display: block;
 }
 
+/* ===== Ratio des pages — largeur calculée d'après la hauteur ===== */
+/* Ratio A4 ≈ 0.707, donc width = height * 0.707 */
+.book-page {
+    aspect-ratio: 210 / 297;
+}
+
+/* ===== PAGE UNIQUE (couverture) ===== */
+#book.single-page .page-right {
+    display: none;
+}
+
 /* ===== RELIURE ===== */
 .book-spine {
     position: absolute;
     left: 50%;
     top: 0;
     transform: translateX(-50%);
-    width: 6px;
+    width: 8px;
     height: 100%;
     background: linear-gradient(90deg,
-        rgba(0,0,0,0.4),
-        rgba(0,0,0,0.1),
-        rgba(0,0,0,0.4));
+        rgba(0,0,0,0.35) 0%,
+        rgba(0,0,0,0.05) 30%,
+        rgba(0,0,0,0.0) 50%,
+        rgba(0,0,0,0.05) 70%,
+        rgba(0,0,0,0.35) 100%);
     z-index: 10;
     pointer-events: none;
 }
 
-/* ===== PAGE UNIQUE (couverture / dernière) ===== */
-#book.single-page {
-    justify-content: center;
-}
-
-#book.single-page .page-left {
-    width: 50vw;
-}
-
-#book.single-page .page-right {
-    display: none;
-}
-
-/* ===== FLÈCHES DE NAVIGATION ===== */
-.click-zone {
+/* Ombre intérieure sur les pages */
+.page-left .page-content::after {
+    content: '';
     position: absolute;
+    right: 0;
     top: 0;
-    width: 60px;
+    width: 40px;
     height: 100%;
-    z-index: 20;
+    background: linear-gradient(to left, rgba(0,0,0,0.08), transparent);
+    pointer-events: none;
+}
+
+.page-right .page-content::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 100%;
+    background: linear-gradient(to right, rgba(0,0,0,0.08), transparent);
+    pointer-events: none;
+}
+
+/* ===== FLÈCHES ===== */
+.nav-arrow {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 44px;
+    height: 44px;
     cursor: pointer;
-    transition: background 0.2s, opacity 0.2s;
+    color: rgba(255,255,255,0.45);
+    transition: color 0.2s, transform 0.15s;
+    flex-shrink: 0;
+}
+
+.nav-arrow:hover {
+    color: rgba(255,255,255,0.9);
+    transform: scale(1.15);
+}
+
+.nav-arrow svg {
+    width: 32px;
+    height: 32px;
+}
+
+.nav-arrow.invisible {
     opacity: 0;
-}
-
-.click-zone:hover {
-    opacity: 1;
-    background: rgba(0, 0, 0, 0.25);
-}
-
-.click-zone svg {
-    width: 36px;
-    height: 36px;
-    color: #fff;
-    filter: drop-shadow(0 0 4px rgba(0,0,0,0.6));
-}
-
-#click-left {
-    left: 0;
-    border-radius: 0 8px 8px 0;
-}
-
-#click-right {
-    right: 0;
-    border-radius: 8px 0 0 8px;
-}
-
-/* ===== INDICATEUR DE PAGE ===== */
-#pageIndicator {
-    position: absolute;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.85rem;
-    z-index: 20;
     pointer-events: none;
-    transition: opacity 0.3s;
+}
+
+/* ===== BARRE DU BAS ===== */
+#bottom-bar {
+    height: 40px;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+}
+
+.bar-left, .bar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bar-center {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+}
+
+.bar-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.bar-btn:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+}
+
+.bar-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* ===== ANIMATION FLIP ===== */
@@ -232,17 +281,16 @@ body {
 #flip-page {
     position: absolute;
     transform-style: preserve-3d;
-    transition: transform 0.6s ease-in-out;
 }
 
 #flip-page.flipping-right {
     transform-origin: left center;
-    animation: flipRight 0.6s ease-in-out forwards;
+    animation: flipRight 0.5s ease-in-out forwards;
 }
 
 #flip-page.flipping-left {
     transform-origin: right center;
-    animation: flipLeft 0.6s ease-in-out forwards;
+    animation: flipLeft 0.5s ease-in-out forwards;
 }
 
 .flip-front, .flip-back {
@@ -275,12 +323,12 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 700px) {
-    .click-zone {
-        width: 44px;
+    #book-wrapper {
+        padding: 10px;
     }
 
-    .click-zone svg {
-        width: 28px;
-        height: 28px;
+    .nav-arrow svg {
+        width: 24px;
+        height: 24px;
     }
 }
