@@ -3,7 +3,7 @@ const PDF_PATH = "ressources/flipbook/forge_motori.pdf";
 const RENDER_SCALE = 1.5;
 
 // ===== STATE =====
-let totalPages = 0;
+let totalPages = 0;zzz
 let pageImages = [];
 let currentSpread = 0;       // index de la double-page actuelle (0 = pages 1-2)
 let isAnimating = false;
