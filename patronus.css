@@ -1,0 +1,523 @@
+/* ========================
+   RESET & BASE
+======================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+body {
+    font-family: 'Raleway', sans-serif;
+    background: #050d12;
+    color: #ffffff;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    cursor: default;
+}
+
+/* ========================
+   FORÊT ARRIÈRE-PLAN
+======================== */
+.forest-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.forest-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.forest-back {
+    z-index: 1;
+}
+
+.forest-mid {
+    z-index: 2;
+    opacity: 0.9;
+}
+
+.forest-front {
+    z-index: 3;
+}
+
+/* ========================
+   FIREFLIES / LUCIOLES
+   (adapté de Pottermore #48f4d6)
+======================== */
+.fireflies {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.firefly {
+    position: absolute;
+    width: var(--core-size, 2px);
+    height: var(--core-size, 2px);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    animation: fireflyRise var(--duration, 40s) linear forwards;
+
+    /* RÉPULSION — séparé de transform, donc pas écrasé par l'animation */
+    translate: var(--repel-x, 0px) var(--repel-y, 0px);
+
+    background: radial-gradient(
+        circle,
+        rgba(var(--color-r), var(--color-g), var(--color-b), 1) 0%,
+        rgba(var(--color-r), var(--color-g), var(--color-b), 0.6) 30%,
+        transparent 70%
+    );
+    box-shadow:
+        0 0 var(--glow-sm) var(--glow-sm-spread) rgba(var(--color-r), var(--color-g), var(--color-b), 0.8),
+        0 0 var(--glow-md) var(--glow-md-spread) rgba(var(--color-r), var(--color-g), var(--color-b), 0.4),
+        0 0 var(--glow-lg) var(--glow-lg-spread) rgba(var(--color-r), var(--color-g), var(--color-b), 0.15);
+}
+
+
+/* Halo diffus large (simule les bords de particle.jpg) */
+.firefly::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--halo-size, 35px);
+    height: var(--halo-size, 35px);
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(var(--color-r, 72), var(--color-g, 244), var(--color-b, 214), var(--halo-opacity, 0.05)) 0%,
+        rgba(var(--color-r, 72), var(--color-g, 244), var(--color-b, 214), 0.02) 40%,
+        transparent 100%
+    );
+}
+
+
+@keyframes fireflyRise {
+    0% {
+        transform: translate(0, 0);
+        opacity: 0;
+    }
+    5% {
+        opacity: var(--max-opacity);
+    }
+    15% {
+        transform: translate(var(--drift-x1), calc(var(--rise-total) * -0.15));
+    }
+    30% {
+        transform: translate(var(--drift-x2), calc(var(--rise-total) * -0.30));
+    }
+    45% {
+        transform: translate(var(--drift-x3), calc(var(--rise-total) * -0.45));
+    }
+    60% {
+        transform: translate(var(--drift-x1), calc(var(--rise-total) * -0.60));
+    }
+    75% {
+        transform: translate(var(--drift-x2), calc(var(--rise-total) * -0.75));
+    }
+    85% {
+        opacity: var(--max-opacity);
+    }
+    90% {
+        transform: translate(var(--drift-x3), calc(var(--rise-total) * -0.90));
+        opacity: 0.1;
+    }
+    100% {
+        transform: translate(var(--drift-x1), calc(var(--rise-total) * -1));
+        opacity: 0;
+    }
+}
+
+/* ========================
+   CONTAINER PRINCIPAL
+======================== */
+.container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ========================
+   ÉCRANS
+======================== */
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.screen.active {
+    display: flex;
+}
+
+.screen.fade-in {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+.screen.fade-out {
+    animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* ========================
+   ÉCRAN INTRO
+======================== */
+.intro-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 4px;
+    color: rgba(200, 220, 240, 0.7);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    animation: textBreath 3s ease-in-out infinite;
+}
+
+.intro-subtext {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 4px;
+    color: rgba(200, 220, 240, 0.5);
+    text-transform: uppercase;
+    animation: textBreath 3s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+@keyframes textBreath {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.swipe-area {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    z-index: 20;
+}
+
+.swipe-area:active {
+    cursor: grabbing;
+}
+
+/* Traînée lumineuse lors du drag */
+.wand-trail {
+    position: fixed;
+    pointer-events: none;
+    z-index: 15;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(180, 210, 255, 0.9), rgba(120, 170, 255, 0.5), transparent);
+    box-shadow: 0 0 10px rgba(150, 200, 255, 0.8), 0 0 20px rgba(120, 170, 255, 0.4);
+    animation: trailFade 0.8s ease forwards;
+}
+
+@keyframes trailFade {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+
+/* ========================
+   ÉCRAN QUESTION
+======================== */
+.question-counter {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: rgba(200, 220, 240, 0.25);
+    letter-spacing: 5px;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+}
+
+.choices {
+    display: flex;
+    gap: 80px;
+    justify-content: center;
+    align-items: center;
+}
+
+.choice-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: rgba(200, 220, 240, 0.55);
+    cursor: pointer;
+    transition: all 0.6s ease;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    position: relative;
+    outline: none;
+}
+
+.choice-btn::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background: rgba(150, 200, 255, 0.5);
+    transition: all 0.4s ease;
+    transform: translateX(-50%);
+}
+
+.choice-btn:hover {
+    color: rgba(200, 225, 255, 1);
+    text-shadow: 0 0 20px rgba(150, 200, 255, 0.4);
+}
+
+.choice-btn:hover::after {
+    width: 100%;
+}
+
+.choice-btn.fade-out {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+    transition: all 0.5s ease;
+    pointer-events: none;
+}
+
+.choice-btn.selected {
+    color: rgba(200, 225, 255, 1);
+    text-shadow: 0 0 30px rgba(150, 200, 255, 0.6);
+}
+
+.choice-btn.appearing {
+    opacity: 0;
+    transform: translateY(15px);
+}
+
+.choice-btn.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* ========================
+   ÉCRAN CHARGEMENT
+======================== */
+.patronus-orb {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.orb {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200, 225, 255, 0.95), rgba(120, 170, 255, 0.6), rgba(80, 140, 230, 0.2), transparent);
+    box-shadow:
+        0 0 30px rgba(150, 200, 255, 0.7),
+        0 0 60px rgba(120, 170, 255, 0.4),
+        0 0 100px rgba(100, 150, 230, 0.2);
+    animation: orbPulse 1.5s ease-in-out infinite, orbGrow 3s ease forwards;
+}
+
+@keyframes orbPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 30px rgba(150, 200, 255, 0.7),
+            0 0 60px rgba(120, 170, 255, 0.4);
+    }
+    50% {
+        box-shadow:
+            0 0 50px rgba(150, 200, 255, 0.9),
+            0 0 100px rgba(120, 170, 255, 0.6),
+            0 0 150px rgba(100, 150, 230, 0.3);
+    }
+}
+
+@keyframes orbGrow {
+    0% { transform: scale(0.3); opacity: 0; }
+    30% { opacity: 1; }
+    60% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* ========================
+   ÉCRAN RÉSULTAT
+======================== */
+#screen-result {
+    position: absolute;
+}
+
+.result-glow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(120, 180, 255, 0.12), transparent 70%);
+    border-radius: 50%;
+    animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.4); opacity: 0.8; }
+}
+
+.patronus-emoji {
+    font-size: 70px;
+    margin-bottom: 25px;
+    animation: patronusReveal 1.2s ease forwards;
+    position: relative;
+    z-index: 2;
+    filter: brightness(1.2);
+}
+
+@keyframes patronusReveal {
+    0% { transform: scale(0) rotate(-10deg); opacity: 0; filter: brightness(3); }
+    50% { transform: scale(1.2) rotate(5deg); filter: brightness(2); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1.2); }
+}
+
+.result-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: rgba(200, 220, 240, 0.4);
+    margin-bottom: 8px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 2;
+}
+
+.patronus-name {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    color: rgba(200, 225, 255, 0.95);
+    text-shadow: 0 0 30px rgba(150, 200, 255, 0.4);
+    letter-spacing: 4px;
+    position: relative;
+    z-index: 2;
+}
+
+.patronus-description {
+    font-size: 0.85rem;
+    color: rgba(200, 220, 240, 0.5);
+    line-height: 1.9;
+    max-width: 420px;
+    margin-bottom: 40px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.5px;
+}
+
+.btn-restart {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    padding: 10px 25px;
+    background: transparent;
+    border: 1px solid rgba(150, 200, 255, 0.2);
+    color: rgba(200, 220, 240, 0.5);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    letter-spacing: 3px;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-restart:hover {
+    border-color: rgba(150, 200, 255, 0.5);
+    color: rgba(200, 225, 255, 0.9);
+    box-shadow: 0 0 20px rgba(150, 200, 255, 0.15);
+}
+
+/* ========================
+   BARRES SON (DÉCORATIF)
+======================== */
+.sound-bars {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 20;
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 18px;
+}
+
+.sound-bars span {
+    display: block;
+    width: 2px;
+    background: rgba(200, 220, 240, 0.3);
+    animation: soundBar 1.2s ease-in-out infinite;
+}
+
+.sound-bars span:nth-child(1) { height: 8px; animation-delay: 0s; }
+.sound-bars span:nth-child(2) { height: 14px; animation-delay: 0.2s; }
+.sound-bars span:nth-child(3) { height: 6px; animation-delay: 0.4s; }
+.sound-bars span:nth-child(4) { height: 11px; animation-delay: 0.1s; }
+
+@keyframes soundBar {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.4); }
+}
+
+/* ========================
+   RESPONSIVE
+======================== */
+@media (max-width: 600px) {
+    .choices {
+        gap: 50px;
+    }
+    .choice-btn {
+        font-size: 0.95rem;
+        letter-spacing: 2px;
+    }
+    .patronus-name {
+        font-size: 1.6rem;
+    }
+    .patronus-description {
+        font-size: 0.8rem;
+        padding: 0 20px;
+    }
+    .intro-text {
+        font-size: 0.7rem;
+    }
+    .intro-subtext {
+        font-size: 0.6rem;
+    }
+}
