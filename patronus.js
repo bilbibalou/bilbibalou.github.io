@@ -1981,8 +1981,8 @@ const swipeArea = document.getElementById('swipe-area');
 function createFireflies() {
     const firefliesContainer = document.querySelector('.fireflies');
 
-    const TOTAL = 50;
-    const BASE_COLOR = {r: 72, g: 244, b: 214};
+    const TOTAL = 100; // Nombre totale de luciole
+    const BASE_COLOR = {r: 72, g: 244, b: 214}; // couleur de luciole #48F4D6
 
     function spawnFirefly() {
         const firefly = document.createElement('div');
@@ -2125,9 +2125,24 @@ document.addEventListener('mousemove', (e) => {
     // Créer des particules de traînée
     spawnTrailParticles(e.clientX, e.clientY);
 
-    // Repousser les lucioles
-    repelFireflies(e.clientX, e.clientY);
+    
 });
+
+// ========================
+// TRAÎNÉE DE BAGUETTE (WAND TRAIL)
+// ========================
+
+function createTrailDot(x, y) {
+    const dot = document.createElement('div');
+    dot.classList.add('wand-trail');
+    dot.style.left = (x - 4) + 'px';
+    dot.style.top = (y - 4) + 'px';
+    document.body.appendChild(dot);
+
+    setTimeout(() => {
+        dot.remove();
+    }, 800);
+}
 
 // ================================
 // PARTICULES DE TRAÎNÉE
