@@ -3,134 +3,1946 @@
 // ========================
 
 const questions = [
-    {
-        choices: [
-            { text: "Lune", traits: ["mystère", "calme", "sagesse"] },
-            { text: "Soleil", traits: ["énergie", "courage", "force"] }
+    { // Question 1
+        groups: [
+            ["Briller", "Scintiller", "Luire"],
+            ["Feuille", "Lame", "Épine"],
+            ["Soleil", "Vent", "Pluie"],
+            ["Chercher", "Protéger", "Servir"],
+            ["Rêver", "Découvrir", "Danser"]
         ]
     },
-    {
-        choices: [
-            { text: "Forêt", traits: ["mystère", "sagesse", "indépendance"] },
-            { text: "Océan", traits: ["calme", "liberté", "adaptabilité"] }
+    { // Question 2
+        groups: [
+            ["Faire", "Améliorer"],
+            ["Clarté", "Ombre"],
+            ["Sucré", "Salé"],
+            ["Chaud", "Froid"],
+            ["Sang", "Os"],
+            ["Rugueux", "Lisse"]
         ]
     },
-    {
-        choices: [
-            { text: "Observer", traits: ["sagesse", "calme", "mystère"] },
-            { text: "Agir", traits: ["courage", "énergie", "force"] }
+    { // Question 3
+        groups: [
+            ["Mener", "Sauver", "Échapper"],
+            ["Jouer", "Rôder", "Préparer"],
+            ["Penser", "Sentir", "Ressentir"],
+            ["Pierre", "Bois", "Terre"],
+            ["Au-dessus", "En dessous", "Autour"]
         ]
     },
-    {
-        choices: [
-            { text: "Ombre", traits: ["mystère", "indépendance", "adaptabilité"] },
-            { text: "Lumière", traits: ["courage", "énergie", "loyauté"] }
+    { // Question 4
+        groups: [
+            ["Toujours", "Parfois"],
+            ["Qui", "Pourquoi"],
+            ["Liberté", "Sécurité"],
+            ["Ensemble", "Seul"],
+            ["Perdu", "Trouvé"],
+            ["Parler", "Silencieux"]
         ]
     },
-    {
-        choices: [
-            { text: "Douceur", traits: ["calme", "loyauté", "adaptabilité"] },
-            { text: "Fougue", traits: ["courage", "énergie", "force"] }
+    { // Question 5
+        groups: [
+            ["Espoir", "Confiance", "Amour"],
+            ["Noir", "Blanc", "Gris"],
+            ["Esprit", "Cœur", "Âme"],
+            ["Réconforter", "Conseiller", "Impressionner"],
+            ["Regarder", "Écouter", "Toucher"]
         ]
     },
-    {
-        choices: [
-            { text: "Étoile", traits: ["sagesse", "mystère", "liberté"] },
-            { text: "Flamme", traits: ["énergie", "courage", "force"] }
+    { // Question 6 (Rare + Mythique uniquement)
+        groups: [
+            ["Anguleux", "Élégant"],
+            ["Haut", "Profond"],
+            ["Endormi", "Éveillé"],
+            ["Givre", "Rosée"],
+            ["Ondulation", "Vague"],
+            ["Chasser", "Créer"]
         ]
     },
-    {
-        choices: [
-            { text: "Seul", traits: ["indépendance", "mystère", "sagesse"] },
-            { text: "Ensemble", traits: ["loyauté", "calme", "adaptabilité"] }
+    { // Question 7 (Mythique uniquement)
+        groups: [
+            ["Mythe", "Légende"],
+            ["Sérénité", "Gloire"],
+            ["Éternel", "Impossible"],
+            ["Enchanter", "Ensorceler"],
+            ["Charme", "Malédiction"]
         ]
     }
 ];
 
 const patronusList = [
     {
-        name: "Cerf",
-        emoji: "🦌",
-        description: "Noble et protecteur, ton Patronus reflète un courage inébranlable et un esprit de guide. Comme James Potter, tu es un gardien naturel pour ceux que tu aimes.",
-        traits: ["courage", "force", "loyauté"]
-    },
-    {
-        name: "Loutre",
-        emoji: "🦦",
-        description: "Joueuse et intelligente, la loutre symbolise ta curiosité et ta joie de vivre. Tu combines esprit brillant et cœur chaleureux.",
-        traits: ["énergie", "adaptabilité", "calme"]
-    },
-    {
-        name: "Loup",
-        emoji: "🐺",
-        description: "Loyal et instinctif, le loup représente ta connexion profonde avec ceux que tu considères comme ta meute. Ta force réside dans tes liens.",
-        traits: ["loyauté", "courage", "force"]
-    },
-    {
-        name: "Phénix",
-        emoji: "🔥",
-        description: "Rare et majestueux, le phénix symbolise ta capacité à renaître de tes épreuves. Tu portes en toi une lumière que rien ne peut éteindre.",
-        traits: ["énergie", "courage", "sagesse"]
-    },
-    {
-        name: "Chat",
-        emoji: "🐈",
-        description: "Indépendant et mystérieux, le chat reflète ton esprit libre et ta perspicacité. Tu observes le monde avec une sagesse tranquille.",
-        traits: ["indépendance", "mystère", "calme"]
-    },
-    {
-        name: "Chouette",
-        emoji: "🦉",
-        description: "Sage et silencieuse, la chouette représente ta profonde intuition et ton amour du savoir. Tu vois ce que d'autres ne perçoivent pas.",
-        traits: ["sagesse", "mystère", "indépendance"]
-    },
-    {
-        name: "Cheval",
-        emoji: "🐎",
-        description: "Libre et puissant, le cheval symbolise ton esprit indomptable et ta soif de liberté. Tu galopes vers tes rêves sans regarder en arrière.",
-        traits: ["liberté", "force", "énergie"]
-    },
-    {
-        name: "Dauphin",
-        emoji: "🐬",
-        description: "Joyeux et social, le dauphin reflète ta nature bienveillante et ton intelligence émotionnelle. Tu apportes la lumière partout où tu vas.",
-        traits: ["calme", "adaptabilité", "loyauté"]
-    },
-    {
-        name: "Renard",
-        emoji: "🦊",
-        description: "Rusé et adaptable, le renard représente ton intelligence vive et ta capacité à naviguer les situations les plus complexes avec grâce.",
-        traits: ["adaptabilité", "mystère", "indépendance"]
+        name: "Abraxan",
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Légende", "Gloire", "Impossible", "Ensorceler", "Malédiction"]
+        ]
     },
     {
         name: "Aigle",
-        emoji: "🦅",
-        description: "Majestueux et visionnaire, l'aigle symbolise ton ambition et ta capacité à voir au-delà des horizons. Tu voles plus haut que quiconque.",
-        traits: ["liberté", "sagesse", "force"]
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
     },
     {
-        name: "Lièvre",
-        emoji: "🐇",
-        description: "Vif et intuitif, le lièvre reflète ta sensibilité et ta rapidité d'esprit. Tu perçois la magie dans l'ordinaire.",
-        traits: ["calme", "mystère", "adaptabilité"]
+        name: "Albatross",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
     },
     {
-        name: "Lynx",
-        emoji: "🐱",
-        description: "Discret et perçant, le lynx symbolise ta capacité à voir les vérités cachées. Tu es un gardien silencieux doté d'une intuition redoutable.",
-        traits: ["mystère", "indépendance", "sagesse"]
+        name: "Autour des palombes",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Balbuzard",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Barzoï",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Basset Hound",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Beagle",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Belette",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Biche",
+        rarity: "rare",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Blaireau",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Buffle",
+        rarity: "rare",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Busard des marais",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Buse",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Cerf",
+        rarity: "rare",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Chat blanc",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Bleu russe",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat calico",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat écaille de tortue",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Manx",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Nebelung",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat noir",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Ocicat",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Ragdoll",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat roux",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat sauvage",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Sibérien",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Sphynx",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chat Tonkinois",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chauve-souris",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Chevêche",
+        rarity: "rare",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Chèvre",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chien croisé",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chien de Saint-Hubert",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Chouette brune",
+        rarity: "rare",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Chow-chow",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Cobra royal",
+        rarity: "rare",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Colibri",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Corbeau",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Couleuvre",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Cygne blanc",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Cygne noir",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Dauphin",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
     },
     {
         name: "Dragon",
-        emoji: "🐉",
-        description: "Puissant et rare, le dragon représente une force intérieure exceptionnelle. Tu portes en toi un feu que rien ne peut dompter.",
-        traits: ["force", "courage", "énergie"]
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Légende", "Gloire", "Impossible", "Ensorceler", "Malédiction"]
+        ]
     },
     {
-        name: "Cygne",
-        emoji: "🦢",
-        description: "Gracieux et déterminé, le cygne cache une force immense sous son élégance. Ta beauté intérieure est ton arme la plus puissante.",
-        traits: ["calme", "sagesse", "loyauté"]
+        name: "Écureuil gris",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Écureuil roux",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Éléphant",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Engoulevent",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Épervier",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Éruptif",
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Légende", "Gloire", "Impossible", "Ensorceler", "Malédiction"]
+        ]
+    },
+    {
+        name: "Étalon alezan",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Étalon bai",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Étalon blanc",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Étalon gris pommelé",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Étalon isabelle",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Étalon noir",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Étalon pie",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Faisan",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Faucon",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Fox-terrier",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Grand corbeau",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Grand-duc",
+        rarity: "rare",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Grand-duc gris",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Gronian",
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Mythe", "Sérénité", "Éternel", "Enchanter", "Charme"]
+        ]
+    },
+    {
+        name: "Guépard",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Harfang des neiges",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Hérisson",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Hermine",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Héron",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Hippogriffe",
+        rarity: "mythical",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Légende", "Gloire", "Impossible", "Ensorceler", "Malédiction"]
+        ]
+    },
+    {
+        name: "Hirondelle",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Husky",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Hyène",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Impala",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Jument alezan",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Jument bai",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Jument blanc",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Jument gris pommelé",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Jument isabelle",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Jument noir",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Jument pie",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Lapin sauvage",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Léopard",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Léoparde",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Lévrier d'Ibiza",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Lévrier écossais",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Lévrier gris",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Lévrier irlandais",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Libellule",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Licorne",
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Mythe", "Sérénité", "Éternel", "Enchanter", "Charme"]
+        ]
+    },
+    {
+        name: "Lièvre brun",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Lièvre variable",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Lion",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Lionne",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Loup",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Loutre",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Lynx",
+        rarity: "rare",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Mamba noir",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Martin-pêcheur",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Martinet",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Martre des pins",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Mastiff",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Merle",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Moineau",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Mouche",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Mulot",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Musaraigne",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Occamy",
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Mythe", "Sérénité", "Éternel", "Enchanter", "Charme"]
+        ]
+    },
+    {
+        name: "Orang-outan",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Orque",
+        rarity: "rare",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Oryctérope",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Oryx",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Ours brun",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Ours noir",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Ours polaire",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Paon",
+        rarity: "rare",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Petit-duc",
+        rarity: "rare",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Phoque",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Pie",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Putois",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Python",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Rat",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Renard",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Requin",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Rhinocéros",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            []
+        ]
+    },
+    {
+        name: "Rottweiler",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Rougegorge",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Runespoor",
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Légende", "Gloire", "Impossible", "Ensorceler", "Malédiction"]
+        ]
+    },
+    {
+        name: "Saint-Bernard",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Salamandre de feu",
+        rarity: "mythical",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Mythe", "Sérénité", "Éternel", "Enchanter", "Charme"]
+        ]
+    },
+    {
+        name: "Sanglier",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+        {
+        name: "Saumon",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Serpent à sonnette",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Singe capucin",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Sombral",
+        rarity: "mythical",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            ["Anguleux", "Profondeur", "Éveillé", "Givre", "Ondulation", "Chasser"],
+            ["Mythe", "Sérénité", "Éternel", "Enchanter", "Charme"]
+        ]
+    },
+    {
+        name: "Souris des champs",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Taupe",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Espoir", "Noir", "Mental", "Conseiller", "Écouter"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Terre-Neuve",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Tigre",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Tigresse",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Vautour",
+        rarity: "rare",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            ["Arrondi", "Hauteur", "Endormi", "Rosée", "Vague", "Créer"],
+            []
+        ]
+    },
+    {
+        name: "Vipère",
+        rarity: "common",
+        answers: [
+            ["Briller", "Épine", "Pluie", "Chercher", "Découvrir"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Diriger", "Roder", "Penser", "Pierre", "En dessous"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Confiance", "Gris", "Âme", "Impressionner", "Toucher"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "Vison",
+        rarity: "common",
+        answers: [
+            ["Luire", "Lame", "Vent", "Servir", "Danser"],
+            ["Faire", "Clarté", "Sucré", "Chaud", "Os", "Lisse"],
+            ["Échapper", "Se pomponner", "Sentir", "Terre", "Autour"],
+            ["Toujours", "Qui", "Sécurité", "Ensemble", "Trouver", "Parler"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
+    },
+    {
+        name: "West Highland Terrier",
+        rarity: "common",
+        answers: [
+            ["Scintiller", "Feuille", "Soleil", "Protéger", "Rêver"],
+            ["Améliorer", "Ombre", "Salé", "Froid", "Sang", "Rugueux"],
+            ["Sauver", "Jouer", "Ressentir", "Bois", "Au-dessus"],
+            ["Parfois", "Pourquoi", "Liberté", "Seul", "Perdre", "Silencieux"],
+            ["Amour", "Blanc", "Cœur", "Réconforter", "Observer"],
+            [],
+            []
+        ]
     }
 ];
 
@@ -140,9 +1952,15 @@ const patronusList = [
 
 let currentQuestion = 0;
 let collectedTraits = [];
+let selectedIds = [];
+let questionTimer = null;
+let timeoutCount = 0; // Compteur de timeouts
+let isLocked = false; // Verrouillage définitif
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
+let selectedWords = [];
+let selectedGroupIndices = [];
 
 // ========================
 // ÉLÉMENTS DOM
@@ -152,7 +1970,6 @@ const screenIntro = document.getElementById('screen-intro');
 const screenQuestion = document.getElementById('screen-question');
 const screenLoading = document.getElementById('screen-loading');
 const screenResult = document.getElementById('screen-result');
-const btnRestart = document.getElementById('btn-restart');
 const choicesContainer = document.getElementById('choices');
 const questionCounter = document.getElementById('question-counter');
 const patronusEmoji = document.getElementById('patronus-emoji');
@@ -590,59 +2407,193 @@ function startQuiz() {
 }
 
 // ========================
+// RESET DU QUIZ (sans reset le timeoutCount)
+// ========================
+function resetQuiz() {
+    currentQuestion = 0;
+    collectedTraits = [];
+    selectedIds = [];
+    selectedWords = [];
+    selectedGroupIndices = [];
+    showQuestion();
+}
+
+// ========================
+// TIMER DE 5 SECONDES
+// ========================
+function startQuestionTimer() {
+    clearQuestionTimer();
+    questionTimer = setTimeout(() => {
+        if (timeoutCount === 0) {
+            timeoutCount = 1;
+            showConcentrationWarning();
+        } else {
+            showLockedScreen();
+        }
+    }, 6000);
+}
+
+function clearQuestionTimer() {
+    clearTimeout(questionTimer);
+}
+
+function handleTimeout() {
+    timeoutCount++;
+
+    if (timeoutCount === 1) {
+        // Premier timeout : message + reset
+        showConcentrationWarning();
+    } else if (timeoutCount >= 2) {
+        // Deuxième timeout : blocage définitif
+        showLockedScreen();
+    }
+}
+
+// ========================
+// ÉCRAN "NE PERDS PAS TA CONCENTRATION"
+// ========================
+function showConcentrationWarning() {
+    clearQuestionTimer();
+    isLocked = true; // Empêcher les clics pendant le message
+
+    // Créer l'overlay du message
+    const overlay = document.createElement('div');
+    overlay.id = 'concentration-overlay';
+    overlay.innerHTML = `
+        <div class="concentration-message">
+            <p>Ne perds pas ta concentration !</p>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Après 5 secondes, on reset et on recommence
+    setTimeout(() => {
+        overlay.remove();
+        isLocked = false;
+        resetQuiz();
+    }, 2500);
+}
+
+// ========================
+// ÉCRAN DE BLOCAGE DÉFINITIF
+// ========================
+function showLockedScreen() {
+    clearQuestionTimer();
+    isLocked = true;
+
+    // Masquer l'écran de quiz
+    const quizScreen = document.getElementById('screen-quiz');
+    if (quizScreen) quizScreen.classList.remove('active');
+
+    // Créer l'écran de blocage
+    const overlay = document.createElement('div');
+    overlay.id = 'locked-overlay';
+    overlay.innerHTML = `
+        <div class="locked-message">
+            <p>Dommage, tu n'es peut-être pas encore prêt pour lancer ce sortilège.</p>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Sauvegarder le blocage en localStorage pour persister
+    localStorage.setItem('patronus_locked', 'true');
+}
+
+
+// ========================
 // AFFICHER UNE QUESTION
 // ========================
 
 function showQuestion() {
-    const question = questions[currentQuestion];
-    questionCounter.textContent = '';
+    if (isLocked) return;
+    // Vérifier si on dépasse la question 5
+    // Questions 6-7 ne s'affichent que si le chemin mène à un rare/mythique
+    if (currentQuestion >= 5) {
+        const maxQuestions = getMaxQuestions();
+        if (currentQuestion >= maxQuestions) {
+            showLoadingScreen();
+            return;
+        }
+    }
 
+    if (currentQuestion >= questions.length) {
+        showLoadingScreen();
+        return;
+    }
+
+    const question = questions[currentQuestion];
+
+    // Choisir UN groupe aléatoire
+    const randomIndex = Math.floor(Math.random() * question.groups.length);
+    const group = question.groups[randomIndex];
+    selectedGroupIndices.push(randomIndex);
+
+    questionCounter.textContent = '';
     choicesContainer.innerHTML = '';
 
-    question.choices.forEach((choice, index) => {
+    // Afficher chaque mot du groupe
+    group.forEach((word, index) => {
         const btn = document.createElement('button');
         btn.classList.add('choice-btn', 'appearing');
-        btn.textContent = choice.text;
+        btn.textContent = word;
 
-        btn.addEventListener('click', () => selectChoice(btn, choice));
+        btn.addEventListener('click', () => {
+            selectWord(btn, word);
+        });
+
         choicesContainer.appendChild(btn);
 
-        // Animation d'apparition progressive
         setTimeout(() => {
             btn.classList.add('visible');
-        }, 400 + index * 300);
+        }, 300 + index * 200);
     });
+
+    startQuestionTimer(); 
 }
 
 // ========================
-// SÉLECTIONNER UN CHOIX
+// DÉTERMINER COMBIEN DE QUESTIONS
 // ========================
 
-function selectChoice(selectedBtn, choice) {
-    const allBtns = choicesContainer.querySelectorAll('.choice-btn');
-    allBtns.forEach(btn => {
-        btn.disabled = true;
-        if (btn !== selectedBtn) {
-            btn.classList.add('fade-out');
-        }
+function getMaxQuestions() {
+    // Après la question 5, vérifier si des candidats
+    // rare/mythique sont encore possibles
+    let candidates = patronusList;
+
+    selectedWords.forEach((word, questionIndex) => {
+        candidates = candidates.filter(patronus => {
+            const acceptedWords = patronus.answers[questionIndex];
+            if (acceptedWords.length === 0) return false;
+            return acceptedWords.includes(word);
+        });
     });
+
+    // Vérifier la rareté max parmi les candidats
+    const hasMyth = candidates.some(p => p.rarity === "mythical");
+    const hasRare = candidates.some(p => p.rarity === "rare");
+
+    if (hasMyth) return 7;
+    if (hasRare) return 6;
+    return 5;
+}
+
+// ========================
+// SÉLECTIONNER UN MOT
+// ========================
+
+function selectWord(selectedBtn, word) {
+    if (isLocked) return;
+    clearQuestionTimer();
 
     selectedBtn.classList.add('selected');
-    collectedTraits.push(...choice.traits);
+    selectedWords.push(word);
 
-    setTimeout(() => {
-        currentQuestion++;
-        if (currentQuestion < questions.length) {
-            // Transition douce entre questions
-            allBtns.forEach(btn => btn.classList.add('fade-out'));
-            setTimeout(() => {
-                showQuestion();
-            }, 500);
-        } else {
-            showLoadingScreen();
-        }
-    }, 900);
+    console.log("Mots choisis:", selectedWords);
+
+    currentQuestion++;
+    showQuestion();
 }
+
 
 // ========================
 // ÉCRAN DE CHARGEMENT
@@ -656,32 +2607,34 @@ function showLoadingScreen() {
 }
 
 // ========================
-// CALCUL DU PATRONUS
+// TROUVER LE PATRONUS
 // ========================
 
-function calculatePatronus() {
-    const traitCount = {};
-    collectedTraits.forEach(trait => {
-        traitCount[trait] = (traitCount[trait] || 0) + 1;
-    });
+function findPatronus() {
+    console.log("Mots choisis:", selectedWords);
 
-    let bestMatch = null;
-    let bestScore = -1;
+    // Filtrer les patronus compatibles avec chaque réponse
+    let candidates = patronusList;
 
-    patronusList.forEach(patronus => {
-        let score = 0;
-        patronus.traits.forEach(trait => {
-            score += traitCount[trait] || 0;
+    selectedWords.forEach((word, questionIndex) => {
+        candidates = candidates.filter(patronus => {
+            const acceptedWords = patronus.answers[questionIndex];
+            // Si la liste est vide, ce patronus n'a pas cette question
+            if (acceptedWords.length === 0) return false;
+            return acceptedWords.includes(word);
         });
-        score += Math.random() * 1.5;
-
-        if (score > bestScore) {
-            bestScore = score;
-            bestMatch = patronus;
-        }
     });
 
-    return bestMatch;
+    console.log("Candidats restants:", candidates.map(p => p.name));
+
+    if (candidates.length > 0) {
+        // Si plusieurs candidats, en choisir un au hasard
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    // Fallback : patronus aléatoire commun
+    const commonPatronus = patronusList.filter(p => p.rarity === "common");
+    return commonPatronus[Math.floor(Math.random() * commonPatronus.length)];
 }
 
 // ========================
@@ -689,11 +2642,11 @@ function calculatePatronus() {
 // ========================
 
 function revealPatronus() {
-    const patronus = calculatePatronus();
+    const patronus = findPatronus();
 
-    patronusEmoji.textContent = patronus.emoji;
+    // patronusEmoji.textContent = patronus.emoji;
     patronusName.textContent = patronus.name.toUpperCase();
-    patronusDescription.textContent = patronus.description;
+    // patronusDescription.textContent = patronus.description;
 
     showScreen(screenResult);
 
@@ -716,19 +2669,33 @@ function revealPatronus() {
 }
 
 // ========================
-// REDÉMARRAGE
+// AU CHARGEMENT - Vérifier si bloqué
 // ========================
+function initQuiz() {
+    // Vérifier si le joueur est bloqué
+    if (localStorage.getItem('patronus_locked') === 'true') {
+        showLockedScreen();
+        return;
+    }
 
-btnRestart.addEventListener('click', () => {
+    timeoutCount = 0;
+    isLocked = false;
     currentQuestion = 0;
     collectedTraits = [];
+    selectedIds = [];
 
-    // Nettoyer les fireflies extra
-    firefliesContainer.innerHTML = '';
-    createFireflies();
+    showQuestion();
+}
 
-    showScreen(screenIntro);
-});
+// ========================
+// RESTART COMPLET (si tu veux un bouton admin pour débloquer)
+// ========================
+function fullRestart() {
+    localStorage.removeItem('patronus_locked');
+    timeoutCount = 0;
+    isLocked = false;
+    resetQuiz();
+}
 
 // ========================
 // INIT
