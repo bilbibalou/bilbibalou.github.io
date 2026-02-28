@@ -24,9 +24,9 @@ const questions = [
     },
     { // Question 3
         groups: [
-            ["Mener", "Sauver", "Échapper"],
-            ["Jouer", "Rôder", "Préparer"],
-            ["Penser", "Sentir", "Ressentir"],
+            ["Diriger", "Sauver", "Échapper"],
+            ["Jouer", "Roder", "Se pomponner"],
+            ["Penser", "Ressentir", "Sentir"],
             ["Pierre", "Bois", "Terre"],
             ["Au-dessus", "En dessous", "Autour"]
         ]
@@ -37,7 +37,7 @@ const questions = [
             ["Qui", "Pourquoi"],
             ["Liberté", "Sécurité"],
             ["Ensemble", "Seul"],
-            ["Perdu", "Trouvé"],
+            ["Perdre", "Trouver"],
             ["Parler", "Silencieux"]
         ]
     },
@@ -45,15 +45,15 @@ const questions = [
         groups: [
             ["Espoir", "Confiance", "Amour"],
             ["Noir", "Blanc", "Gris"],
-            ["Esprit", "Cœur", "Âme"],
+            ["Mental", "Cœur", "Âme"],
             ["Réconforter", "Conseiller", "Impressionner"],
-            ["Regarder", "Écouter", "Toucher"]
+            ["Observer", "Écouter", "Toucher"]
         ]
     },
     { // Question 6 (Rare + Mythique uniquement)
         groups: [
-            ["Anguleux", "Élégant"],
-            ["Haut", "Profond"],
+            ["Anguleux", "Arrondi"],
+            ["Hauteur", "Profondeur"],
             ["Endormi", "Éveillé"],
             ["Givre", "Rosée"],
             ["Ondulation", "Vague"],
@@ -2643,29 +2643,21 @@ function findPatronus() {
 
 function revealPatronus() {
     const patronus = findPatronus();
-
-    // patronusEmoji.textContent = patronus.emoji;
+    
     patronusName.textContent = patronus.name.toUpperCase();
-    // patronusDescription.textContent = patronus.description;
-
+    patronusDescription.textContent = patronus.description;
+    
+    const video = document.getElementById('patronus-video');
+    video.src = `ressources/patronus/${patronus.name.toLowerCase()}.mp4`;
+    video.loop = false;
+    video.play();
+    
+    video.addEventListener('ended', () => {
+        video.currentTime = video.duration;
+        video.pause();
+    }, { once: true });
+    
     showScreen(screenResult);
-
-    // Extra fireflies pour le résultat
-    for (let i = 0; i < 10; i++) {
-        const firefly = document.createElement('div');
-        firefly.classList.add('firefly');
-        firefly.style.left = (30 + Math.random() * 40) + '%';
-        firefly.style.top = (30 + Math.random() * 40) + '%';
-        const dx = (Math.random() - 0.5) * 100;
-        const dy = (Math.random() - 0.5) * 100;
-        firefly.style.setProperty('--dx', dx + 'px');
-        firefly.style.setProperty('--dy', dy + 'px');
-        firefly.style.setProperty('--dx2', (dx * 1.5) + 'px');
-        firefly.style.setProperty('--dy2', (dy * 1.5) + 'px');
-        firefly.style.animationDuration = (Math.random() * 4 + 3) + 's';
-        firefly.style.animationDelay = (Math.random() * 1) + 's';
-        firefliesContainer.appendChild(firefly);
-    }
 }
 
 // ========================

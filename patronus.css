@@ -13,7 +13,7 @@ body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background: url('ressources/lac.png') no-repeat center center fixed;
+    background: url('ressources/patronus/lac.png') no-repeat center center fixed;
     background-size: cover;
 }
 
@@ -359,15 +359,29 @@ body {
 ======================== */
 #screen-result {
     position: absolute;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.result-header {
+    position: fixed;
+    top: 40px;
+    left: 40px;
+    z-index: 10;
+    text-align: left;
+}
+
+.result-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: rgba(200, 220, 240, 0.4);
+    margin-bottom: 8px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
 }
 
 .result-glow {
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(120, 180, 255, 0.12), transparent 70%);
-    border-radius: 50%;
-    animation: glowPulse 4s ease-in-out infinite;
+    display: none;
 }
 
 @keyframes glowPulse {
@@ -382,22 +396,10 @@ body {
     100% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1.2); }
 }
 
-.result-title {
-    font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
-    color: rgba(200, 220, 240, 0.4);
-    margin-bottom: 8px;
-    letter-spacing: 5px;
-    text-transform: uppercase;
-    position: relative;
-    z-index: 2;
-}
-
 .patronus-name {
     font-family: 'Cinzel', serif;
     font-size: 2.8rem;
     font-weight: 900;
-    margin-bottom: 20px;
     color: rgba(220, 235, 255, 1);
     text-shadow: 
         0 0 10px rgba(150, 200, 255, 0.9),
@@ -406,9 +408,46 @@ body {
         0 0 100px rgba(80, 130, 255, 0.3),
         0 0 150px rgba(60, 110, 255, 0.2);
     letter-spacing: 6px;
-    position: relative;
-    z-index: 2;
     animation: patronusNameGlow 3s ease-in-out infinite;
+}
+
+.result-video-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.patronus-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    animation: videoFadeIn 2s ease forwards;
+}
+
+@keyframes videoFadeIn {
+    0% { opacity: 0; filter: brightness(3); }
+    50% { opacity: 0.7; filter: brightness(1.5); }
+    100% { opacity: 1; filter: brightness(1); }
+}
+
+.patronus-description {
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    max-width: 420px;
+    text-align: left;
+    z-index: 10;
+    font-size: 0.85rem;
+    color: rgba(200, 220, 240, 0.5);
+    line-height: 1.9;
+    letter-spacing: 0.5px;
 }
 
 @keyframes patronusNameGlow {
