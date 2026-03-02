@@ -2445,7 +2445,7 @@ function startQuestionTimer() {
         } else {
             showLockedScreen();
         }
-    }, 60000);
+    }, 6000);
 }
 
 function clearQuestionTimer() {
