@@ -106,6 +106,7 @@ body {
 #book {
     display: flex;
     position: relative;
+    transition: width 0.35s ease;
     /* La hauteur s'adapte au viewport moins la barre du bas et les marges */
     height: calc(100vh - 80px);
     max-height: calc(100vh - 80px);
@@ -146,8 +147,18 @@ body {
 }
 
 /* ===== PAGE UNIQUE (couverture) ===== */
+#book .page-right,
+#book .book-spine {
+    transition: opacity 0.35s ease;
+}
+
 #book.single-page .page-right {
-    display: none;
+    visibility: hidden;
+    opacity: 0;
+}
+
+#book.single-page .book-spine {
+    opacity: 0;
 }
 
 /* ===== RELIURE ===== */

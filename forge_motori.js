@@ -128,13 +128,11 @@
             els.book.classList.add("single-page");
             els.imgLeft.src = pageImages[spread[0] - 1];
             els.imgRight.src = "";
-            els.pageRight.style.display = "none";
             els.spine.style.display = "none";
         } else {
             els.book.classList.remove("single-page");
             els.imgLeft.src = pageImages[spread[0] - 1];
             els.imgRight.src = pageImages[spread[1] - 1];
-            els.pageRight.style.display = "";
             els.spine.style.display = "";
         }
 
@@ -185,47 +183,45 @@
         var tgtSpread = spreadMap[targetSpread];
 
         var bookRect = els.book.getBoundingClientRect();
-        var pageW = bookRect.width / 2;
+        var isSingleCur = curSpread.length === 1;
+        var isSingleTgt = tgtSpread.length === 1;
         var pageH = bookRect.height;
+        var pageW = isSingleCur ? bookRect.width : bookRect.width / 2;
 
-        // Ajuster si page unique
-        if (curSpread.length === 1) {
-            pageW = bookRect.width;
-        }
-
-        els.flipOverlay.classList.remove("flip-hidden");
+        // Image qui se trouve sur la face avant de la page qui tourne
+        var frontPage, backPage, flipLeft;
 
         if (direction === "right") {
-            var frontPage = curSpread.length === 2 ? curSpread[1] : curSpread[0];
-            var backPage = tgtSpread[0];
+            // Page tournée = page de droite actuelle (ou unique si couverture)
+            frontPage = isSingleCur ? curSpread[0] : curSpread[1];
+            // Dos = première page de la cible
+            backPage = tgtSpread[0];
+            flipLeft = isSingleCur ? bookRect.left : bookRect.left + pageW;
 
-            els.flipFrontImg.src = pageImages[frontPage - 1] || "";
-            els.flipBackImg.src = pageImages[backPage - 1] || "";
+            // ⬇ Pré-affiche le nouveau spread SOUS l'overlay
+            // Page gauche = ce qui restera après le flip (la page de gauche actuelle reste visible jusqu'à mi-flip,
+            // mais ici on prépare déjà la cible en dessous pour qu'au moment où la page tourne, on voie la suite)
+            // -> on met immédiatement la cible
+            preRenderSpread(targetSpread, "right");
 
-            var flipLeft = curSpread.length === 2
-                ? bookRect.left + pageW
-                : bookRect.left;
-
-            els.flipPage.style.left = flipLeft + "px";
-            els.flipPage.style.top = bookRect.top + "px";
-            els.flipPage.style.width = pageW + "px";
-            els.flipPage.style.height = pageH + "px";
-
-            els.flipPage.className = "flipping-right";
         } else {
-            var frontPage2 = curSpread[0];
-            var backPage2 = tgtSpread.length === 2 ? tgtSpread[1] : tgtSpread[0];
+            frontPage = curSpread[0];
+            backPage = isSingleTgt ? tgtSpread[0] : tgtSpread[tgtSpread.length - 1];
+            flipLeft = bookRect.left;
 
-            els.flipFrontImg.src = pageImages[frontPage2 - 1] || "";
-            els.flipBackImg.src = pageImages[backPage2 - 1] || "";
-
-            els.flipPage.style.left = bookRect.left + "px";
-            els.flipPage.style.top = bookRect.top + "px";
-            els.flipPage.style.width = pageW + "px";
-            els.flipPage.style.height = pageH + "px";
-
-            els.flipPage.className = "flipping-left";
+            preRenderSpread(targetSpread, "left");
         }
+
+        els.flipFrontImg.src = pageImages[frontPage - 1] || "";
+        els.flipBackImg.src = pageImages[backPage - 1] || "";
+
+        els.flipPage.style.left = flipLeft + "px";
+        els.flipPage.style.top = bookRect.top + "px";
+        els.flipPage.style.width = pageW + "px";
+        els.flipPage.style.height = pageH + "px";
+
+        els.flipOverlay.classList.remove("flip-hidden");
+        els.flipPage.className = direction === "right" ? "flipping-right" : "flipping-left";
 
         setTimeout(function () {
             els.flipPage.className = "";
@@ -233,6 +229,40 @@
             showSpread(targetSpread);
             isAnimating = false;
         }, 520);
+    }
+
+    function preRenderSpread(targetIdx, direction) {
+        var tgt = spreadMap[targetIdx];
+        var cur = spreadMap[currentSpread];
+        var isSingleTgt = tgt.length === 1;
+        var isSingleCur = cur.length === 1;
+
+        if (direction === "right") {
+            // La page de gauche reste celle du spread courant (sauf si on quitte la couverture)
+            if (isSingleCur) {
+                // On quittait la couverture seule -> on prépare le double
+                els.book.classList.remove("single-page");
+                els.spine.style.display = "";
+                els.imgLeft.src = pageImages[cur[0] - 1]; // la couverture reste à gauche pendant le flip
+                els.imgRight.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[1] - 1];
+            } else {
+                // Spread normal -> on garde la page de gauche actuelle,
+                // et on met la NOUVELLE page de droite (celle qui apparaitra après flip)
+                els.imgLeft.src = pageImages[cur[0] - 1];
+                els.imgRight.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[1] - 1];
+                if (isSingleTgt) {
+                    // cible = page seule (dernière page impaire), on cache la droite après flip via showSpread final
+                }
+            }
+        } else {
+            // direction left : la page de droite reste, on remplace la gauche par la nouvelle
+            if (isSingleCur) {
+                els.book.classList.remove("single-page");
+                els.spine.style.display = "";
+            }
+            els.imgLeft.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[0] - 1];
+            els.imgRight.src = pageImages[cur[cur.length - 1] - 1];
+        }
     }
 
     // ===== EVENTS =====
