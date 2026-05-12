@@ -106,7 +106,6 @@ body {
 #book {
     display: flex;
     position: relative;
-    transition: width 0.35s ease;
     /* La hauteur s'adapte au viewport moins la barre du bas et les marges */
     height: calc(100vh - 80px);
     max-height: calc(100vh - 80px);
@@ -114,6 +113,22 @@ body {
         0 4px 20px rgba(0,0,0,0.5),
         0 0 60px rgba(0,0,0,0.3);
     border-radius: 2px;
+    transition: transform 0.5s ease;
+}
+
+#book.single-page {
+    transform: translateX(25%);
+}
+
+#book.single-page .page-left {
+    visibility: hidden;
+    opacity: 0;
+}
+
+#book .page-left,
+#book .page-right,
+#book .book-spine {
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 /* ===== PAGES ===== */

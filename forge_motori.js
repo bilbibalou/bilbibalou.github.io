@@ -126,14 +126,13 @@
 
         if (isSingle) {
             els.book.classList.add("single-page");
-            els.imgLeft.src = pageImages[spread[0] - 1];
-            els.imgRight.src = "";
-            els.spine.style.display = "none";
+            // La page unique (couverture ou dernière page) va à DROITE
+            els.imgLeft.src = "";
+            els.imgRight.src = pageImages[spread[0] - 1];
         } else {
             els.book.classList.remove("single-page");
             els.imgLeft.src = pageImages[spread[0] - 1];
             els.imgRight.src = pageImages[spread[1] - 1];
-            els.spine.style.display = "";
         }
 
         updateIndicator();
@@ -182,34 +181,33 @@
         var curSpread = spreadMap[currentSpread];
         var tgtSpread = spreadMap[targetSpread];
 
-        var bookRect = els.book.getBoundingClientRect();
         var isSingleCur = curSpread.length === 1;
         var isSingleTgt = tgtSpread.length === 1;
-        var pageH = bookRect.height;
-        var pageW = isSingleCur ? bookRect.width : bookRect.width / 2;
 
-        // Image qui se trouve sur la face avant de la page qui tourne
+        // Pré-rendu : on enlève déjà le décalage du livre pour qu'il glisse
+        // pendant que la page tourne
+        preRenderSpread(targetSpread, direction);
+
+        // On lit les dimensions APRÈS avoir retiré la classe single-page
+        // pour avoir la position finale correcte
+        var bookRect = els.book.getBoundingClientRect();
+        var pageH = bookRect.height;
+        var pageW = bookRect.width / 2;
+
         var frontPage, backPage, flipLeft;
 
         if (direction === "right") {
-            // Page tournée = page de droite actuelle (ou unique si couverture)
+            // Page qui tourne = page de droite actuelle
+            // (que ce soit la couverture seule ou la page droite d'un spread)
             frontPage = isSingleCur ? curSpread[0] : curSpread[1];
-            // Dos = première page de la cible
-            backPage = tgtSpread[0];
-            flipLeft = isSingleCur ? bookRect.left : bookRect.left + pageW;
-
-            // ⬇ Pré-affiche le nouveau spread SOUS l'overlay
-            // Page gauche = ce qui restera après le flip (la page de gauche actuelle reste visible jusqu'à mi-flip,
-            // mais ici on prépare déjà la cible en dessous pour qu'au moment où la page tourne, on voie la suite)
-            // -> on met immédiatement la cible
-            preRenderSpread(targetSpread, "right");
-
+            backPage = isSingleTgt ? tgtSpread[0] : tgtSpread[0];
+            // Position du flip : moitié droite du livre (toujours, car le livre est maintenant en mode double)
+            flipLeft = bookRect.left + pageW;
         } else {
-            frontPage = curSpread[0];
+            // direction "left" : on tourne la page de gauche actuelle vers la droite
+            frontPage = isSingleCur ? curSpread[0] : curSpread[0];
             backPage = isSingleTgt ? tgtSpread[0] : tgtSpread[tgtSpread.length - 1];
             flipLeft = bookRect.left;
-
-            preRenderSpread(targetSpread, "left");
         }
 
         els.flipFrontImg.src = pageImages[frontPage - 1] || "";
@@ -237,33 +235,37 @@
         var isSingleTgt = tgt.length === 1;
         var isSingleCur = cur.length === 1;
 
+        // On passe TOUJOURS en mode double pendant le flip
+        // pour que le livre glisse à sa position centrée
+        els.book.classList.remove("single-page");
+
         if (direction === "right") {
-            // La page de gauche reste celle du spread courant (sauf si on quitte la couverture)
             if (isSingleCur) {
-                // On quittait la couverture seule -> on prépare le double
-                els.book.classList.remove("single-page");
-                els.spine.style.display = "";
-                els.imgLeft.src = pageImages[cur[0] - 1]; // la couverture reste à gauche pendant le flip
-                els.imgRight.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[1] - 1];
-            } else {
-                // Spread normal -> on garde la page de gauche actuelle,
-                // et on met la NOUVELLE page de droite (celle qui apparaitra après flip)
+                // On ouvre la couverture (qui était seule à droite)
+                // → la couverture devient la page de gauche pendant le flip
+                //   et la nouvelle page de droite est révélée
                 els.imgLeft.src = pageImages[cur[0] - 1];
                 els.imgRight.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[1] - 1];
-                if (isSingleTgt) {
-                    // cible = page seule (dernière page impaire), on cache la droite après flip via showSpread final
-                }
+            } else {
+                // Spread normal → la gauche reste, la droite devient la cible
+                els.imgLeft.src = pageImages[cur[0] - 1];
+                els.imgRight.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[1] - 1];
             }
         } else {
-            // direction left : la page de droite reste, on remplace la gauche par la nouvelle
-            if (isSingleCur) {
-                els.book.classList.remove("single-page");
-                els.spine.style.display = "";
+            // direction "left"
+            if (isSingleTgt) {
+                // On revient sur la couverture (page seule)
+                // Pendant le flip on reste en double : gauche = ce qui va apparaître (rien/cible),
+                // droite = la couverture cible
+                els.imgLeft.src = pageImages[cur[0] - 1]; // page de gauche actuelle reste visible jusqu'à mi-flip
+                els.imgRight.src = pageImages[tgt[0] - 1];
+            } else {
+                els.imgLeft.src = pageImages[tgt[0] - 1];
+                els.imgRight.src = pageImages[cur[cur.length - 1] - 1];
             }
-            els.imgLeft.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[0] - 1];
-            els.imgRight.src = pageImages[cur[cur.length - 1] - 1];
         }
     }
+
 
     // ===== EVENTS =====
     els.zoneLeft.addEventListener("click", prev);
