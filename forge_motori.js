@@ -210,17 +210,15 @@
             els.flipPage.style.width = pageW + "px";
             els.flipPage.style.height = pageH + "px";
 
-            // >>> NOUVEAU : on pré-affiche la page cible SOUS l'overlay
-            // La page qui tourne (à droite) cache déjà la nouvelle droite
-            // donc on peut mettre la nouvelle image de droite dessous
-            if (tgtSpread.length === 2) {
-                els.imgRight.src = pageImages[tgtSpread[1] - 1];
-            }
-            // La gauche : on remplace par la première page du spread cible
-            // (qui sera révélée quand la page aura fini de tourner)
-            els.imgLeft.src = pageImages[tgtSpread[0] - 1];
-
             els.flipPage.className = "flipping-right";
+
+            // À mi-animation : on bascule les images du dessous
+            setTimeout(function () {
+                els.imgLeft.src = pageImages[tgtSpread[0] - 1];
+                if (tgtSpread.length === 2) {
+                    els.imgRight.src = pageImages[tgtSpread[1] - 1];
+                }
+            }, 260);
         } else {
             var frontPage2 = curSpread[0];
             var backPage2 = tgtSpread.length === 2 ? tgtSpread[1] : tgtSpread[0];
@@ -233,16 +231,15 @@
             els.flipPage.style.width = pageW + "px";
             els.flipPage.style.height = pageH + "px";
 
-            // >>> NOUVEAU : on pré-affiche la page cible SOUS l'overlay
-            // La page qui tourne (à gauche) cache la nouvelle gauche
-            // on met la nouvelle image de gauche dessous
-            els.imgLeft.src = pageImages[tgtSpread[0] - 1];
-            // La droite : si le spread cible a 2 pages, on met la droite cible
-            if (tgtSpread.length === 2) {
-                els.imgRight.src = pageImages[tgtSpread[1] - 1];
-            }
-
             els.flipPage.className = "flipping-left";
+
+            // À mi-animation : on bascule les images du dessous
+            setTimeout(function () {
+                els.imgLeft.src = pageImages[tgtSpread[0] - 1];
+                if (tgtSpread.length === 2) {
+                    els.imgRight.src = pageImages[tgtSpread[1] - 1];
+                }
+            }, 260);
         }
 
         setTimeout(function () {
@@ -252,6 +249,7 @@
             isAnimating = false;
         }, 520);
     }
+
 
     // ===== EVENTS =====
     els.zoneLeft.addEventListener("click", prev);
