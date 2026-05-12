@@ -126,13 +126,16 @@
 
         if (isSingle) {
             els.book.classList.add("single-page");
-            // La page unique (couverture ou dernière page) va à DROITE
-            els.imgLeft.src = "";
-            els.imgRight.src = pageImages[spread[0] - 1];
+            els.imgLeft.src = pageImages[spread[0] - 1];
+            els.imgRight.src = "";
+            els.pageRight.style.display = "none";
+            els.spine.style.display = "none";
         } else {
             els.book.classList.remove("single-page");
             els.imgLeft.src = pageImages[spread[0] - 1];
             els.imgRight.src = pageImages[spread[1] - 1];
+            els.pageRight.style.display = "";
+            els.spine.style.display = "";
         }
 
         updateIndicator();
@@ -181,45 +184,66 @@
         var curSpread = spreadMap[currentSpread];
         var tgtSpread = spreadMap[targetSpread];
 
-        var isSingleCur = curSpread.length === 1;
-        var isSingleTgt = tgtSpread.length === 1;
-
-        // Pré-rendu : on enlève déjà le décalage du livre pour qu'il glisse
-        // pendant que la page tourne
-        preRenderSpread(targetSpread, direction);
-
-        // On lit les dimensions APRÈS avoir retiré la classe single-page
-        // pour avoir la position finale correcte
         var bookRect = els.book.getBoundingClientRect();
-        var pageH = bookRect.height;
         var pageW = bookRect.width / 2;
+        var pageH = bookRect.height;
 
-        var frontPage, backPage, flipLeft;
-
-        if (direction === "right") {
-            // Page qui tourne = page de droite actuelle
-            // (que ce soit la couverture seule ou la page droite d'un spread)
-            frontPage = isSingleCur ? curSpread[0] : curSpread[1];
-            backPage = isSingleTgt ? tgtSpread[0] : tgtSpread[0];
-            // Position du flip : moitié droite du livre (toujours, car le livre est maintenant en mode double)
-            flipLeft = bookRect.left + pageW;
-        } else {
-            // direction "left" : on tourne la page de gauche actuelle vers la droite
-            frontPage = isSingleCur ? curSpread[0] : curSpread[0];
-            backPage = isSingleTgt ? tgtSpread[0] : tgtSpread[tgtSpread.length - 1];
-            flipLeft = bookRect.left;
+        if (curSpread.length === 1) {
+            pageW = bookRect.width;
         }
 
-        els.flipFrontImg.src = pageImages[frontPage - 1] || "";
-        els.flipBackImg.src = pageImages[backPage - 1] || "";
-
-        els.flipPage.style.left = flipLeft + "px";
-        els.flipPage.style.top = bookRect.top + "px";
-        els.flipPage.style.width = pageW + "px";
-        els.flipPage.style.height = pageH + "px";
-
         els.flipOverlay.classList.remove("flip-hidden");
-        els.flipPage.className = direction === "right" ? "flipping-right" : "flipping-left";
+
+        if (direction === "right") {
+            var frontPage = curSpread.length === 2 ? curSpread[1] : curSpread[0];
+            var backPage = tgtSpread[0];
+
+            els.flipFrontImg.src = pageImages[frontPage - 1] || "";
+            els.flipBackImg.src = pageImages[backPage - 1] || "";
+
+            var flipLeft = curSpread.length === 2
+                ? bookRect.left + pageW
+                : bookRect.left;
+
+            els.flipPage.style.left = flipLeft + "px";
+            els.flipPage.style.top = bookRect.top + "px";
+            els.flipPage.style.width = pageW + "px";
+            els.flipPage.style.height = pageH + "px";
+
+            // >>> NOUVEAU : on pré-affiche la page cible SOUS l'overlay
+            // La page qui tourne (à droite) cache déjà la nouvelle droite
+            // donc on peut mettre la nouvelle image de droite dessous
+            if (tgtSpread.length === 2) {
+                els.imgRight.src = pageImages[tgtSpread[1] - 1];
+            }
+            // La gauche : on remplace par la première page du spread cible
+            // (qui sera révélée quand la page aura fini de tourner)
+            els.imgLeft.src = pageImages[tgtSpread[0] - 1];
+
+            els.flipPage.className = "flipping-right";
+        } else {
+            var frontPage2 = curSpread[0];
+            var backPage2 = tgtSpread.length === 2 ? tgtSpread[1] : tgtSpread[0];
+
+            els.flipFrontImg.src = pageImages[frontPage2 - 1] || "";
+            els.flipBackImg.src = pageImages[backPage2 - 1] || "";
+
+            els.flipPage.style.left = bookRect.left + "px";
+            els.flipPage.style.top = bookRect.top + "px";
+            els.flipPage.style.width = pageW + "px";
+            els.flipPage.style.height = pageH + "px";
+
+            // >>> NOUVEAU : on pré-affiche la page cible SOUS l'overlay
+            // La page qui tourne (à gauche) cache la nouvelle gauche
+            // on met la nouvelle image de gauche dessous
+            els.imgLeft.src = pageImages[tgtSpread[0] - 1];
+            // La droite : si le spread cible a 2 pages, on met la droite cible
+            if (tgtSpread.length === 2) {
+                els.imgRight.src = pageImages[tgtSpread[1] - 1];
+            }
+
+            els.flipPage.className = "flipping-left";
+        }
 
         setTimeout(function () {
             els.flipPage.className = "";
@@ -227,43 +251,6 @@
             showSpread(targetSpread);
             isAnimating = false;
         }, 520);
-    }
-
-    function preRenderSpread(targetIdx, direction) {
-        var tgt = spreadMap[targetIdx];
-        var cur = spreadMap[currentSpread];
-        var isSingleTgt = tgt.length === 1;
-        var isSingleCur = cur.length === 1;
-
-        // On passe TOUJOURS en mode double pendant le flip
-        // pour que le livre glisse à sa position centrée
-        els.book.classList.remove("single-page");
-
-        if (direction === "right") {
-            if (isSingleCur) {
-                // On ouvre la couverture (qui était seule à droite)
-                // → la couverture devient la page de gauche pendant le flip
-                //   et la nouvelle page de droite est révélée
-                els.imgLeft.src = pageImages[cur[0] - 1];
-                els.imgRight.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[1] - 1];
-            } else {
-                // Spread normal → la gauche reste, la droite devient la cible
-                els.imgLeft.src = pageImages[cur[0] - 1];
-                els.imgRight.src = pageImages[isSingleTgt ? tgt[0] - 1 : tgt[1] - 1];
-            }
-        } else {
-            // direction "left"
-            if (isSingleTgt) {
-                // On revient sur la couverture (page seule)
-                // Pendant le flip on reste en double : gauche = ce qui va apparaître (rien/cible),
-                // droite = la couverture cible
-                els.imgLeft.src = pageImages[cur[0] - 1]; // page de gauche actuelle reste visible jusqu'à mi-flip
-                els.imgRight.src = pageImages[tgt[0] - 1];
-            } else {
-                els.imgLeft.src = pageImages[tgt[0] - 1];
-                els.imgRight.src = pageImages[cur[cur.length - 1] - 1];
-            }
-        }
     }
 
 
