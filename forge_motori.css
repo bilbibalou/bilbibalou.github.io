@@ -106,9 +106,10 @@ body {
 #book {
     display: flex;
     position: relative;
-    /* La hauteur s'adapte au viewport moins la barre du bas et les marges */
     height: calc(100vh - 80px);
     max-height: calc(100vh - 80px);
+    /* Largeur fixe = 2 pages A4 côte à côte */
+    aspect-ratio: 420 / 297;
     box-shadow:
         0 4px 20px rgba(0,0,0,0.5),
         0 0 60px rgba(0,0,0,0.3);
@@ -122,18 +123,18 @@ body {
 
 #book.single-page .page-left {
     visibility: hidden;
-    opacity: 0;
 }
 
 #book .page-left,
 #book .page-right,
 #book .book-spine {
-    transition: opacity 0.5s ease, visibility 0.5s ease;
+    transition: opacity 0.5s ease;
 }
 
 /* ===== PAGES ===== */
 .book-page {
     height: 100%;
+    width: 50%;
     position: relative;
     overflow: hidden;
     background: #fff;
