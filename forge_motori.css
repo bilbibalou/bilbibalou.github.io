@@ -1,3 +1,4 @@
+/* ===== RESET ===== */
 * {
     margin: 0;
     padding: 0;
@@ -13,6 +14,7 @@ body {
     user-select: none;
 }
 
+/* ===== LOADER ===== */
 #loader {
     position: fixed;
     inset: 0;
@@ -66,31 +68,49 @@ body {
     color: #aaa;
 }
 
+/* ===== CONTAINER ===== */
 #flipbook-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
     width: 100vw;
+    transition: opacity 0.5s;
 }
 
 #flipbook-container.hidden {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
 }
 
+/* ===== BOOK WRAPPER ===== */
 #book-wrapper {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    background: #4a4a4a;
     padding: 20px;
+}
+
+#book-viewport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 16px;
+    width: 100%;
+    height: 100%;
 }
 
+/* ===== BOOK ===== */
 #book {
-    flex-shrink: 0;
+    flex: 1;
+    height: 100%;
+    max-height: calc(100vh - 80px);
+    max-width: 1400px;
 }
 
+/* ===== FLÈCHES ===== */
 .nav-arrow {
     display: flex;
     align-items: center;
@@ -118,6 +138,7 @@ body {
     pointer-events: none;
 }
 
+/* ===== BARRE DU BAS ===== */
 #bottom-bar {
     height: 40px;
     background: rgba(0,0,0,0.55);
@@ -164,7 +185,14 @@ body {
     height: 18px;
 }
 
+/* ===== RESPONSIVE ===== */
 @media (max-width: 700px) {
-    #book-wrapper { padding: 10px; }
-    .nav-arrow svg { width: 24px; height: 24px; }
+    #book-wrapper {
+        padding: 10px;
+    }
+
+    .nav-arrow svg {
+        width: 24px;
+        height: 24px;
+    }
 }
