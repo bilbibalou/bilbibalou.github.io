@@ -6,6 +6,7 @@
     <title>Flipbook - La Forge</title>
     <link rel="stylesheet" href="forge_motori.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 </head>
 <body>
 
@@ -33,19 +34,8 @@
                     </svg>
                 </div>
 
-                <div id="book">
-                    <div class="book-page page-left">
-                        <div class="page-content">
-                            <img id="pageLeftImg" draggable="false">
-                        </div>
-                    </div>
-                    <div class="book-page page-right">
-                        <div class="page-content">
-                            <img id="pageRightImg" draggable="false">
-                        </div>
-                    </div>
-                    <div class="book-spine"></div>
-                </div>
+                <!-- Le book est généré par StPageFlip en mode canvas -->
+                <div id="book"></div>
 
                 <!-- Flèche droite -->
                 <div id="click-right" class="nav-arrow" title="Page suivante">
@@ -79,18 +69,6 @@
             </div>
         </div>
 
-        <!-- Animation flip -->
-        <div id="flip-overlay" class="flip-hidden">
-            <div id="flip-page">
-                <div class="flip-front"><img id="flipFrontImg" draggable="false"></div>
-                <div class="flip-back"><img id="flipBackImg" draggable="false"></div>
-            </div>
-        </div>
-
-        <!-- Miniatures cachées -->
-        <div id="thumbnails-bar" style="display:none;">
-            <div id="thumbnails"></div>
-        </div>
     </div>
 
     <script src="forge_motori.js"></script>
