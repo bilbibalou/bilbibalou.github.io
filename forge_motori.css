@@ -124,11 +124,6 @@ body {
     transition: width 0.4s ease;
 }
 
-#book-viewport.is-cover #book {
-    width: 50% !important;
-    margin: 0 auto;
-}
-
 /* ===== FLÈCHES ===== */
 .nav-arrow {
     display: flex;

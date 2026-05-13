@@ -132,25 +132,16 @@
             showPageCorners: true,
             disableFlipByClick: false,
             renderOnlyPageLengthChange: false,
-            usePortrait: true,
         });
 
         // Mode canvas : on charge via loadFromImages
         pageFlip.loadFromImages(pageImages);
-        els.bookViewport.classList.add("is-cover");
 
         // Événements
         pageFlip.on("flip", function (e) {
             var pageIdx = e.data;
             updateIndicator(pageIdx);
             updateArrows(pageIdx);
-            
-            // Gère l'affichage couverture seule
-            if (pageIdx === 0) {
-                els.bookViewport.classList.add("is-cover");
-            } else {
-                els.bookViewport.classList.remove("is-cover");
-            }
         });
 
         pageFlip.on("changeState", function (e) {
