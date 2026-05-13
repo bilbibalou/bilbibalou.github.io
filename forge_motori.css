@@ -108,6 +108,16 @@ body {
     height: 100%;
     max-height: calc(100vh - 80px);
     max-width: 1400px;
+    background: transparent !important;
+}
+
+.stf__parent,
+.stf__wrapper,
+.stf__canvas,
+.stf__block,
+#book canvas {
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* ===== FLÈCHES ===== */
