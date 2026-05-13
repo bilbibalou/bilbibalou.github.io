@@ -102,6 +102,14 @@ body {
     height: 100%;
 }
 
+.stf__wrapper {
+    background-color: #4a4a4a !important;
+}
+
+.stf__parent {
+    background-color: #4a4a4a !important;
+}
+
 /* ===== BOOK ===== */
 #book {
     flex: 1;

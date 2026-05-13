@@ -135,6 +135,13 @@
 
         // Mode canvas : on charge via loadFromImages
         pageFlip.loadFromImages(pageImages);
+        setTimeout(function () {
+            var canvases = els.book.querySelectorAll("canvas");
+            canvases.forEach(function (c) {
+                c.style.background = "transparent";
+                c.style.backgroundColor = "transparent";
+            });
+        }, 500);
 
         // Événements
         pageFlip.on("flip", function (e) {
