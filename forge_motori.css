@@ -273,6 +273,7 @@ body {
     z-index: 50;
     pointer-events: none;
     perspective: 2500px;
+    perspective-origin: center center;
 }
 
 #flip-overlay.flip-hidden {
@@ -287,12 +288,12 @@ body {
 
 #flip-page.flipping-right {
     transform-origin: left center;
-    animation: flipRight 0.7s cubic-bezier(0.42, 0, 0.58, 1) forwards;
+    animation: flipRight 0.7s cubic-bezier(0.4, 0.0, 0.3, 1) forwards;
 }
 
 #flip-page.flipping-left {
     transform-origin: right center;
-    animation: flipLeft 0.7s cubic-bezier(0.42, 0, 0.58, 1) forwards;
+    animation: flipLeft 0.7s cubic-bezier(0.4, 0.0, 0.3, 1) forwards;
 }
 
 .flip-front, .flip-back {
@@ -314,67 +315,90 @@ body {
     transform: rotateY(180deg);
 }
 
-/* Ombre dynamique sur la face avant (s'assombrit au milieu du flip) */
-.flip-front::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to left, rgba(0,0,0,0.5), rgba(0,0,0,0) 60%);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 2;
-}
-
+/* Ombre dynamique simulant le pli/courbure du papier */
+.flip-front::after,
 .flip-back::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0) 60%);
-    opacity: 0;
     pointer-events: none;
-    z-index: 2;
+    background: linear-gradient(to right,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0) 50%,
+        rgba(0,0,0,0.25) 100%);
+    opacity: 0;
+    transition: opacity 0.1s;
 }
 
-#flip-page.flipping-right .flip-front::after,
+#flip-page.flipping-right .flip-front::after {
+    animation: shadeFrontRight 0.7s cubic-bezier(0.4, 0.0, 0.3, 1) forwards;
+}
+
+#flip-page.flipping-right .flip-back::after {
+    animation: shadeBackRight 0.7s cubic-bezier(0.4, 0.0, 0.3, 1) forwards;
+}
+
 #flip-page.flipping-left .flip-front::after {
-    animation: shadowFront 0.7s cubic-bezier(0.42, 0, 0.58, 1) forwards;
+    animation: shadeFrontLeft 0.7s cubic-bezier(0.4, 0.0, 0.3, 1) forwards;
 }
 
-#flip-page.flipping-right .flip-back::after,
 #flip-page.flipping-left .flip-back::after {
-    animation: shadowBack 0.7s cubic-bezier(0.42, 0, 0.58, 1) forwards;
+    animation: shadeBackLeft 0.7s cubic-bezier(0.4, 0.0, 0.3, 1) forwards;
 }
 
-/* Animation de rotation avec courbure simulée via un léger skew/scale */
+/* Rotation avec légère élévation au milieu (effet courbure) */
 @keyframes flipRight {
-    0%   { transform: rotateY(0deg) skewY(0deg); }
-    25%  { transform: rotateY(-45deg) skewY(-2deg); }
-    50%  { transform: rotateY(-90deg) skewY(0deg); }
-    75%  { transform: rotateY(-135deg) skewY(2deg); }
-    100% { transform: rotateY(-180deg) skewY(0deg); }
+    0%   { transform: rotateY(0deg) translateZ(0); }
+    50%  { transform: rotateY(-90deg) translateZ(40px); }
+    100% { transform: rotateY(-180deg) translateZ(0); }
 }
 
 @keyframes flipLeft {
-    0%   { transform: rotateY(0deg) skewY(0deg); }
-    25%  { transform: rotateY(45deg) skewY(2deg); }
-    50%  { transform: rotateY(90deg) skewY(0deg); }
-    75%  { transform: rotateY(135deg) skewY(-2deg); }
-    100% { transform: rotateY(180deg) skewY(0deg); }
+    0%   { transform: rotateY(0deg) translateZ(0); }
+    50%  { transform: rotateY(90deg) translateZ(40px); }
+    100% { transform: rotateY(180deg) translateZ(0); }
 }
 
-/* Ombres qui s'intensifient au milieu du flip */
-@keyframes shadowFront {
+/* Ombre face avant qui tourne vers la droite (page de droite vers gauche)
+   au début pas d'ombre, au milieu maximum, à la fin invisible (face cachée) */
+@keyframes shadeFrontRight {
     0%   { opacity: 0; }
-    50%  { opacity: 0.8; }
+    50%  { opacity: 0.9; }
     100% { opacity: 0; }
 }
 
-@keyframes shadowBack {
-    0%   { opacity: 0; }
-    50%  { opacity: 0.8; }
+/* Ombre face arrière : invisible au début, apparaît au milieu, disparaît à plat */
+@keyframes shadeBackRight {
+    0%   { opacity: 0;
+           background: linear-gradient(to left,
+               rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); }
+    50%  { opacity: 0.9;
+           background: linear-gradient(to left,
+               rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); }
+    100% { opacity: 0;
+           background: linear-gradient(to left,
+               rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); }
+}
+
+@keyframes shadeFrontLeft {
+    0%   { opacity: 0;
+           background: linear-gradient(to left,
+               rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); }
+    50%  { opacity: 0.9; }
     100% { opacity: 0; }
 }
 
+@keyframes shadeBackLeft {
+    0%   { opacity: 0;
+           background: linear-gradient(to right,
+               rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); }
+    50%  { opacity: 0.9;
+           background: linear-gradient(to right,
+               rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); }
+    100% { opacity: 0;
+           background: linear-gradient(to right,
+               rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); }
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 700px) {
