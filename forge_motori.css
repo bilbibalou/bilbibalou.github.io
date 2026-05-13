@@ -121,10 +121,12 @@ body {
 
 /* ===== BOOK ===== */
 #book {
-    flex: 1;
-    height: 100%;
-    max-height: calc(100vh - 80px);
-    max-width: 1400px;
+    transition: width 0.4s ease;
+}
+
+#book-viewport.is-cover #book {
+    width: 50% !important;
+    margin: 0 auto;
 }
 
 /* ===== FLÈCHES ===== */

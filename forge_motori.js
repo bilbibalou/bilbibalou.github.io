@@ -16,7 +16,8 @@
         book: document.getElementById("book"),
         zoneLeft: document.getElementById("click-left"),
         zoneRight: document.getElementById("click-right"),
-        btnFullscreen: document.getElementById("btnFullscreen")
+        btnFullscreen: document.getElementById("btnFullscreen"),
+        bookViewport: document.getElementById("book-viewport"),
     };
 
     // ===== ÉTAT =====
@@ -136,11 +137,20 @@
 
         // Mode canvas : on charge via loadFromImages
         pageFlip.loadFromImages(pageImages);
+        els.bookViewport.classList.add("is-cover");
 
         // Événements
         pageFlip.on("flip", function (e) {
-            updateIndicator(e.data);
-            updateArrows(e.data);
+            var pageIdx = e.data;
+            updateIndicator(pageIdx);
+            updateArrows(pageIdx);
+            
+            // Gère l'affichage couverture seule
+            if (pageIdx === 0) {
+                els.bookViewport.classList.add("is-cover");
+            } else {
+                els.bookViewport.classList.remove("is-cover");
+            }
         });
 
         pageFlip.on("changeState", function (e) {
