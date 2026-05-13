@@ -1,4 +1,3 @@
-/* ===== RESET ===== */
 * {
     margin: 0;
     padding: 0;
@@ -14,7 +13,6 @@ body {
     user-select: none;
 }
 
-/* ===== LOADER ===== */
 #loader {
     position: fixed;
     inset: 0;
@@ -68,76 +66,31 @@ body {
     color: #aaa;
 }
 
-/* ===== CONTAINER ===== */
 #flipbook-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
     width: 100vw;
-    transition: opacity 0.5s;
 }
 
 #flipbook-container.hidden {
-    opacity: 0;
-    pointer-events: none;
+    display: none;
 }
 
-/* Fond du conteneur StPageFlip transparent */
-#book,
-.stf__parent,
-.stf__wrapper,
-.stf__block {
-    background: transparent !important;
-}
-
-/* Si le canvas lui-même a un fond */
-#book canvas {
-    background: transparent !important;
-}
-
-.stf__parent {
-    margin: 0 auto;
-}
-
-/* ===== BOOK WRAPPER ===== */
 #book-wrapper {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: #4a4a4a;
     padding: 20px;
-}
-
-#book-viewport {
-    display: flex;
-    position: relative;
-    align-items: center;
-    justify-content: center;
     gap: 16px;
-    width: 100%;
-    height: 100%;
 }
 
-#cover-overlay {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 50%;
-    height: 100%;
-    background: #4a4a4a;
-    pointer-events: none;
-    z-index: 10;
-    display: none;
-}
-
-/* ===== BOOK ===== */
 #book {
-    transition: width 0.4s ease;
+    flex-shrink: 0;
 }
 
-/* ===== FLÈCHES ===== */
 .nav-arrow {
     display: flex;
     align-items: center;
@@ -165,7 +118,6 @@ body {
     pointer-events: none;
 }
 
-/* ===== BARRE DU BAS ===== */
 #bottom-bar {
     height: 40px;
     background: rgba(0,0,0,0.55);
@@ -212,14 +164,7 @@ body {
     height: 18px;
 }
 
-/* ===== RESPONSIVE ===== */
 @media (max-width: 700px) {
-    #book-wrapper {
-        padding: 10px;
-    }
-
-    .nav-arrow svg {
-        width: 24px;
-        height: 24px;
-    }
+    #book-wrapper { padding: 10px; }
+    .nav-arrow svg { width: 24px; height: 24px; }
 }

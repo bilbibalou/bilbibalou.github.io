@@ -1,11 +1,9 @@
 (function () {
     "use strict";
 
-    // ===== CONFIG =====
     var PDF_PATH = "ressources/flipbook/forge_motori.pdf";
     var RENDER_SCALE = 2;
 
-    // ===== ÉLÉMENTS =====
     var els = {
         loader: document.getElementById("loader"),
         loaderMsg: document.getElementById("loaderMsg"),
@@ -17,25 +15,19 @@
         zoneLeft: document.getElementById("click-left"),
         zoneRight: document.getElementById("click-right"),
         btnFullscreen: document.getElementById("btnFullscreen"),
-        bookViewport: document.getElementById("book-viewport"),
+        bookWrapper: document.getElementById("book-wrapper"),
     };
 
-    // ===== ÉTAT =====
     var pdfDoc = null;
     var totalPages = 0;
     var pageImages = [];
     var pageFlip = null;
-    var pageRatio = 210 / 297; // ratio par défaut A4 (sera recalculé)
-    var overlay = document.getElementById("cover-overlay");
+    var pageRatio = 210 / 297;
 
-    overlay.style.display = "block";
-
-    // ===== CHARGEMENT PDF =====
     function load() {
         els.loaderMsg.textContent = "Chargement du PDF…";
         pdfjsLib.GlobalWorkerOptions.workerSrc =
             "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
         pdfjsLib.getDocument(PDF_PATH).promise.then(function (pdf) {
             pdfDoc = pdf;
             totalPages = pdf.numPages;
@@ -53,20 +45,15 @@
         function renderPage(num) {
             return pdfDoc.getPage(num).then(function (page) {
                 var vp = page.getViewport({ scale: RENDER_SCALE });
-
-                // Récupère le ratio depuis la première page
                 if (num === 1) {
                     pageRatio = vp.width / vp.height;
                 }
-
                 var canvas = document.createElement("canvas");
                 canvas.width = vp.width;
                 canvas.height = vp.height;
                 var ctx = canvas.getContext("2d");
-
                 return page.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
                     pageImages[num - 1] = canvas.toDataURL("image/jpeg", 0.92);
-
                     rendered++;
                     var pct = Math.round((rendered / totalPages) * 100);
                     els.progressFill.style.width = pct + "%";
@@ -81,87 +68,65 @@
                 chain = chain.then(function () { return renderPage(num); });
             })(i);
         }
-
         chain.then(function () {
             startFlipbook();
         });
     }
 
-    // ===== DÉMARRAGE =====
     function startFlipbook() {
         els.loader.classList.add("hidden");
         els.container.classList.remove("hidden");
 
-        // Calcule les dimensions optimales du livre
-        var bookRect = els.book.getBoundingClientRect();
-        var maxH = bookRect.height;
-        var maxW = bookRect.width;
+        // Attend que le DOM soit rendu avant de calculer les dimensions
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                initPageFlip();
+            });
+        });
+    }
 
-        // Pour un spread (2 pages côte à côte), largeur = 2 * hauteur * ratio
-        var hFromW = maxW / (2 * pageRatio);
-        var wFromH = maxH * 2 * pageRatio;
+    function initPageFlip() {
+        var wrapperRect = els.bookWrapper.getBoundingClientRect();
+        var maxW = wrapperRect.width - 120; // espace pour les flèches
+        var maxH = wrapperRect.height - 20;
 
-        var height, width;
-        if (hFromW <= maxH) {
-            width = maxW;
-            height = hFromW;
-        } else {
-            height = maxH;
-            width = wFromH;
-        }
+        // Calcule dimensions : spread = 2 pages côte à côte
+        var pageH = Math.min(maxH, maxW / 2 / pageRatio);
+        var pageW = Math.floor(pageH * pageRatio);
+        pageH = Math.floor(pageH);
 
-        var pageW = Math.floor(width / 2);
-        var pageH = Math.floor(height);
-
-        // Initialise StPageFlip en mode canvas
         pageFlip = new St.PageFlip(els.book, {
             width: pageW,
             height: pageH,
-            size: "stretch",
-            minWidth: 200,
-            maxWidth: 2000,
-            minHeight: 300,
-            maxHeight: 2400,
+            size: "fixed",
             maxShadowOpacity: 0.5,
             showCover: true,
             mobileScrollSupport: false,
             usePortrait: false,
-            startZIndex: 0,
-            autoSize: true,
+            autoSize: false,
             drawShadow: true,
             flippingTime: 800,
             useMouseEvents: true,
             swipeDistance: 30,
             showPageCorners: true,
             disableFlipByClick: false,
-            renderOnlyPageLengthChange: false,
         });
 
-        // Mode canvas : on charge via loadFromImages
         pageFlip.loadFromImages(pageImages);
 
-        // Événements
         pageFlip.on("flip", function (e) {
             var pageIdx = e.data;
             updateIndicator(pageIdx);
             updateArrows(pageIdx);
-            overlay.style.display = (pageIdx === 0) ? "block" : "none";
-        });
-
-        pageFlip.on("changeState", function (e) {
-            // e.data peut être : "user_fold", "fold_corner", "flipping", "read"
         });
 
         updateIndicator(0);
         updateArrows(0);
     }
 
-    // ===== UI =====
     function updateIndicator(pageIdx) {
-        // pageIdx est l'index de la page de gauche du spread courant
         var current = pageIdx + 1;
         if (pageIdx === 0 || pageIdx === totalPages - 1) {
-            // Couverture ou dernière page seule
             els.pageIndicator.textContent = current + " / " + totalPages;
         } else {
             els.pageIndicator.textContent = current + "-" + (current + 1) + " / " + totalPages;
@@ -181,16 +146,9 @@
         }
     }
 
-    // ===== NAVIGATION =====
-    function next() {
-        if (pageFlip) pageFlip.flipNext();
-    }
+    function next() { if (pageFlip) pageFlip.flipNext(); }
+    function prev() { if (pageFlip) pageFlip.flipPrev(); }
 
-    function prev() {
-        if (pageFlip) pageFlip.flipPrev();
-    }
-
-    // ===== EVENTS =====
     els.zoneLeft.addEventListener("click", prev);
     els.zoneRight.addEventListener("click", next);
 
@@ -201,7 +159,6 @@
         else if (e.key === "End" && pageFlip) { pageFlip.flip(totalPages - 1); }
     });
 
-    // Fullscreen
     els.btnFullscreen.addEventListener("click", function () {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen();
@@ -210,15 +167,12 @@
         }
     });
 
-    // Molette
     els.book.addEventListener("wheel", function (e) {
         e.preventDefault();
         if (e.deltaY > 0 || e.deltaX > 0) next();
         else prev();
     }, { passive: false });
 
-    // ===== GO =====
-    console.log("Flipbook JS chargé (StPageFlip canvas) ✓");
     load();
 
 })();
