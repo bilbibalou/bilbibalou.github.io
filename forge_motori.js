@@ -265,8 +265,6 @@
         }, 520);
     }
 
-
-
     // ===== EVENTS =====
     els.zoneLeft.addEventListener("click", prev);
     els.zoneRight.addEventListener("click", next);
