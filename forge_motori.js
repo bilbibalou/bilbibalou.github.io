@@ -225,7 +225,7 @@
             // La page qui tourne couvre la GAUCHE à la fin → on change la gauche TARD
             setTimeout(function () {
                 els.imgLeft.src = pageImages[tgtSpread[0] - 1];
-            }, 470);
+            }, 650);
 
         } else {
             // Page de gauche tourne vers la droite
@@ -262,7 +262,7 @@
             els.flipOverlay.classList.add("flip-hidden");
             showSpread(targetSpread);
             isAnimating = false;
-        }, 520);
+        }, 720);
     }
 
     // ===== EVENTS =====
