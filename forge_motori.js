@@ -195,6 +195,7 @@
         els.flipOverlay.classList.remove("flip-hidden");
 
         if (direction === "right") {
+            // Page de droite tourne vers la gauche
             var frontPage = curSpread.length === 2 ? curSpread[1] : curSpread[0];
             var backPage = tgtSpread[0];
 
@@ -212,14 +213,22 @@
 
             els.flipPage.className = "flipping-right";
 
-            // À mi-animation : on bascule les images du dessous
+            // La page qui tourne couvre la DROITE au début → on change la droite TÔT
             setTimeout(function () {
-                els.imgLeft.src = pageImages[tgtSpread[0] - 1];
                 if (tgtSpread.length === 2) {
                     els.imgRight.src = pageImages[tgtSpread[1] - 1];
+                } else {
+                    els.imgRight.src = "";
                 }
-            }, 260);
+            }, 50);
+
+            // La page qui tourne couvre la GAUCHE à la fin → on change la gauche TARD
+            setTimeout(function () {
+                els.imgLeft.src = pageImages[tgtSpread[0] - 1];
+            }, 470);
+
         } else {
+            // Page de gauche tourne vers la droite
             var frontPage2 = curSpread[0];
             var backPage2 = tgtSpread.length === 2 ? tgtSpread[1] : tgtSpread[0];
 
@@ -233,13 +242,19 @@
 
             els.flipPage.className = "flipping-left";
 
-            // À mi-animation : on bascule les images du dessous
+            // La page qui tourne couvre la GAUCHE au début → on change la gauche TÔT
             setTimeout(function () {
                 els.imgLeft.src = pageImages[tgtSpread[0] - 1];
+            }, 50);
+
+            // La page qui tourne couvre la DROITE à la fin → on change la droite TARD
+            setTimeout(function () {
                 if (tgtSpread.length === 2) {
                     els.imgRight.src = pageImages[tgtSpread[1] - 1];
+                } else {
+                    els.imgRight.src = "";
                 }
-            }, 260);
+            }, 470);
         }
 
         setTimeout(function () {
@@ -249,6 +264,7 @@
             isAnimating = false;
         }, 520);
     }
+
 
 
     // ===== EVENTS =====
