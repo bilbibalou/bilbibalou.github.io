@@ -95,6 +95,9 @@ body {
     background: transparent !important;
 }
 
+.stf__parent {
+    margin: 0 auto;
+}
 
 /* ===== BOOK WRAPPER ===== */
 #book-wrapper {
