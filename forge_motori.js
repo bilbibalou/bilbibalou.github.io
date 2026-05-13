@@ -26,6 +26,9 @@
     var pageImages = [];
     var pageFlip = null;
     var pageRatio = 210 / 297; // ratio par défaut A4 (sera recalculé)
+    var overlay = document.getElementById("cover-overlay");
+
+    overlay.style.display = "block";
 
     // ===== CHARGEMENT PDF =====
     function load() {
@@ -142,6 +145,7 @@
             var pageIdx = e.data;
             updateIndicator(pageIdx);
             updateArrows(pageIdx);
+            overlay.style.display = (pageIdx === 0) ? "block" : "none";
         });
 
         pageFlip.on("changeState", function (e) {
