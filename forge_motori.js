@@ -130,7 +130,8 @@
             swipeDistance: 30,
             showPageCorners: true,
             disableFlipByClick: false,
-            renderOnlyPageLengthChange: false
+            renderOnlyPageLengthChange: false,
+            usePortrait: true,
         });
 
         // Mode canvas : on charge via loadFromImages
