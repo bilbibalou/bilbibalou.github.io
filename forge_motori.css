@@ -102,30 +102,12 @@ body {
     height: 100%;
 }
 
-.stf__wrapper {
-    background-color: #4a4a4a !important;
-}
-
-.stf__parent {
-    background-color: #4a4a4a !important;
-}
-
 /* ===== BOOK ===== */
 #book {
     flex: 1;
     height: 100%;
     max-height: calc(100vh - 80px);
     max-width: 1400px;
-    background: transparent !important;
-}
-
-.stf__parent,
-.stf__wrapper,
-.stf__canvas,
-.stf__block,
-#book canvas {
-    background: transparent !important;
-    background-color: transparent !important;
 }
 
 /* ===== FLÈCHES ===== */
