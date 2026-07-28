@@ -136,6 +136,13 @@
         // Mode canvas : on charge via loadFromImages
         pageFlip.loadFromImages(pageImages);
 
+        // Remplace le remplissage blanc du canvas par une réinitialisation transparente
+        if (pageFlip.render && pageFlip.render.clear) {
+            pageFlip.render.clear = function () {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            };
+        }
+
         // Événements
         pageFlip.on("flip", function (e) {
             updateIndicator(e.data);
