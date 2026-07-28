@@ -110,6 +110,14 @@ body {
     max-width: 1400px;
 }
 
+#book canvas,
+.stf__parent,
+.stf__wrapper,
+.stf__block,
+.stf__item {
+    background: transparent !important;
+}
+
 /* ===== FLÈCHES ===== */
 .nav-arrow {
     display: flex;
