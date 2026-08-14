@@ -12,6 +12,10 @@
   const specNameInput = document.querySelector('#specNameInput');
   const denomInput = document.querySelector('#denomInput');
 
+  // Canvas hors-écran réutilisable pour teinter les SVGs de la couleur du tracé
+  const offscreenCanvas = document.createElement('canvas');
+  const offscreenCtx = offscreenCanvas.getContext('2d');
+
   // Éléments Précision
   const precisionToggle = document.querySelector('#precisionToggle');
   const precisionGearBtn = document.querySelector('#precisionGearBtn');
@@ -42,7 +46,7 @@
     'etre': 5        // Haut-gauche
   };
 
-  // Chargement et mise en cache des SVGs de Runes Primaires (fichiers au même endroit)
+  // Chargement et mise en cache des SVGs de Runes Primaires
   const runeImages = {};
   const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune'];
 
@@ -488,16 +492,13 @@
       ctx.lineWidth = THICK.MEDIUM * baseScale;
       circleInfos.forEach(info => {
         if (info.state !== 'center') {
-          // Angle angulaire correspondant au rayon du cercle sur la circonférence
           const circleAngularOffset = Math.asin(rDenomCircle / info.pDist);
 
           let startA, endA;
           if (info.currAngle < axisAngle) {
-            // Cercles à gauche : l'arc part du cercle (bord droit) jusqu'à l'axe
             startA = info.currAngle + circleAngularOffset;
             endA = axisAngle;
           } else {
-            // Cercles à droite : l'arc part de l'axe jusqu'au cercle (bord gauche)
             startA = axisAngle;
             endA = info.currAngle - circleAngularOffset;
           }
@@ -625,19 +626,32 @@
       ctx.arc(runeCenterX, runeCenterY, rRuneCircle, 0, TAU);
       ctx.stroke();
 
-      // Dessin de l'image SVG de la rune primaire sélectionnée
+      // Dessin de l'image SVG de la rune primaire (orientée et teintée avec lineColor)
       if (selectedRune !== 'none' && runeImages[selectedRune] && runeImages[selectedRune].complete) {
         const runeImg = runeImages[selectedRune];
         const runeSize = rRuneCircle * 1.35;
-        ctx.save();
-        ctx.drawImage(
-          runeImg, 
-          runeCenterX - runeSize / 2, 
-          runeCenterY - runeSize / 2, 
-          runeSize, 
-          runeSize
-        );
-        ctx.restore();
+        const size = Math.ceil(runeSize);
+
+        if (size > 0) {
+          // Teinture de l'image SVG sur le canvas hors-écran
+          offscreenCanvas.width = size;
+          offscreenCanvas.height = size;
+          offscreenCtx.clearRect(0, 0, size, size);
+          offscreenCtx.globalCompositeOperation = 'source-over';
+          offscreenCtx.drawImage(runeImg, 0, 0, size, size);
+          
+          // Remplace les pixels SVG non-transparents par lineColor
+          offscreenCtx.globalCompositeOperation = 'source-in';
+          offscreenCtx.fillStyle = lineColor;
+          offscreenCtx.fillRect(0, 0, size, size);
+
+          // Affichage sur le canvas principal avec rotation
+          ctx.save();
+          ctx.translate(runeCenterX, runeCenterY);
+          ctx.rotate(axisAngle + Math.PI / 2);
+          ctx.drawImage(offscreenCanvas, -runeSize / 2, -runeSize / 2, runeSize, runeSize);
+          ctx.restore();
+        }
       }
 
       const rConnStart = rDouble1_Mid + rRuneCircle;
