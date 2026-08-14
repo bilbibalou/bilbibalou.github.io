@@ -46,15 +46,40 @@
     'etre': 5        // Haut-gauche
   };
 
-  // Chargement et mise en cache des SVGs de Runes Primaires
+  // Chargement et mise en cache des SVGs de Runes Primaires et de l'étoile Polaire
   const runeImages = {};
-  const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune'];
+  const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune', 'sirius', 'chaos', 'deimos', 'grand attracteur', 'phobos', 'pluton', 'soleil'];
 
   runeNames.forEach(rune => {
     const img = new Image();
     img.src = `./ressources/Astronomie/${rune}.svg`;
     runeImages[rune] = img;
   });
+
+  // Helper pour dessiner une image SVG teintée avec lineColor
+  function drawTintedImage(img, cx, cy, size, angle = 0) {
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
+    const pxSize = Math.ceil(size);
+    if (pxSize <= 0) return;
+
+    offscreenCanvas.width = pxSize;
+    offscreenCanvas.height = pxSize;
+    offscreenCtx.clearRect(0, 0, pxSize, pxSize);
+    offscreenCtx.globalCompositeOperation = 'source-over';
+    offscreenCtx.drawImage(img, 0, 0, pxSize, pxSize);
+    
+    // Remplace la silhouette par la couleur sélectionnée
+    offscreenCtx.globalCompositeOperation = 'source-in';
+    offscreenCtx.fillStyle = lineColor;
+    offscreenCtx.fillRect(0, 0, pxSize, pxSize);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (angle !== 0) ctx.rotate(angle);
+    ctx.drawImage(offscreenCanvas, -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
 
   specSelect.addEventListener('change', () => {
     if (specSelect.value === 'nom') {
@@ -152,32 +177,12 @@
     ctx.restore();
   }
 
-  function drawPolarStarSymbol(cx, cy, radius) {
-    ctx.save();
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = THICK.FINE * view.zoom;
-
-    ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const angle = i * (Math.PI / 4);
-      const r = (i % 2 === 0) ? radius * 0.75 : radius * 0.35;
-      const x = cx + r * Math.cos(angle);
-      const y = cy + r * Math.sin(angle);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
-  }
-
   function draw(time = 0) {
     drawBackground(time);
 
     const cx = W / 2 + view.x;
     const cy = H / 2 + view.y;
     const baseScale = (Math.min(W, H) / 900) * view.zoom;
-
     const rEarth = 32 * baseScale;
     
     // RAYONS DES DOUBLES CERCLES
@@ -217,7 +222,6 @@
     ctx.beginPath();
     ctx.arc(cx, cy, rEarth, 0, TAU);
     ctx.stroke();
-
     ctx.beginPath();
     ctx.moveTo(cx - rEarth, cy);
     ctx.lineTo(cx + rEarth, cy);
@@ -253,9 +257,6 @@
         ctx.beginPath();
         ctx.moveTo(xStart + dx, yStart + dy);
         ctx.lineTo(xHex + dx, yHex + dy);
-        ctx.stroke();
-
-        ctx.beginPath();
         ctx.moveTo(xStart - dx, yStart - dy);
         ctx.lineTo(xHex - dx, yHex - dy);
         ctx.stroke();
@@ -268,33 +269,32 @@
       }
     }
 
-    // MASQUE ET DÉNOMBREMENT SUR L'AXE ACTIF
+    // DÉNOMINATEUR (Tri-cercles & Chiffres)
     if (activeAxis !== -1 && denomVal > 0) {
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
       const mainCenterX = cx + distFromCenter * Math.cos(axisAngle);
       const mainCenterY = cy + distFromCenter * Math.sin(axisAngle);
-
       const maskRadius = rDenomCircle;
 
-      ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath();
-      ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
-      ctx.fill();
-      ctx.restore();
+      if (denomVal <= 10) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
+        ctx.fill();
+        ctx.restore();
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
-      ctx.clip();
-      drawBackground(time);
-      ctx.restore();
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
+        ctx.clip();
+        drawBackground(time);
+        ctx.restore();
 
-      if (denomVal === 1) {
         const xSegmentStart = cx + (distFromCenter - rDenomCircle) * Math.cos(axisAngle);
         const ySegmentStart = cy + (distFromCenter - rDenomCircle) * Math.sin(axisAngle);
-        const xSegmentEnd   = cx + (distFromCenter + rDenomCircle) * Math.cos(axisAngle);
-        const ySegmentEnd   = cy + (distFromCenter + rDenomCircle) * Math.sin(axisAngle);
+        const xSegmentEnd = cx + (distFromCenter + rDenomCircle) * Math.cos(axisAngle);
+        const ySegmentEnd = cy + (distFromCenter + rDenomCircle) * Math.sin(axisAngle);
 
         ctx.lineWidth = THICK.FINE * baseScale;
         ctx.beginPath();
@@ -319,6 +319,7 @@
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
+        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
         ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
         ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
         ctx.fill();
@@ -326,6 +327,7 @@
 
         ctx.save();
         ctx.beginPath();
+        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
         ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
         ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
         ctx.clip();
@@ -493,7 +495,6 @@
       circleInfos.forEach(info => {
         if (info.state !== 'center') {
           const circleAngularOffset = Math.asin(rDenomCircle / info.pDist);
-
           let startA, endA;
           if (info.currAngle < axisAngle) {
             startA = info.currAngle + circleAngularOffset;
@@ -574,7 +575,6 @@
           ctx.beginPath();
           ctx.moveTo(cx + offset, yStartExtension);
           ctx.lineTo(cx + offset, yEndExtension);
-
           ctx.moveTo(cx - offset, yStartExtension);
           ctx.lineTo(cx - offset, yEndExtension);
           ctx.stroke();
@@ -627,31 +627,10 @@
       ctx.stroke();
 
       // Dessin de l'image SVG de la rune primaire (orientée et teintée avec lineColor)
-      if (selectedRune !== 'none' && runeImages[selectedRune] && runeImages[selectedRune].complete) {
+      if (selectedRune !== 'none' && runeImages[selectedRune]) {
         const runeImg = runeImages[selectedRune];
         const runeSize = rRuneCircle * 1.35;
-        const size = Math.ceil(runeSize);
-
-        if (size > 0) {
-          // Teinture de l'image SVG sur le canvas hors-écran
-          offscreenCanvas.width = size;
-          offscreenCanvas.height = size;
-          offscreenCtx.clearRect(0, 0, size, size);
-          offscreenCtx.globalCompositeOperation = 'source-over';
-          offscreenCtx.drawImage(runeImg, 0, 0, size, size);
-          
-          // Remplace les pixels SVG non-transparents par lineColor
-          offscreenCtx.globalCompositeOperation = 'source-in';
-          offscreenCtx.fillStyle = lineColor;
-          offscreenCtx.fillRect(0, 0, size, size);
-
-          // Affichage sur le canvas principal avec rotation
-          ctx.save();
-          ctx.translate(runeCenterX, runeCenterY);
-          ctx.rotate(axisAngle + Math.PI / 2);
-          ctx.drawImage(offscreenCanvas, -runeSize / 2, -runeSize / 2, runeSize, runeSize);
-          ctx.restore();
-        }
+        drawTintedImage(runeImg, runeCenterX, runeCenterY, runeSize, axisAngle + Math.PI / 2);
       }
 
       const rConnStart = rDouble1_Mid + rRuneCircle;
@@ -795,7 +774,7 @@
     ctx.arc(cx, cy, rDouble2_Out, 0, TAU);
     ctx.stroke();
 
-    // 7. CERCLE ÉTOILE POLAIRE
+    // 7. CERCLE ÉTOILE POLAIRE (Chargement de l'image polaire.svg)
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
@@ -815,7 +794,12 @@
     ctx.arc(cx, polarY, rPolarCircle, 0, TAU);
     ctx.stroke();
 
-    drawPolarStarSymbol(cx, polarY, rPolarCircle);
+    // Affichage de polaire.svg au centre du cercle polaire
+    const polarImg = runeImages['polaire'];
+    if (polarImg) {
+      const polarSize = rPolarCircle * 1.35;
+      drawTintedImage(polarImg, cx, polarY, polarSize);
+    }
 
     requestAnimationFrame(draw);
   }
