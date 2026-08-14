@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cercle astrologique</title>
+  <link rel="stylesheet" href="cercle_astro.css">
+</head>
+<body>
+  <main class="stage">
+    <!-- Menu déroulant fixe en haut à gauche -->
+    <div class="menu-top-left">
+      <!-- Catégorie 1 : Type de sujet -->
+      <div class="control-group">
+        <label for="subjectType">Type de sujet</label>
+        <select id="subjectType">
+          <option value="none">-- Aucun --</option>
+          <option value="concept">Concept</option>
+          <option value="lieu">Lieu</option>
+          <option value="energie">Énergie</option>
+          <option value="objet">Objet</option>
+          <option value="phenomene">Phénomène</option>
+          <option value="etre">Être</option>
+        </select>
+      </div>
+
+      <!-- Catégorie 2 : Spécification -->
+      <div class="control-group">
+        <label for="specType">Spécification</label>
+        <select id="specType">
+          <option value="none">-- Aucune --</option>
+          <option value="nom">Par nom</option>
+          <option value="echantillon">Par échantillon</option>
+        </select>
+      </div>
+
+      <!-- Champ texte affiché uniquement si "Par nom" est sélectionné dans Spécification -->
+      <div class="control-group hidden" id="specNameGroup">
+        <label for="specNameInput">Nom de la cible</label>
+        <input type="text" id="specNameInput" placeholder="Ex: Harry Potter" maxlength="24">
+      </div>
+
+      <!-- Catégorie 3 : Dénombrement -->
+      <div class="control-group">
+        <label for="denomInput">Dénombrement</label>
+        <input type="number" id="denomInput" min="0" value="0" placeholder="Entrer un chiffre > 0">
+      </div>
+
+      <!-- Catégorie 4 : Précision -->
+      <div class="control-group">
+        <label>Précision</label>
+        <div class="precision-header">
+          <label class="switch">
+            <input type="checkbox" id="precisionToggle">
+            <span class="slider"></span>
+          </label>
+          <button id="precisionGearBtn" class="precision-btn hidden" type="button" title="Réglages de précision">⚙️</button>
+        </div>
+      </div>
+
+      <!-- Catégorie 5 : Rune primaire (À la fin du menu) -->
+      <div class="control-group">
+        <label for="primaryRune">Rune primaire</label>
+        <select id="primaryRune">
+          <option value="none">-- Aucune --</option>
+          <option value="mercure">Mercure</option>
+          <option value="venus">Vénus</option>
+          <option value="mars">Mars</option>
+          <option value="jupiter">Jupiter</option>
+          <option value="saturne">Saturne</option>
+          <option value="uranus">Uranus</option>
+          <option value="neptune">Neptune</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Sous-menu Précision -->
+    <div id="precisionSubmenu" class="precision-submenu hidden">
+      <div class="precision-item">
+        <span class="precision-label">Vivant</span>
+        <div class="tri-switch" data-index="0" data-state="center"><div class="tri-knob"></div></div>
+      </div>
+      <div class="precision-item">
+        <span class="precision-label">Conjuré / Transformé / Naturel</span>
+        <div class="tri-switch" data-index="1" data-state="center"><div class="tri-knob"></div></div>
+      </div>
+      <div class="precision-item">
+        <span class="precision-label">Sentient</span>
+        <div class="tri-switch" data-index="2" data-state="center"><div class="tri-knob"></div></div>
+      </div>
+      <div class="precision-item">
+        <span class="precision-label">Mouvant</span>
+        <div class="tri-switch" data-index="3" data-state="center"><div class="tri-knob"></div></div>
+      </div>
+      <div class="precision-item">
+        <span class="precision-label">Magique</span>
+        <div class="tri-switch" data-index="4" data-state="center"><div class="tri-knob"></div></div>
+      </div>
+      <div class="precision-item">
+        <span class="precision-label">Tangible</span>
+        <div class="tri-switch" data-index="5" data-state="center"><div class="tri-knob"></div></div>
+      </div>
+    </div>
+
+    <canvas id="astroCanvas"></canvas>
+
+    <section class="controls">
+      <label for="lineColor">Tracé</label>
+      <input id="lineColor" type="color" value="#d8c996">
+      <button id="resetButton" type="button">Réinitialiser</button>
+    </section>
+
+    <p class="hint">glisser pour déplacer · molette pour zoomer</p>
+  </main>
+  <script src="cercle_astro.js"></script>
+</body>
+</html>
