@@ -145,11 +145,11 @@
   // --- ÉTOILES AVEC CŒUR LUMINEUX ET BRILLANCE ---
   function makeStars() {
     const random = mulberry32(92837);
-    const count = Math.max(200, Math.floor(W * H / 4000));
+    const count = Math.max(200, Math.floor(W * H / 4000)); // Modifier / 4000 : Plus ce nombre est petit plus il y aura d'étoiles.
     stars = Array.from({ length: count }, () => ({
       x: random(),
       y: random(),
-      r: 0.8 + random() * 1.6,
+      r: 0.8 + random() * 1.6, // Le rayon définit la taille de base des étoiles. Augmenter ces valeurs rendra les étoiles physiquement plus grosses.
       a: 0.4 + random() * 0.6,
       glow: random() > 0.55,
       twinkleSpeed: 0.0015 + random() * 0.003,
@@ -177,19 +177,19 @@
     
     ctx.save();
     stars.forEach(s => {
-      const jitter = (Math.random() - 0.5) * 0.08;
+      const jitter = (Math.random() - 0.5) * 0.08; // 0.08 Gère le tremblement rapide. Augmenter cette valeur fait "sautiller" la lumière de manière plus nerveuse.
       const wave = Math.sin(time * s.twinkleSpeed + s.twinkle);
-      const pulse = Math.min(1, Math.max(0.2, 0.75 + 0.25 * wave + jitter));
+      const pulse = Math.min(1, Math.max(0.2, 0.75 + 0.25 * wave + jitter)); // valeur min de Math.max Empêche l'étoile de s'éteindre complètement. Si vous mettez 0, l'étoile peut devenir totalement invisible un bref instant en scintillant.
       const alpha = s.a * pulse;
       const sx = s.x * W;
       const sy = s.y * H;
 
       // 1. Halo extérieur lumineux pour l'effet de brillance
       if (s.glow) {
-        ctx.shadowBlur = s.r * (4 + pulse * 4);
-        ctx.shadowColor = `rgba(180, 220, 255, ${alpha * 0.8})`;
-
-        const auraRad = s.r * (2.2 + pulse * 0.8);
+        ctx.shadowBlur = s.r * (4 + pulse * 4); // Contrôle l'étalement du flou lumineux autour de l'étoile. passez à (10 + pulse * 10), la lumière baignera beaucoup plus loin autour de l'étoile.
+        ctx.shadowColor = `rgba(180, 220, 255, ${alpha * 0.8})`; // Plus il est proche de 1 (ou plus), plus le flou lumineux sera vif et opaque.
+        //                   RGB Règlent la teinte du halo
+        const auraRad = s.r * (2.2 + pulse * 0.8); // Ajuste le rayon du cercle dégradé transparent. Augmenter ce chiffre agrandit le disque de lumière diffuse.
         const auraGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, auraRad);
         auraGrad.addColorStop(0, `rgba(220, 240, 255, ${alpha * 0.5})`);
         auraGrad.addColorStop(0.5, `rgba(140, 180, 255, ${alpha * 0.2})`);
@@ -212,9 +212,9 @@
       // 3. Cœur ultra-lumineux (blanc pur brillant au centre)
       ctx.shadowBlur = s.r * 2;
       ctx.shadowColor = `rgba(255, 255, 255, ${Math.min(1, alpha * 1.2)})`;
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, alpha * 1.3)})`;
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, alpha * 1.3)})`; // alpha * 1.3 Ajuste l'intensité blanche du cœur.
       ctx.beginPath();
-      ctx.arc(sx, sy, Math.max(0.5, s.r * 0.5), 0, TAU);
+      ctx.arc(sx, sy, Math.max(0.5, s.r * 0.5), 0, TAU); // s.r * 0.5 Contrôle la taille du point blanc au centre. 
       ctx.fill();
     });
     ctx.restore();
