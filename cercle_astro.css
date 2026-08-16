@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  --muted: rgba(216, 201, 150, .58);
+  --muted: rgba(216, 201, 150, .58); /* Souleur de l'ecriture des titre des categorie */
   --panel: rgba(7, 9, 29, .65);
   --hairline: rgba(216, 201, 150, .25);
 }
@@ -73,7 +73,7 @@ html, body {
 .control-group input[type="text"],
 .control-group input[type="number"] {
   background: rgba(0, 0, 0, 0.4);
-  color: #d8c996;
+  color: #d8c996; /* couleur de l'ecriture dans le menu deroulant */
   border: 1px solid var(--hairline);
   padding: 6px 10px;
   border-radius: 4px;
@@ -272,4 +272,10 @@ input:checked + .slider:before {
   font-size: 0.75rem;
   color: var(--muted);
   pointer-events: none;
+}
+
+/* Couleur du menu déroulant lorsqu'il est ouvert */
+.control-group select option {
+  background-color: #0a081c; /* Remplace le gris par un bleu nuit très sombre */
+  color: #d8c996;            /* Garde le texte doré */
 }
