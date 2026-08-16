@@ -179,7 +179,7 @@
     stars.forEach(s => {
       const jitter = (Math.random() - 0.5) * 0.08; // 0.08 Gère le tremblement rapide. Augmenter cette valeur fait "sautiller" la lumière de manière plus nerveuse.
       const wave = Math.sin(time * s.twinkleSpeed + s.twinkle);
-      const pulse = Math.min(1, Math.max(0.2, 0.75 + 0.25 * wave + jitter)); // valeur min de Math.max Empêche l'étoile de s'éteindre complètement. Si vous mettez 0, l'étoile peut devenir totalement invisible un bref instant en scintillant.
+      const pulse = Math.min(1, Math.max(0.001, 0.75 + 0.25 * wave + jitter)); // valeur min de Math.max Empêche l'étoile de s'éteindre complètement. Si vous mettez 0, l'étoile peut devenir totalement invisible un bref instant en scintillant.
       const alpha = s.a * pulse;
       const sx = s.x * W;
       const sy = s.y * H;
