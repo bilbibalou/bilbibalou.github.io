@@ -46,9 +46,12 @@
     'etre': 5        // Haut-gauche
   };
 
-  // Chargement et mise en cache des SVGs de Runes Primaires et de l'étoile Polaire
+  // Chargement et mise en cache des SVGs (runes primaires et étoile polaire)
   const runeImages = {};
-  const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune', 'sirius', 'chaos', 'deimos', 'grand attracteur', 'phobos', 'pluton', 'soleil'];
+  const runeNames = [
+    'mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune',
+    'sirius', 'chaos', 'deimos', 'grand attracteur', 'phobos', 'pluton', 'soleil', 'polaire'
+  ];
 
   runeNames.forEach(rune => {
     const img = new Image();
@@ -56,28 +59,39 @@
     runeImages[rune] = img;
   });
 
-  // Helper pour dessiner une image SVG teintée avec lineColor
-  function drawTintedImage(img, cx, cy, size, angle = 0) {
+  // Helper pour dessiner une image SVG teintée tout en préservant ses proportions
+  function drawTintedImage(img, cx, cy, targetSize, angle = 0) {
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
-    const pxSize = Math.ceil(size);
-    if (pxSize <= 0) return;
+    // Calcul du ratio d'aspect pour éviter toute déformation
+    const aspect = img.naturalWidth / img.naturalHeight;
+    let w = targetSize;
+    let h = targetSize;
 
-    offscreenCanvas.width = pxSize;
-    offscreenCanvas.height = pxSize;
-    offscreenCtx.clearRect(0, 0, pxSize, pxSize);
+    if (aspect > 1) {
+      h = targetSize / aspect; // Plus large que haute
+    } else {
+      w = targetSize * aspect; // Plus haute que large
+    }
+    const pxW = Math.ceil(w);
+    const pxH = Math.ceil(h);
+    if (pxW <= 0 || pxH <= 0) return;
+
+    offscreenCanvas.width = pxW;
+    offscreenCanvas.height = pxH;
+    offscreenCtx.clearRect(0, 0, pxW, pxH);
     offscreenCtx.globalCompositeOperation = 'source-over';
-    offscreenCtx.drawImage(img, 0, 0, pxSize, pxSize);
+    offscreenCtx.drawImage(img, 0, 0, pxW, pxH);
     
-    // Remplace la silhouette par la couleur sélectionnée
+    // Remplace la silhouette par la couleur sélectionnée (lineColor)
     offscreenCtx.globalCompositeOperation = 'source-in';
     offscreenCtx.fillStyle = lineColor;
-    offscreenCtx.fillRect(0, 0, pxSize, pxSize);
+    offscreenCtx.fillRect(0, 0, pxW, pxH);
 
     ctx.save();
     ctx.translate(cx, cy);
     if (angle !== 0) ctx.rotate(angle);
-    ctx.drawImage(offscreenCanvas, -size / 2, -size / 2, size, size);
+    ctx.drawImage(offscreenCanvas, -w / 2, -h / 2, w, h);
     ctx.restore();
   }
 
@@ -128,15 +142,17 @@
     };
   }
 
+  // --- ÉTOILES AVEC CŒUR LUMINEUX ET BRILLANCE ---
   function makeStars() {
     const random = mulberry32(92837);
     const count = Math.max(200, Math.floor(W * H / 4000));
     stars = Array.from({ length: count }, () => ({
       x: random(),
       y: random(),
-      r: 0.5 + random() * 1.5,
-      a: 0.3 + random() * 0.7,
-      glow: random() > 0.65,
+      r: 0.8 + random() * 1.6,
+      a: 0.4 + random() * 0.6,
+      glow: random() > 0.55,
+      twinkleSpeed: 0.0015 + random() * 0.003,
       twinkle: random() * TAU
     }));
   }
@@ -161,17 +177,44 @@
     
     ctx.save();
     stars.forEach(s => {
-      const pulse = 0.75 + 0.25 * Math.sin(time * 0.002 + s.twinkle);
+      const jitter = (Math.random() - 0.5) * 0.08;
+      const wave = Math.sin(time * s.twinkleSpeed + s.twinkle);
+      const pulse = Math.min(1, Math.max(0.2, 0.75 + 0.25 * wave + jitter));
       const alpha = s.a * pulse;
+      const sx = s.x * W;
+      const sy = s.y * H;
+
+      // 1. Halo extérieur lumineux pour l'effet de brillance
       if (s.glow) {
-        ctx.shadowBlur = s.r * 6;
-        ctx.shadowColor = `rgba(220, 230, 255, ${alpha})`;
+        ctx.shadowBlur = s.r * (4 + pulse * 4);
+        ctx.shadowColor = `rgba(180, 220, 255, ${alpha * 0.8})`;
+
+        const auraRad = s.r * (2.2 + pulse * 0.8);
+        const auraGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, auraRad);
+        auraGrad.addColorStop(0, `rgba(220, 240, 255, ${alpha * 0.5})`);
+        auraGrad.addColorStop(0.5, `rgba(140, 180, 255, ${alpha * 0.2})`);
+        auraGrad.addColorStop(1, 'rgba(100, 150, 255, 0)');
+
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(sx, sy, auraRad, 0, TAU);
+        ctx.fill();
       } else {
         ctx.shadowBlur = 0;
       }
-      ctx.fillStyle = `rgba(240, 243, 255, ${alpha})`;
+
+      // 2. Corps intermédiaire de l'étoile
+      ctx.fillStyle = `rgba(210, 230, 255, ${alpha})`;
       ctx.beginPath();
-      ctx.arc(s.x * W, s.y * H, s.r, 0, TAU);
+      ctx.arc(sx, sy, s.r, 0, TAU);
+      ctx.fill();
+
+      // 3. Cœur ultra-lumineux (blanc pur brillant au centre)
+      ctx.shadowBlur = s.r * 2;
+      ctx.shadowColor = `rgba(255, 255, 255, ${Math.min(1, alpha * 1.2)})`;
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, alpha * 1.3)})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, Math.max(0.5, s.r * 0.5), 0, TAU);
       ctx.fill();
     });
     ctx.restore();
@@ -199,202 +242,114 @@
     const polarY = cy - ((rDouble2_In + rDouble2_Out) / 2);
     const rPolarCircle = 28 * baseScale;
 
+    const subjectVal = subjectSelect.value;
+    const activeAxis = SUBJECT_AXES[subjectVal] !== undefined ? SUBJECT_AXES[subjectVal] : -1;
+    const selectedRune = primaryRuneSelect.value;
+    const spec = specSelect.value;
+    const specName = specNameInput.value.trim();
+    const denomVal = parseInt(denomInput.value, 10) || 0;
+
     ctx.strokeStyle = lineColor;
     ctx.fillStyle = lineColor;
-    ctx.lineCap = 'butt';
-    ctx.lineJoin = 'round';
 
-    const selectedSubject = subjectSelect.value;
-    const activeAxis = SUBJECT_AXES[selectedSubject] !== undefined ? SUBJECT_AXES[selectedSubject] : -1;
-    const oppositeAxis = activeAxis !== -1 ? (activeAxis + 3) % 6 : -1;
-
-    // Angle de l'axe opposé (ou haut par défaut)
-    const oppAngle = oppositeAxis !== -1 
-      ? oppositeAxis * (TAU / 6) - (Math.PI / 2)
-      : -Math.PI / 2;
-
-    const spec = specSelect.value;
-    const denomVal = parseInt(denomInput.value, 10) || 0;
-    const selectedRune = primaryRuneSelect.value;
-
-    // 1. SYMBOLE DE LA TERRE AU CENTRE (Trait ÉPAIS)
-    ctx.lineWidth = THICK.THICK * baseScale;
+    // 1. CERCLE TERRESTRE ET AXES HEXAGONAUX
+    ctx.lineWidth = THICK.MEDIUM * baseScale;
     ctx.beginPath();
     ctx.arc(cx, cy, rEarth, 0, TAU);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx - rEarth, cy);
-    ctx.lineTo(cx + rEarth, cy);
-    ctx.moveTo(cx, cy - rEarth);
-    ctx.lineTo(cx, cy + rEarth);
-    ctx.stroke();
 
-    // 2. DESSIN DES 6 AXES (jusqu'au 1er grand double cercle)
     const hexPoints = [];
+    const rHex = rDouble1_In;
 
     for (let i = 0; i < 6; i++) {
       const angle = i * (TAU / 6) - (Math.PI / 2);
-      const xHex = cx + rDouble1_In * Math.cos(angle);
-      const yHex = cy + rDouble1_In * Math.sin(angle);
-      hexPoints.push({ x: xHex, y: yHex });
-
-      const xStart = cx + rEarth * Math.cos(angle);
-      const yStart = cy + rEarth * Math.sin(angle);
-
-      if (i === activeAxis && activeAxis !== -1) {
-        ctx.lineWidth = THICK.THICK * baseScale;
-        ctx.beginPath();
-        ctx.moveTo(xStart, yStart);
-        ctx.lineTo(xHex, yHex);
-        ctx.stroke();
-      } else if (i === oppositeAxis && oppositeAxis !== -1) {
-        ctx.lineWidth = THICK.FINE * baseScale;
-        const offset = 4 * baseScale;
-        const perpAngle = angle + Math.PI / 2;
-        const dx = Math.cos(perpAngle) * offset;
-        const dy = Math.sin(perpAngle) * offset;
-
-        ctx.beginPath();
-        ctx.moveTo(xStart + dx, yStart + dy);
-        ctx.lineTo(xHex + dx, yHex + dy);
-        ctx.moveTo(xStart - dx, yStart - dy);
-        ctx.lineTo(xHex - dx, yHex - dy);
-        ctx.stroke();
-      } else {
-        ctx.lineWidth = THICK.FINE * baseScale;
-        ctx.beginPath();
-        ctx.moveTo(xStart, yStart);
-        ctx.lineTo(xHex, yHex);
-        ctx.stroke();
-      }
+      hexPoints.push({
+        x: cx + rHex * Math.cos(angle),
+        y: cy + rHex * Math.sin(angle)
+      });
     }
 
-    // DÉNOMINATEUR (Tri-cercles & Chiffres)
-    if (activeAxis !== -1 && denomVal > 0) {
+    // TRAITS DES AXES DU MÊME RAYON QUE L'HEXAGONE
+    ctx.lineWidth = THICK.FINE * baseScale;
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(hexPoints[i].x, hexPoints[i].y);
+      ctx.stroke();
+    }
+
+    // 2. DÉNOMBREMENT (3 CERCLES SUR L'AXE DU SUJET)
+    if (activeAxis !== -1) {
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
+      const angleOffset = Math.asin((rDenomCircle * 2) / distFromCenter);
+
       const mainCenterX = cx + distFromCenter * Math.cos(axisAngle);
       const mainCenterY = cy + distFromCenter * Math.sin(axisAngle);
+
+      const angleLeft = axisAngle - angleOffset;
+      const leftCenterX = cx + distFromCenter * Math.cos(angleLeft);
+      const leftCenterY = cy + distFromCenter * Math.sin(angleLeft);
+
+      const angleRight = axisAngle + angleOffset;
+      const rightCenterX = cx + distFromCenter * Math.cos(angleRight);
+      const rightCenterY = cy + distFromCenter * Math.sin(angleRight);
+
       const maskRadius = rDenomCircle;
 
-      if (denomVal <= 10) {
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
-        ctx.fill();
-        ctx.restore();
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
+      ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
+      ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
+      ctx.fill();
+      ctx.restore();
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
-        ctx.clip();
-        drawBackground(time);
-        ctx.restore();
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
+      ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
+      ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
+      ctx.clip();
+      drawBackground(time);
+      ctx.restore();
 
-        const xSegmentStart = cx + (distFromCenter - rDenomCircle) * Math.cos(axisAngle);
-        const ySegmentStart = cy + (distFromCenter - rDenomCircle) * Math.sin(axisAngle);
-        const xSegmentEnd = cx + (distFromCenter + rDenomCircle) * Math.cos(axisAngle);
-        const ySegmentEnd = cy + (distFromCenter + rDenomCircle) * Math.sin(axisAngle);
+      const deltaAngle = Math.asin(rDenomCircle / distFromCenter);
 
-        ctx.lineWidth = THICK.FINE * baseScale;
-        ctx.beginPath();
-        ctx.moveTo(xSegmentStart, ySegmentStart);
-        ctx.lineTo(xSegmentEnd, ySegmentEnd);
-        ctx.stroke();
+      ctx.lineWidth = THICK.MEDIUM * baseScale;
 
-        ctx.beginPath();
-        ctx.arc(mainCenterX, mainCenterY, rDenomCircle, 0, TAU);
-        ctx.stroke();
-      } else {
-        const offsetAngle = 50 * (Math.PI / 180);
-        const angleLeft = axisAngle - offsetAngle;
-        const angleRight = axisAngle + offsetAngle;
+      ctx.beginPath();
+      ctx.arc(cx, cy, distFromCenter, angleLeft + deltaAngle, axisAngle - deltaAngle);
+      ctx.stroke();
 
-        const leftCenterX = cx + distFromCenter * Math.cos(angleLeft);
-        const leftCenterY = cy + distFromCenter * Math.sin(angleLeft);
+      ctx.beginPath();
+      ctx.arc(cx, cy, distFromCenter, axisAngle + deltaAngle, angleRight - deltaAngle);
+      ctx.stroke();
 
-        const rightCenterX = cx + distFromCenter * Math.cos(angleRight);
-        const rightCenterY = cy + distFromCenter * Math.sin(angleRight);
+      ctx.lineWidth = THICK.FINE * baseScale;
+      ctx.beginPath();
+      ctx.arc(mainCenterX, mainCenterY, rDenomCircle, 0, TAU);
+      ctx.stroke();
 
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
-        ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
-        ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
-        ctx.fill();
-        ctx.restore();
+      ctx.beginPath();
+      ctx.arc(leftCenterX, leftCenterY, rDenomCircle, 0, TAU);
+      ctx.stroke();
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
-        ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
-        ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
-        ctx.clip();
-        drawBackground(time);
-        ctx.restore();
+      ctx.beginPath();
+      ctx.arc(rightCenterX, rightCenterY, rDenomCircle, 0, TAU);
+      ctx.stroke();
 
-        const deltaAngle = Math.asin(rDenomCircle / distFromCenter);
-
-        ctx.lineWidth = THICK.MEDIUM * baseScale;
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, distFromCenter, angleLeft + deltaAngle, axisAngle - deltaAngle);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, distFromCenter, axisAngle + deltaAngle, angleRight - deltaAngle);
-        ctx.stroke();
-
-        ctx.lineWidth = THICK.FINE * baseScale;
-        ctx.beginPath();
-        ctx.arc(mainCenterX, mainCenterY, rDenomCircle, 0, TAU);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(leftCenterX, leftCenterY, rDenomCircle, 0, TAU);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(rightCenterX, rightCenterY, rDenomCircle, 0, TAU);
-        ctx.stroke();
-
-        const u = denomVal % 10;
-        const d = Math.floor(denomVal / 10) % 10;
-        const c = Math.floor(denomVal / 100) % 10;
-        const m = Math.floor(denomVal / 1000) % 10;
-
-        if (u > 0) {
-          const startA = angleLeft + deltaAngle;
-          const endA = axisAngle - deltaAngle;
-          const arcSpan = endA - startA;
-          const midA = (startA + endA) / 2;
-
-          const rDotPos = distFromCenter + 5.5 * baseScale;
-          const dotRadius = 1.0 * baseScale;
-
-          const stepA = (arcSpan * 0.7) / 8;
-          const startClusterA = midA - ((u - 1) * stepA) / 2;
-
-          for (let k = 0; k < u; k++) {
-            const currentA = startClusterA + k * stepA;
-            const px = cx + rDotPos * Math.cos(currentA);
-            const py = cy + rDotPos * Math.sin(currentA);
-            ctx.beginPath();
-            ctx.arc(px, py, dotRadius, 0, TAU);
-            ctx.fill();
-          }
-        }
-
+      // UNITES DE DENOMBREMENT (TRAITS)
+      if (denomVal > 0) {
+        const d = Math.floor(denomVal / 100);
+        const c = Math.floor((denomVal % 100) / 10);
+        const m = denomVal % 10;
         const totalMarks = d + c + m;
-        if (totalMarks > 0) {
-          const startA = axisAngle + deltaAngle;
-          const endA = angleRight - deltaAngle;
-          const arcSpan = endA - startA;
-          const midA = (startA + endA) / 2;
 
-          const stepA = (arcSpan * 0.2625) / 8;
-          const startClusterA = midA - ((totalMarks - 1) * stepA) / 2;
+        if (totalMarks > 0) {
+          const startClusterA = axisAngle - Math.PI / 12;
+          const endClusterA = axisAngle + Math.PI / 12;
+          const stepA = (endClusterA - startClusterA) / Math.max(1, totalMarks - 1);
 
           ctx.lineWidth = (THICK.FINE / 4) * baseScale;
 
@@ -431,7 +386,6 @@
       const gap = 30 * baseScale; 
       const rRuneCircle = 36 * baseScale;
       const rDouble1_Mid = (rDouble1_In + rDouble1_Out) / 2;
-
       const firstCircleDist = distFromCenter + gap;
       const lastCircleDist  = (rDouble1_Mid - rRuneCircle) - gap;
       
@@ -478,7 +432,6 @@
         ctx.fill();
         ctx.restore();
 
-        // Restauration du fond étoilé sous les cercles de l'axe
         ctx.save();
         ctx.beginPath();
         centerCircles.forEach(info => {
@@ -490,31 +443,9 @@
         ctx.restore();
       }
 
-      // ARCS DE CERCLE EN TRAIT MOYEN RELIANT LES CERCLES DÉCALÉS À L'AXE DU TYPE
-      ctx.lineWidth = THICK.MEDIUM * baseScale;
+      // Dessin des 6 cercles de précision
       circleInfos.forEach(info => {
-        if (info.state !== 'center') {
-          const circleAngularOffset = Math.asin(rDenomCircle / info.pDist);
-          let startA, endA;
-          if (info.currAngle < axisAngle) {
-            startA = info.currAngle + circleAngularOffset;
-            endA = axisAngle;
-          } else {
-            startA = axisAngle;
-            endA = info.currAngle - circleAngularOffset;
-          }
-
-          if (startA < endA) {
-            ctx.beginPath();
-            ctx.arc(cx, cy, info.pDist, startA, endA);
-            ctx.stroke();
-          }
-        }
-      });
-
-      // Tracé uniquement des contours fins des cercles de précision
-      ctx.lineWidth = THICK.FINE * baseScale;
-      circleInfos.forEach(info => {
+        ctx.lineWidth = THICK.FINE * baseScale;
         ctx.beginPath();
         ctx.arc(info.px, info.py, rDenomCircle, 0, TAU);
         ctx.stroke();
@@ -530,6 +461,10 @@
     }
     ctx.closePath();
     ctx.stroke();
+
+    // 3. PREMIER GRAND DOUBLE CERCLE ET SPÉCIFICATION
+    const oppositeAxis = activeAxis !== -1 ? (activeAxis + 3) % 6 : -1;
+    const oppAngle = oppositeAxis !== -1 ? oppositeAxis * (TAU / 6) - (Math.PI / 2) : 0;
 
     // PROLONGEMENT DE L'AXE VERTICAL HAUT
     const isConceptActiveDouble = (oppositeAxis === 0);
@@ -555,11 +490,6 @@
           ctx.lineTo(cx + offset, yCutBottom);
           ctx.moveTo(cx + offset, yCutTop);
           ctx.lineTo(cx + offset, yEndExtension);
-
-          ctx.moveTo(cx - offset, yStartExtension);
-          ctx.lineTo(cx - offset, yCutBottom);
-          ctx.moveTo(cx - offset, yCutTop);
-          ctx.lineTo(cx - offset, yEndExtension);
           ctx.stroke();
         } else {
           ctx.beginPath();
@@ -575,8 +505,6 @@
           ctx.beginPath();
           ctx.moveTo(cx + offset, yStartExtension);
           ctx.lineTo(cx + offset, yEndExtension);
-          ctx.moveTo(cx - offset, yStartExtension);
-          ctx.lineTo(cx - offset, yEndExtension);
           ctx.stroke();
         } else {
           ctx.beginPath();
@@ -587,16 +515,32 @@
       }
     }
 
-    // 3. PREMIER GRAND DOUBLE CERCLE
-    ctx.lineWidth = THICK.THICK * baseScale;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rDouble1_In, 0, TAU);
-    ctx.stroke();
+    // SI LE SUJET SÉLECTIONNÉ EST "CONCEPT" (OU OPPOSITE_AXIS === 0), DÉDOULER LES LIGNES
+    if (isConceptActiveDouble) {
+      const offset = 4 * baseScale;
 
-    ctx.lineWidth = THICK.MEDIUM * baseScale;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rDouble1_Out, 0, TAU);
-    ctx.stroke();
+      ctx.lineWidth = THICK.FINE * baseScale;
+
+      ctx.beginPath();
+      ctx.moveTo(cx - offset, cy);
+      ctx.lineTo(hexPoints[0].x - offset, hexPoints[0].y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + offset, cy);
+      ctx.lineTo(hexPoints[0].x + offset, hexPoints[0].y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx - offset, cy);
+      ctx.lineTo(hexPoints[3].x - offset, hexPoints[3].y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + offset, cy);
+      ctx.lineTo(hexPoints[3].x + offset, hexPoints[3].y);
+      ctx.stroke();
+    }
 
     // 3.1 CERCLE DE RUNE PRIMAIRE (SUR L'AXE DU SUJET)
     if (activeAxis !== -1) {
@@ -632,84 +576,65 @@
         const runeSize = rRuneCircle * 1.35;
         drawTintedImage(runeImg, runeCenterX, runeCenterY, runeSize, axisAngle + Math.PI / 2);
       }
-
-      const rConnStart = rDouble1_Mid + rRuneCircle;
-      const rConnEnd = rDouble2_In;
-      const xConn1 = cx + rConnStart * Math.cos(axisAngle);
-      const yConn1 = cy + rConnStart * Math.sin(axisAngle);
-      const xConn2 = cx + rConnEnd * Math.cos(axisAngle);
-      const yConn2 = cy + rConnEnd * Math.sin(axisAngle);
-
-      ctx.lineWidth = THICK.MEDIUM * baseScale;
-      ctx.beginPath();
-      ctx.moveTo(xConn1, yConn1);
-      ctx.lineTo(xConn2, yConn2);
-      ctx.stroke();
-
-      if (activeAxis === 0) {
-        ctx.lineWidth = THICK.FINE * baseScale;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - rDouble2_Out);
-        ctx.lineTo(cx, polarY + rPolarCircle);
-        ctx.stroke();
-      }
     }
 
-    // 5. TRACÉ DES SPÉCIFICATIONS
-    if (spec === 'nom') {
+    // 4. PREMIER DOUBLE CERCLE
+    ctx.lineWidth = THICK.THICK * baseScale;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rDouble1_In, 0, TAU);
+    ctx.stroke();
+
+    ctx.lineWidth = THICK.MEDIUM * baseScale;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rDouble1_Out, 0, TAU);
+    ctx.stroke();
+
+    // 5. SPÉCIFICATION (SUR L'AXE OPPOSÉ À LA RUNE)
+    if (spec === 'nom' && activeAxis !== -1) {
       const arcCenterX = cx + rDouble1_In * Math.cos(oppAngle);
       const arcCenterY = cy + rDouble1_In * Math.sin(oppAngle);
 
-      const rArcInner = 30 * baseScale;
-      const rArcOuter = 58 * baseScale;
-
-      const aStart = oppAngle + Math.PI - 1.42;
-      const aEnd   = oppAngle + Math.PI + 1.42;
-
-      const pathSector = new Path2D();
-      pathSector.moveTo(arcCenterX, arcCenterY);
-      pathSector.arc(arcCenterX, arcCenterY, rArcOuter + 2 * baseScale, aStart, aEnd, false);
-      pathSector.closePath();
+      const rSpecOut = 58 * baseScale;
+      const rSpecIn = 36 * baseScale;
 
       ctx.save();
       ctx.globalCompositeOperation = 'destination-out';
-      ctx.fill(pathSector);
+      ctx.beginPath();
+      ctx.arc(arcCenterX, arcCenterY, rSpecOut, 0, TAU);
+      ctx.fill();
       ctx.restore();
 
       ctx.save();
-      ctx.clip(pathSector);
+      ctx.beginPath();
+      ctx.arc(arcCenterX, arcCenterY, rSpecOut, 0, TAU);
+      ctx.clip();
       drawBackground(time);
       ctx.restore();
 
       ctx.lineWidth = THICK.FINE * baseScale;
       ctx.beginPath();
-      ctx.arc(arcCenterX, arcCenterY, rArcInner, aStart, aEnd);
+      ctx.arc(arcCenterX, arcCenterY, rSpecIn, 0, TAU);
       ctx.stroke();
+
+      const aStart = oppAngle + Math.PI * 0.75;
+      const aEnd = oppAngle + Math.PI * 2.25;
 
       ctx.lineWidth = THICK.MEDIUM * baseScale;
       ctx.beginPath();
-      ctx.arc(arcCenterX, arcCenterY, rArcOuter, aStart, aEnd);
+      ctx.arc(arcCenterX, arcCenterY, rSpecOut, aStart, aEnd);
       ctx.stroke();
 
-      ctx.lineWidth = THICK.FINE * baseScale;
-      ctx.beginPath();
-      ctx.moveTo(arcCenterX + rArcInner * Math.cos(aStart), arcCenterY + rArcInner * Math.sin(aStart));
-      ctx.lineTo(arcCenterX + rArcOuter * Math.cos(aStart), arcCenterY + rArcOuter * Math.sin(aStart));
-      ctx.moveTo(arcCenterX + rArcInner * Math.cos(aEnd), arcCenterY + rArcInner * Math.sin(aEnd));
-      ctx.lineTo(arcCenterX + rArcOuter * Math.cos(aEnd), arcCenterY + rArcOuter * Math.sin(aEnd));
-      ctx.stroke();
-
-      const textToDraw = specNameInput.value.trim();
-      if (textToDraw) {
-        const rText = (rArcInner + rArcOuter) / 2;
-        const midAngle = (aStart + aEnd) / 2;
-
+      if (specName) {
         ctx.save();
+        ctx.font = `600 ${Math.round(11 * baseScale)}px system-ui, sans-serif`;
         ctx.fillStyle = lineColor;
-        ctx.font = `bold ${Math.round(16 * baseScale)}px system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
+        const rText = (rSpecOut + rSpecIn) / 2;
+        const midAngle = oppAngle + Math.PI * 1.5;
+
+        const textToDraw = specName.toUpperCase();
         const textLen = textToDraw.length;
         const margin = 0.15;
         const maxAvailableArc = (aEnd - aStart) - (margin * 2);
@@ -731,7 +656,7 @@
         }
         ctx.restore();
       }
-    } else if (spec === 'echantillon') {
+    } else if (spec === 'echantillon' && activeAxis !== -1) {
       const centerSpecX = cx + rDouble1_In * Math.cos(oppAngle);
       const centerSpecY = cy + rDouble1_In * Math.sin(oppAngle);
 
@@ -774,7 +699,7 @@
     ctx.arc(cx, cy, rDouble2_Out, 0, TAU);
     ctx.stroke();
 
-    // 7. CERCLE ÉTOILE POLAIRE (Chargement de l'image polaire.svg)
+    // 7. CERCLE ÉTOILE POLAIRE
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
