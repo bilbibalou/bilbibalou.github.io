@@ -48,7 +48,7 @@
 
   // Chargement et mise en cache des SVGs de Runes Primaires et de l'étoile Polaire
   const runeImages = {};
-  const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune', 'sirius', 'chaos', 'deimos', 'grand attracteur', 'phobos', 'pluton', 'soleil'];
+  const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune', 'sirius', 'chaos', 'deimos', 'grand attracteur', 'phobos', 'pluton', 'soleil', 'polaire'];
 
   runeNames.forEach(rune => {
     const img = new Image();
@@ -193,14 +193,16 @@
 
     const cx = W / 2 + view.x;
     const cy = H / 2 + view.y;
-    const baseScale = (Math.min(W, H) / 900) * view.zoom;
+    
+    // Échelle ajustée (/ 1080) pour faire rentrer l'ensemble dans l'écran
+    const baseScale = (Math.min(W, H) / 1080) * view.zoom;
     const rEarth = 32 * baseScale;
     
-    // RAYONS DES DOUBLES CERCLES
+    // RAYONS DES DOUBLES CERCLES (Second double cercle agrandi)
     const rDouble1_In = 300 * baseScale;
     const rDouble1_Out = 320 * baseScale;
-    const rDouble2_In = 400 * baseScale;
-    const rDouble2_Out = 420 * baseScale;
+    const rDouble2_In = 460 * baseScale;
+    const rDouble2_Out = 480 * baseScale;
     
     // TAILLE DES CERCLES DE DÉNOMBREMENT / PRÉCISION
     const rDenomCircle = 8 * baseScale;
@@ -285,8 +287,6 @@
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
       const mainCenterX = cx + distFromCenter * Math.cos(axisAngle);
       const mainCenterY = cy + distFromCenter * Math.sin(axisAngle);
-      
-      // Rayon exact de l'intérieur du cercle (en tenant compte de l'épaisseur du trait fin)
       const maskRadius = rDenomCircle;
 
       if (denomVal === 1) {
@@ -322,7 +322,7 @@
         ctx.stroke();
       } else {
         // Pour denomVal > 1 :
-        const offsetAngle = 50 * (Math.PI / 180);
+        const offsetAngle = 48 * (Math.PI / 180);
         const angleLeft = axisAngle - offsetAngle;
         const angleRight = axisAngle + offsetAngle;
 
@@ -347,13 +347,10 @@
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        // 1. Rond au centre du cercle principal
         ctx.moveTo(mainCenterX + maskRadius, mainCenterY);
         ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
-        // 2. Rond au centre du cercle gauche
         ctx.moveTo(leftCenterX + maskRadius, leftCenterY);
         ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
-        // 3. Rond au centre du cercle droit
         ctx.moveTo(rightCenterX + maskRadius, rightCenterY);
         ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
         ctx.fill();
@@ -431,7 +428,7 @@
           const startClusterA = midA - ((totalMarks - 1) * stepA) / 2;
 
           ctx.strokeStyle = lineColor;
-          ctx.lineWidth = (THICK.FINE / 2) * baseScale;
+          ctx.lineWidth = 0.65 * baseScale;
 
           let posIndex = 0;
 
