@@ -57,27 +57,39 @@
   });
 
   // Helper pour dessiner une image SVG teintée avec lineColor
-  function drawTintedImage(img, cx, cy, size, angle = 0) {
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+  function drawTintedImage(img, cx, cy, maxSize, angle = 0) {
+    if (!img || !img.complete || img.naturalWidth === 0 || img.naturalHeight === 0) return;
 
-    const pxSize = Math.ceil(size);
-    if (pxSize <= 0) return;
+    // Calcul des dimensions en préservant le ratio d'aspect d'origine
+    const aspect = img.naturalWidth / img.naturalHeight;
+    let drawW = maxSize;
+    let drawH = maxSize;
 
-    offscreenCanvas.width = pxSize;
-    offscreenCanvas.height = pxSize;
-    offscreenCtx.clearRect(0, 0, pxSize, pxSize);
+    if (aspect > 1) {
+      drawH = maxSize / aspect;
+    } else {
+      drawW = maxSize * aspect;
+    }
+
+    const pxW = Math.ceil(drawW);
+    const pxH = Math.ceil(drawH);
+    if (pxW <= 0 || pxH <= 0) return;
+
+    offscreenCanvas.width = pxW;
+    offscreenCanvas.height = pxH;
+    offscreenCtx.clearRect(0, 0, pxW, pxH);
     offscreenCtx.globalCompositeOperation = 'source-over';
-    offscreenCtx.drawImage(img, 0, 0, pxSize, pxSize);
+    offscreenCtx.drawImage(img, 0, 0, pxW, pxH);
     
     // Remplace la silhouette par la couleur sélectionnée
     offscreenCtx.globalCompositeOperation = 'source-in';
     offscreenCtx.fillStyle = lineColor;
-    offscreenCtx.fillRect(0, 0, pxSize, pxSize);
+    offscreenCtx.fillRect(0, 0, pxW, pxH);
 
     ctx.save();
     ctx.translate(cx, cy);
     if (angle !== 0) ctx.rotate(angle);
-    ctx.drawImage(offscreenCanvas, -size / 2, -size / 2, size, size);
+    ctx.drawImage(offscreenCanvas, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
   }
 
