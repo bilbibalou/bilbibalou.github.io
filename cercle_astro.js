@@ -60,7 +60,6 @@
   function drawTintedImage(img, cx, cy, maxSize, angle = 0) {
     if (!img || !img.complete || img.naturalWidth === 0 || img.naturalHeight === 0) return;
 
-    // Calcul des dimensions en préservant le ratio d'aspect d'origine
     const aspect = img.naturalWidth / img.naturalHeight;
     let drawW = maxSize;
     let drawH = maxSize;
@@ -241,7 +240,7 @@
     ctx.lineTo(cx, cy + rEarth);
     ctx.stroke();
 
-    // 2. DESSIN DES 6 AXES (jusqu'au 1er grand double cercle)
+    // 2. ÉTAPE 1 : TRACÉ DES 6 AXES (dont l'Axe Principal en trait épais)
     const hexPoints = [];
 
     for (let i = 0; i < 6; i++) {
@@ -281,14 +280,17 @@
       }
     }
 
-    // DÉNOMINATEUR (Tri-cercles & Chiffres)
+    // 2.0 DÉNOMBREMENT
     if (activeAxis !== -1 && denomVal > 0) {
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
       const mainCenterX = cx + distFromCenter * Math.cos(axisAngle);
       const mainCenterY = cy + distFromCenter * Math.sin(axisAngle);
+      
+      // Rayon exact de l'intérieur du cercle (en tenant compte de l'épaisseur du trait fin)
       const maskRadius = rDenomCircle;
 
-      if (denomVal <= 10) {
+      if (denomVal === 1) {
+        // Pour denomVal = 1 : un seul cercle avec trait fin au centre
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
@@ -308,6 +310,7 @@
         const xSegmentEnd = cx + (distFromCenter + rDenomCircle) * Math.cos(axisAngle);
         const ySegmentEnd = cy + (distFromCenter + rDenomCircle) * Math.sin(axisAngle);
 
+        ctx.strokeStyle = lineColor;
         ctx.lineWidth = THICK.FINE * baseScale;
         ctx.beginPath();
         ctx.moveTo(xSegmentStart, ySegmentStart);
@@ -318,6 +321,7 @@
         ctx.arc(mainCenterX, mainCenterY, rDenomCircle, 0, TAU);
         ctx.stroke();
       } else {
+        // Pour denomVal > 1 :
         const offsetAngle = 50 * (Math.PI / 180);
         const angleLeft = axisAngle - offsetAngle;
         const angleRight = axisAngle + offsetAngle;
@@ -328,36 +332,48 @@
         const rightCenterX = cx + distFromCenter * Math.cos(angleRight);
         const rightCenterY = cy + distFromCenter * Math.sin(angleRight);
 
+        // ÉTAPE 2 : TRACÉ DES ARCS DE CERCLE RELIANT LES 3 POSITIONS
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = THICK.MEDIUM * baseScale;
+        ctx.beginPath();
+        ctx.arc(cx, cy, distFromCenter, angleLeft, axisAngle);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, distFromCenter, axisAngle, angleRight);
+        ctx.stroke();
+
+        // ÉTAPE 3 : MASQUE ROND DE LA TAILLE DE L'INTÉRIEUR DU CERCLE AU CENTRE DE CHACUN DES 3 CERCLES
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
+        // 1. Rond au centre du cercle principal
+        ctx.moveTo(mainCenterX + maskRadius, mainCenterY);
         ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
+        // 2. Rond au centre du cercle gauche
+        ctx.moveTo(leftCenterX + maskRadius, leftCenterY);
         ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
+        // 3. Rond au centre du cercle droit
+        ctx.moveTo(rightCenterX + maskRadius, rightCenterY);
         ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
         ctx.fill();
         ctx.restore();
 
+        // Restauration du fond étoilé au centre de chacun des 3 cercles
         ctx.save();
         ctx.beginPath();
+        ctx.moveTo(mainCenterX + maskRadius, mainCenterY);
         ctx.arc(mainCenterX, mainCenterY, maskRadius, 0, TAU);
+        ctx.moveTo(leftCenterX + maskRadius, leftCenterY);
         ctx.arc(leftCenterX, leftCenterY, maskRadius, 0, TAU);
+        ctx.moveTo(rightCenterX + maskRadius, rightCenterY);
         ctx.arc(rightCenterX, rightCenterY, maskRadius, 0, TAU);
         ctx.clip();
         drawBackground(time);
         ctx.restore();
 
-        const deltaAngle = Math.asin(rDenomCircle / distFromCenter);
-
-        ctx.lineWidth = THICK.MEDIUM * baseScale;
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, distFromCenter, angleLeft + deltaAngle, axisAngle - deltaAngle);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, distFromCenter, axisAngle + deltaAngle, angleRight - deltaAngle);
-        ctx.stroke();
-
+        // ÉTAPE 4 : TRACÉ DES CONTOURS FINS DES 3 CERCLES
+        ctx.strokeStyle = lineColor;
         ctx.lineWidth = THICK.FINE * baseScale;
         ctx.beginPath();
         ctx.arc(mainCenterX, mainCenterY, rDenomCircle, 0, TAU);
@@ -371,23 +387,28 @@
         ctx.arc(rightCenterX, rightCenterY, rDenomCircle, 0, TAU);
         ctx.stroke();
 
+        // ÉTAPE 5 : POINTS DES UNITÉS ET GRADUATIONS
         const u = denomVal % 10;
         const d = Math.floor(denomVal / 10) % 10;
         const c = Math.floor(denomVal / 100) % 10;
         const m = Math.floor(denomVal / 1000) % 10;
 
+        const deltaAngle = Math.asin(rDenomCircle / distFromCenter);
+
+        // Points des unités (au-dessus de l'arc gauche)
         if (u > 0) {
           const startA = angleLeft + deltaAngle;
           const endA = axisAngle - deltaAngle;
           const arcSpan = endA - startA;
           const midA = (startA + endA) / 2;
 
-          const rDotPos = distFromCenter + 5.5 * baseScale;
-          const dotRadius = 1.0 * baseScale;
+          const rDotPos = distFromCenter + 6 * baseScale;
+          const dotRadius = 1.6 * baseScale;
 
           const stepA = (arcSpan * 0.7) / 8;
           const startClusterA = midA - ((u - 1) * stepA) / 2;
 
+          ctx.fillStyle = lineColor;
           for (let k = 0; k < u; k++) {
             const currentA = startClusterA + k * stepA;
             const px = cx + rDotPos * Math.cos(currentA);
@@ -398,6 +419,7 @@
           }
         }
 
+        // Graduations (sur l'arc droit)
         const totalMarks = d + c + m;
         if (totalMarks > 0) {
           const startA = axisAngle + deltaAngle;
@@ -408,7 +430,8 @@
           const stepA = (arcSpan * 0.2625) / 8;
           const startClusterA = midA - ((totalMarks - 1) * stepA) / 2;
 
-          ctx.lineWidth = (THICK.FINE / 4) * baseScale;
+          ctx.strokeStyle = lineColor;
+          ctx.lineWidth = (THICK.FINE / 2) * baseScale;
 
           let posIndex = 0;
 
@@ -454,7 +477,6 @@
       let leftCount = 0;
       let rightCount = 0;
 
-      // Calcul des positions des cercles
       const circleInfos = [];
       for (let i = 0; i < 6; i++) {
         const pDist = firstCircleDist + i * stepDist;
@@ -476,7 +498,7 @@
         circleInfos.push({ pDist, px, py, currAngle, state });
       }
 
-      // Masquage UNIQUE pour les cercles situés sur l'axe (state === 'center')
+      // Masquage pour les cercles situés sur l'axe
       const centerCircles = circleInfos.filter(info => info.state === 'center');
 
       if (centerCircles.length > 0) {
@@ -490,7 +512,6 @@
         ctx.fill();
         ctx.restore();
 
-        // Restauration du fond étoilé sous les cercles de l'axe
         ctx.save();
         ctx.beginPath();
         centerCircles.forEach(info => {
@@ -502,7 +523,8 @@
         ctx.restore();
       }
 
-      // ARCS DE CERCLE EN TRAIT MOYEN RELIANT LES CERCLES DÉCALÉS À L'AXE DU TYPE
+      // Arcs de cercle reliant les cercles décalés à l'axe
+      ctx.strokeStyle = lineColor;
       ctx.lineWidth = THICK.MEDIUM * baseScale;
       circleInfos.forEach(info => {
         if (info.state !== 'center') {
@@ -524,7 +546,7 @@
         }
       });
 
-      // Tracé uniquement des contours fins des cercles de précision
+      // Contours fins des cercles de précision
       ctx.lineWidth = THICK.FINE * baseScale;
       circleInfos.forEach(info => {
         ctx.beginPath();
@@ -534,6 +556,7 @@
     }
 
     // CONTOUR DE L'HEXAGONE (Trait MOYEN)
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = THICK.MEDIUM * baseScale;
     ctx.beginPath();
     ctx.moveTo(hexPoints[0].x, hexPoints[0].y);
@@ -600,6 +623,7 @@
     }
 
     // 3. PREMIER GRAND DOUBLE CERCLE
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = THICK.THICK * baseScale;
     ctx.beginPath();
     ctx.arc(cx, cy, rDouble1_In, 0, TAU);
@@ -632,13 +656,12 @@
       drawBackground(time);
       ctx.restore();
 
-      // Dessin du contour fin du cercle de rune primaire
+      ctx.strokeStyle = lineColor;
       ctx.lineWidth = THICK.FINE * baseScale;
       ctx.beginPath();
       ctx.arc(runeCenterX, runeCenterY, rRuneCircle, 0, TAU);
       ctx.stroke();
 
-      // Dessin de l'image SVG de la rune primaire (orientée et teintée avec lineColor)
       if (selectedRune !== 'none' && runeImages[selectedRune]) {
         const runeImg = runeImages[selectedRune];
         const runeSize = rRuneCircle * 1.35;
@@ -652,6 +675,7 @@
       const xConn2 = cx + rConnEnd * Math.cos(axisAngle);
       const yConn2 = cy + rConnEnd * Math.sin(axisAngle);
 
+      ctx.strokeStyle = lineColor;
       ctx.lineWidth = THICK.MEDIUM * baseScale;
       ctx.beginPath();
       ctx.moveTo(xConn1, yConn1);
@@ -693,6 +717,7 @@
       drawBackground(time);
       ctx.restore();
 
+      ctx.strokeStyle = lineColor;
       ctx.lineWidth = THICK.FINE * baseScale;
       ctx.beginPath();
       ctx.arc(arcCenterX, arcCenterY, rArcInner, aStart, aEnd);
@@ -764,6 +789,7 @@
       drawBackground(time);
       ctx.restore();
 
+      ctx.strokeStyle = lineColor;
       ctx.lineWidth = THICK.MEDIUM * baseScale;
       ctx.beginPath();
       ctx.arc(centerSpecX, centerSpecY, rSpecOut, 0, TAU);
@@ -776,6 +802,7 @@
     }
 
     // 6. SECOND GRAND DOUBLE CERCLE
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = THICK.THICK * baseScale;
     ctx.beginPath();
     ctx.arc(cx, cy, rDouble2_In, 0, TAU);
@@ -786,7 +813,7 @@
     ctx.arc(cx, cy, rDouble2_Out, 0, TAU);
     ctx.stroke();
 
-    // 7. CERCLE ÉTOILE POLAIRE (Chargement de l'image polaire.svg)
+    // 7. CERCLE ÉTOILE POLAIRE
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
@@ -801,12 +828,12 @@
     drawBackground(time);
     ctx.restore();
 
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = THICK.MEDIUM * baseScale;
     ctx.beginPath();
     ctx.arc(cx, polarY, rPolarCircle, 0, TAU);
     ctx.stroke();
 
-    // Affichage de polaire.svg au centre du cercle polaire
     const polarImg = runeImages['polaire'];
     if (polarImg) {
       const polarSize = rPolarCircle * 1.35;
