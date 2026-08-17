@@ -220,10 +220,10 @@ input:checked + .slider:before {
 .tri-switch[data-state="center"] .tri-knob { left: 19px; }
 .tri-switch[data-state="right"] .tri-knob { left: 35px; }
 
-/* Contrôles haut-droite */
+/* Contrôles bas-droite */
 .controls {
   position: absolute;
-  top: 16px;
+  bottom: 16px;
   right: 16px;
   z-index: 10;
   display: flex;
