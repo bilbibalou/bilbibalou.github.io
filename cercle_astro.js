@@ -161,7 +161,13 @@
     
     ctx.save();
     stars.forEach(s => {
+<<<<<<< HEAD
       const pulse = 0.75 + 0.25 * Math.sin(time * 0.002 + s.twinkle);
+=======
+      const jitter = (Math.random() - 0.5) * 0.08; // 0.08 Gère le tremblement rapide. Augmenter cette valeur fait "sautiller" la lumière de manière plus nerveuse.
+      const wave = Math.sin(time * s.twinkleSpeed + s.twinkle);
+      const pulse = Math.min(1, Math.max(0.001, 0.75 + 0.25 * wave + jitter)); // valeur min de Math.max Empêche l'étoile de s'éteindre complètement. Si vous mettez 0, l'étoile peut devenir totalement invisible un bref instant en scintillant.
+>>>>>>> parent of f9f7a27 (Revert "Update cercle_astro.js")
       const alpha = s.a * pulse;
       if (s.glow) {
         ctx.shadowBlur = s.r * 6;
