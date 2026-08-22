@@ -22,17 +22,18 @@
   const precisionSubmenu = document.querySelector('#precisionSubmenu');
   const triSwitches = document.querySelectorAll('.tri-switch');
 
-  // Nombre de cercles de précision par type de sujet
-  const SUBJECT_PRECISION_COUNTS = {
-    'concept': 2,
-    'energie': 3,
-    'lieu': 4,
-    'phenomene': 4,
-    'objet': 6,
-    'etre': 6
+  // --- MAPPAGE DES CERCLES DE PRÉCISION PAR SUJET ---
+  // 0: Vivant | 1: Conjuré | 2: Sentient | 3: Mouvant | 4: Magique | 5: Tangible
+  const SUBJECT_PRECISION_MAP = {
+    'concept':    [1, 4],          // Conjuré, Magique
+    'energie':    [1, 3, 4],       // Conjuré, Mouvant, Magique
+    'lieu':       [1, 3, 4, 5],    // Conjuré, Mouvant, Magique, Tangible
+    'phenomene':  [0, 1, 3, 4],    // Vivant, Conjuré, Mouvant, Magique
+    'objet':      [0, 1, 2, 3, 4, 5], // Tous
+    'etre':       [0, 1, 2, 3, 4, 5]  // Tous
   };
 
-  // Éléments de précision (jusqu'à 6 interrupteurs à 3 états)
+  // Tableau des 6 états des interrupteurs
   const precisionStates = ['center', 'center', 'center', 'center', 'center', 'center'];
 
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -102,17 +103,22 @@
     ctx.restore();
   }
 
-  // Mise à jour de la visibilité des interrupteurs de précision selon le sujet sélectionné
+  // Renvoie la liste des index actifs pour le sujet actuellement sélectionné
+  function getActiveIndices() {
+    return SUBJECT_PRECISION_MAP[subjectSelect.value] || [0, 1, 2, 3, 4, 5];
+  }
+
+  // Mise à jour de la visibilité des lignes de précision selon le sujet sélectionné
   function updatePrecisionSwitches() {
-    const count = SUBJECT_PRECISION_COUNTS[subjectSelect.value] || 6;
-    triSwitches.forEach((sw, idx) => {
-      const parent = sw.closest('.switch-group, .precision-row, .control-group, label') || sw;
-      if (idx < count) {
-        sw.style.display = '';
-        if (parent !== sw) parent.style.display = '';
+    const allowed = getActiveIndices();
+
+    triSwitches.forEach((sw) => {
+      const idx = parseInt(sw.getAttribute('data-index'), 10);
+      const row = sw.closest('.precision-item') || sw;
+      if (allowed.includes(idx)) {
+        row.style.display = '';
       } else {
-        sw.style.display = 'none';
-        if (parent !== sw) parent.style.display = 'none';
+        row.style.display = 'none';
       }
     });
   }
@@ -148,7 +154,7 @@
   triSwitches.forEach(sw => {
     sw.addEventListener('click', () => {
       const idx = parseInt(sw.getAttribute('data-index'), 10);
-      const currState = sw.getAttribute('data-state');
+      const currState = sw.getAttribute('data-state') || 'center';
       let nextState = 'center';
 
       if (currState === 'left') nextState = 'center';
@@ -224,21 +230,17 @@
     const cx = W / 2 + view.x;
     const cy = H / 2 + view.y;
     
-    // Échelle ajustée (/ 1080) pour faire rentrer l'ensemble dans l'écran
     const baseScale = (Math.min(W, H) / 1080) * view.zoom;
     const rEarth = 32 * baseScale;
     
-    // RAYONS DES DOUBLES CERCLES (Second double cercle agrandi)
     const rDouble1_In = 300 * baseScale;
     const rDouble1_Out = 320 * baseScale;
     const rDouble2_In = 460 * baseScale;
     const rDouble2_Out = 480 * baseScale;
     
-    // TAILLE DES CERCLES DE DÉNOMBREMENT / PRÉCISION
     const rDenomCircle = 8 * baseScale;
     const distFromCenter = rEarth + 30 * baseScale;
 
-    // ETOILE POLAIRE
     const polarY = cy - ((rDouble2_In + rDouble2_Out) / 2);
     const rPolarCircle = 28 * baseScale;
 
@@ -251,7 +253,6 @@
     const activeAxis = SUBJECT_AXES[selectedSubject] !== undefined ? SUBJECT_AXES[selectedSubject] : -1;
     const oppositeAxis = activeAxis !== -1 ? (activeAxis + 3) % 6 : -1;
 
-    // Angle de l'axe opposé (ou haut par défaut)
     const oppAngle = oppositeAxis !== -1 
       ? oppositeAxis * (TAU / 6) - (Math.PI / 2)
       : -Math.PI / 2;
@@ -260,7 +261,7 @@
     const denomVal = parseInt(denomInput.value, 10) || 0;
     const selectedRune = primaryRuneSelect.value;
 
-    // 1. SYMBOLE DE LA TERRE AU CENTRE (Trait ÉPAIS)
+    // 1. SYMBOLE DE LA TERRE AU CENTRE
     ctx.lineWidth = THICK.THICK * baseScale;
     ctx.beginPath();
     ctx.arc(cx, cy, rEarth, 0, TAU);
@@ -272,7 +273,7 @@
     ctx.lineTo(cx, cy + rEarth);
     ctx.stroke();
 
-    // 2. ÉTAPE 1 : TRACÉ DES 6 AXES (dont l'Axe Principal en trait épais et l'Axe opposé en double trait fin)
+    // 2. ÉTAPE 1 : TRACÉ DES 6 AXES
     const hexPoints = [];
 
     for (let i = 0; i < 6; i++) {
@@ -320,7 +321,6 @@
       const maskRadius = rDenomCircle;
 
       if (denomVal === 1) {
-        // Pour denomVal = 1 : un seul cercle avec trait fin au centre
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
@@ -351,7 +351,6 @@
         ctx.arc(mainCenterX, mainCenterY, rDenomCircle, 0, TAU);
         ctx.stroke();
       } else {
-        // Pour denomVal > 1 :
         const offsetAngle = 48 * (Math.PI / 180);
         const angleLeft = axisAngle - offsetAngle;
         const angleRight = axisAngle + offsetAngle;
@@ -362,7 +361,6 @@
         const rightCenterX = cx + distFromCenter * Math.cos(angleRight);
         const rightCenterY = cy + distFromCenter * Math.sin(angleRight);
 
-        // ÉTAPE 2 : TRACÉ DES ARCS DE CERCLE RELIANT LES 3 POSITIONS
         ctx.strokeStyle = lineColor;
         ctx.lineWidth = THICK.MEDIUM * baseScale;
         ctx.beginPath();
@@ -373,7 +371,6 @@
         ctx.arc(cx, cy, distFromCenter, axisAngle, angleRight);
         ctx.stroke();
 
-        // ÉTAPE 3 : MASQUE ROND DE LA TAILLE DE L'INTÉRIEUR DU CERCLE AU CENTRE DE CHACUN DES 3 CERCLES
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
@@ -386,7 +383,6 @@
         ctx.fill();
         ctx.restore();
 
-        // Restauration du fond étoilé au centre de chacun des 3 cercles
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(mainCenterX + maskRadius, mainCenterY);
@@ -399,7 +395,6 @@
         drawBackground(time);
         ctx.restore();
 
-        // ÉTAPE 4 : TRACÉ DES CONTOURS FINS DES 3 CERCLES
         ctx.strokeStyle = lineColor;
         ctx.lineWidth = THICK.FINE * baseScale;
         ctx.beginPath();
@@ -414,7 +409,6 @@
         ctx.arc(rightCenterX, rightCenterY, rDenomCircle, 0, TAU);
         ctx.stroke();
 
-        // ÉTAPE 5 : POINTS DES UNITÉS ET GRADUATIONS
         const u = denomVal % 10;
         const d = Math.floor(denomVal / 10) % 10;
         const c = Math.floor(denomVal / 100) % 10;
@@ -422,7 +416,6 @@
 
         const deltaAngle = Math.asin(rDenomCircle / distFromCenter);
 
-        // Points des unités (au-dessus de l'arc gauche)
         if (u > 0) {
           const startA = angleLeft + deltaAngle;
           const endA = axisAngle - deltaAngle;
@@ -446,7 +439,6 @@
           }
         }
 
-        // Graduations (sur l'arc droit)
         const totalMarks = d + c + m;
         if (totalMarks > 0) {
           const startA = axisAngle + deltaAngle;
@@ -486,7 +478,7 @@
       }
     }
 
-    // 2.1 CERCLES DE PRÉCISION (Nombre et espacement dynamiques selon le sujet)
+    // 2.1 CERCLES DE PRÉCISION (Positionnés et espacés selon les cercles activés)
     if (precisionToggle.checked && activeAxis !== -1) {
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
       
@@ -497,10 +489,8 @@
       const firstCircleDist = distFromCenter + gap;
       const lastCircleDist  = (rDouble1_Mid - rRuneCircle) - gap;
       
-      // Nombre dynamique de cercles de précision selon le type choisi
-      const numCircles = SUBJECT_PRECISION_COUNTS[selectedSubject] !== undefined 
-        ? SUBJECT_PRECISION_COUNTS[selectedSubject] 
-        : 6;
+      const allowedIndices = getActiveIndices();
+      const numCircles = allowedIndices.length;
 
       // Calcul de l'intervalle équilibré
       const stepDist = numCircles > 1 
@@ -518,7 +508,8 @@
           ? (firstCircleDist + i * stepDist) 
           : (firstCircleDist + lastCircleDist) / 2;
           
-        const state = precisionStates[i] || 'center';
+        const switchIdx = allowedIndices[i];
+        const state = precisionStates[switchIdx] || 'center';
 
         let angleOffset = 0;
         if (state === 'left') {
@@ -533,7 +524,7 @@
         const px = cx + pDist * Math.cos(currAngle);
         const py = cy + pDist * Math.sin(currAngle);
 
-        circleInfos.push({ pDist, px, py, currAngle, state });
+        circleInfos.push({ switchIdx, pDist, px, py, currAngle, state });
       }
 
       // Masquage pour les cercles situés sur l'axe
@@ -593,7 +584,7 @@
       });
     }
 
-    // CONTOUR DE L'HEXAGONE (Trait MOYEN)
+    // CONTOUR DE L'HEXAGONE
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = THICK.MEDIUM * baseScale;
     ctx.beginPath();
@@ -604,7 +595,7 @@
     ctx.closePath();
     ctx.stroke();
 
-    // PROLONGEMENT DE L'AXE VERTICAL HAUT (Toujours en simple trait fin)
+    // PROLONGEMENT DE L'AXE VERTICAL HAUT
     ctx.lineWidth = THICK.FINE * baseScale;
     if (activeAxis !== 0) {
       const yStartExtension = cy - rDouble1_In;
@@ -646,7 +637,7 @@
     ctx.arc(cx, cy, rDouble1_Out, 0, TAU);
     ctx.stroke();
 
-    // 3.1 CERCLE DE RUNE PRIMAIRE (SUR L'AXE DU SUJET)
+    // 3.1 CERCLE DE RUNE PRIMAIRE
     if (activeAxis !== -1) {
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
       const rDouble1_Mid = (rDouble1_In + rDouble1_Out) / 2;
@@ -899,10 +890,15 @@
     precisionToggle.checked = false;
     precisionGearBtn.classList.add('hidden');
     precisionSubmenu.classList.add('hidden');
-    triSwitches.forEach((sw, idx) => {
+    
+    for (let i = 0; i < precisionStates.length; i++) {
+      precisionStates[i] = 'center';
+    }
+
+    triSwitches.forEach((sw) => {
       sw.setAttribute('data-state', 'center');
-      precisionStates[idx] = 'center';
     });
+
     updatePrecisionSwitches();
   });
 
