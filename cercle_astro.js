@@ -22,7 +22,17 @@
   const precisionSubmenu = document.querySelector('#precisionSubmenu');
   const triSwitches = document.querySelectorAll('.tri-switch');
 
-  // Éléments de précision (6 interrupteurs à 3 états)
+  // Nombre de cercles de précision par type de sujet
+  const SUBJECT_PRECISION_COUNTS = {
+    'concept': 2,
+    'energie': 3,
+    'lieu': 4,
+    'phenomene': 4,
+    'objet': 6,
+    'etre': 6
+  };
+
+  // Éléments de précision (jusqu'à 6 interrupteurs à 3 états)
   const precisionStates = ['center', 'center', 'center', 'center', 'center', 'center'];
 
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -92,6 +102,21 @@
     ctx.restore();
   }
 
+  // Mise à jour de la visibilité des interrupteurs de précision selon le sujet sélectionné
+  function updatePrecisionSwitches() {
+    const count = SUBJECT_PRECISION_COUNTS[subjectSelect.value] || 6;
+    triSwitches.forEach((sw, idx) => {
+      const parent = sw.closest('.switch-group, .precision-row, .control-group, label') || sw;
+      if (idx < count) {
+        sw.style.display = '';
+        if (parent !== sw) parent.style.display = '';
+      } else {
+        sw.style.display = 'none';
+        if (parent !== sw) parent.style.display = 'none';
+      }
+    });
+  }
+
   specSelect.addEventListener('change', () => {
     if (specSelect.value === 'nom') {
       specNameGroup.classList.remove('hidden');
@@ -100,10 +125,15 @@
     }
   });
 
+  subjectSelect.addEventListener('change', () => {
+    updatePrecisionSwitches();
+  });
+
   // Gestion de la Précision
   precisionToggle.addEventListener('change', (e) => {
     if (e.target.checked) {
       precisionGearBtn.classList.remove('hidden');
+      updatePrecisionSwitches();
     } else {
       precisionGearBtn.classList.add('hidden');
       precisionSubmenu.classList.add('hidden');
@@ -456,7 +486,7 @@
       }
     }
 
-    // 2.1 CERCLES DE PRÉCISION
+    // 2.1 CERCLES DE PRÉCISION (Nombre et espacement dynamiques selon le sujet)
     if (precisionToggle.checked && activeAxis !== -1) {
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
       
@@ -467,7 +497,15 @@
       const firstCircleDist = distFromCenter + gap;
       const lastCircleDist  = (rDouble1_Mid - rRuneCircle) - gap;
       
-      const stepDist = (lastCircleDist - firstCircleDist) / 5;
+      // Nombre dynamique de cercles de précision selon le type choisi
+      const numCircles = SUBJECT_PRECISION_COUNTS[selectedSubject] !== undefined 
+        ? SUBJECT_PRECISION_COUNTS[selectedSubject] 
+        : 6;
+
+      // Calcul de l'intervalle équilibré
+      const stepDist = numCircles > 1 
+        ? (lastCircleDist - firstCircleDist) / (numCircles - 1) 
+        : 0;
 
       const maskRadius = rDenomCircle;
 
@@ -475,9 +513,12 @@
       let rightCount = 0;
 
       const circleInfos = [];
-      for (let i = 0; i < 6; i++) {
-        const pDist = firstCircleDist + i * stepDist;
-        const state = precisionStates[i];
+      for (let i = 0; i < numCircles; i++) {
+        const pDist = numCircles > 1 
+          ? (firstCircleDist + i * stepDist) 
+          : (firstCircleDist + lastCircleDist) / 2;
+          
+        const state = precisionStates[i] || 'center';
 
         let angleOffset = 0;
         if (state === 'left') {
@@ -862,10 +903,12 @@
       sw.setAttribute('data-state', 'center');
       precisionStates[idx] = 'center';
     });
+    updatePrecisionSwitches();
   });
 
   window.addEventListener('resize', resize);
 
   resize();
+  updatePrecisionSwitches();
   requestAnimationFrame(draw);
 })();
