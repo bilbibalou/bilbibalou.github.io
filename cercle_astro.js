@@ -242,7 +242,7 @@
     ctx.lineTo(cx, cy + rEarth);
     ctx.stroke();
 
-    // 2. ÉTAPE 1 : TRACÉ DES 6 AXES (dont l'Axe Principal en trait épais)
+    // 2. ÉTAPE 1 : TRACÉ DES 6 AXES (dont l'Axe Principal en trait épais et l'Axe opposé en double trait fin)
     const hexPoints = [];
 
     for (let i = 0; i < 6; i++) {
@@ -563,8 +563,7 @@
     ctx.closePath();
     ctx.stroke();
 
-    // PROLONGEMENT DE L'AXE VERTICAL HAUT
-    const isConceptActiveDouble = (oppositeAxis === 0);
+    // PROLONGEMENT DE L'AXE VERTICAL HAUT (Toujours en simple trait fin)
     ctx.lineWidth = THICK.FINE * baseScale;
     if (activeAxis !== 0) {
       const yStartExtension = cy - rDouble1_In;
@@ -580,42 +579,17 @@
         const yCutBottom = yStartExtension - rCutOut;
         const yCutTop = yStartExtension - (rCutOut * 0.2);
 
-        if (isConceptActiveDouble) {
-          const offset = 4 * baseScale;
-          ctx.beginPath();
-          ctx.moveTo(cx + offset, yStartExtension);
-          ctx.lineTo(cx + offset, yCutBottom);
-          ctx.moveTo(cx + offset, yCutTop);
-          ctx.lineTo(cx + offset, yEndExtension);
-
-          ctx.moveTo(cx - offset, yStartExtension);
-          ctx.lineTo(cx - offset, yCutBottom);
-          ctx.moveTo(cx - offset, yCutTop);
-          ctx.lineTo(cx - offset, yEndExtension);
-          ctx.stroke();
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(cx, yStartExtension);
-          ctx.lineTo(cx, yCutBottom);
-          ctx.moveTo(cx, yCutTop);
-          ctx.lineTo(cx, yEndExtension);
-          ctx.stroke();
-        }
+        ctx.beginPath();
+        ctx.moveTo(cx, yStartExtension);
+        ctx.lineTo(cx, yCutBottom);
+        ctx.moveTo(cx, yCutTop);
+        ctx.lineTo(cx, yEndExtension);
+        ctx.stroke();
       } else {
-        if (isConceptActiveDouble) {
-          const offset = 4 * baseScale;
-          ctx.beginPath();
-          ctx.moveTo(cx + offset, yStartExtension);
-          ctx.lineTo(cx + offset, yEndExtension);
-          ctx.moveTo(cx - offset, yStartExtension);
-          ctx.lineTo(cx - offset, yEndExtension);
-          ctx.stroke();
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(cx, yStartExtension);
-          ctx.lineTo(cx, yEndExtension);
-          ctx.stroke();
-        }
+        ctx.beginPath();
+        ctx.moveTo(cx, yStartExtension);
+        ctx.lineTo(cx, yEndExtension);
+        ctx.stroke();
       }
     }
 
