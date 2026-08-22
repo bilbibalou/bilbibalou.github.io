@@ -291,7 +291,8 @@
         ctx.moveTo(xStart, yStart);
         ctx.lineTo(xHex, yHex);
         ctx.stroke();
-      } else if (i === oppositeAxis && oppositeAxis !== -1) {
+      } else if (i === oppositeAxis && oppositeAxis !== -1 && spec !== 'none') {
+        // Double trait fin UNIQUEMENT si le module de spécification est activé
         ctx.lineWidth = THICK.FINE * baseScale;
         const offset = 4 * baseScale;
         const perpAngle = angle + Math.PI / 2;
@@ -305,6 +306,7 @@
         ctx.lineTo(xHex - dx, yHex - dy);
         ctx.stroke();
       } else {
+        // Trait simple par défaut (ou si spec === 'none')
         ctx.lineWidth = THICK.FINE * baseScale;
         ctx.beginPath();
         ctx.moveTo(xStart, yStart);
@@ -492,7 +494,6 @@
       const allowedIndices = getActiveIndices();
       const numCircles = allowedIndices.length;
 
-      // Calcul de l'intervalle équilibré
       const stepDist = numCircles > 1 
         ? (lastCircleDist - firstCircleDist) / (numCircles - 1) 
         : 0;
@@ -527,7 +528,6 @@
         circleInfos.push({ switchIdx, pDist, px, py, currAngle, state });
       }
 
-      // Masquage pour les cercles situés sur l'axe
       const centerCircles = circleInfos.filter(info => info.state === 'center');
 
       if (centerCircles.length > 0) {
@@ -552,7 +552,6 @@
         ctx.restore();
       }
 
-      // Arcs de cercle reliant les cercles décalés à l'axe
       ctx.strokeStyle = lineColor;
       ctx.lineWidth = THICK.MEDIUM * baseScale;
       circleInfos.forEach(info => {
@@ -575,7 +574,6 @@
         }
       });
 
-      // Contours fins des cercles de précision
       ctx.lineWidth = THICK.FINE * baseScale;
       circleInfos.forEach(info => {
         ctx.beginPath();
