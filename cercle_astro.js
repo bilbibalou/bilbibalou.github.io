@@ -177,15 +177,20 @@
 
   function makeStars() {
     const random = mulberry32(92837);
-    const count = Math.max(200, Math.floor(W * H / 4000));
-    stars = Array.from({ length: count }, () => ({
-      x: random(),
-      y: random(),
-      r: 0.5 + random() * 1.5,
-      a: 0.3 + random() * 0.7,
-      glow: random() > 0.65,
-      twinkle: random() * TAU
-    }));
+    const count = Math.max(200, Math.floor(W * H / 3500));
+    
+    stars = Array.from({ length: count }, () => {
+      return {
+        x: random(),
+        y: random(),
+        r: 0.5 + random() * 1.5,           // Rayon STRICTEMENT d'origine (inchangé)
+        twinkle: random() * TAU,
+        speed: 0.0003 + random() * 0.0012,   // Large gamme de vitesses
+        sparklePow: 1.2 + random() * 4.0,  // Variété de profils (fondu doux vs flash net)
+        minAlpha: 0.03 + random() * 0.10,  // Fourchette basse : descend très bas (presque éteinte)
+        maxAlpha: 0.90 + random() * 0.10   // Fourchette haute : éclat lumineux maximal
+      };
+    });
   }
 
   function resize() {
@@ -208,17 +213,16 @@
     
     ctx.save();
     stars.forEach(s => {
-      const pulse = 0.75 + 0.25 * Math.sin(time * 0.002 + s.twinkle);
-      const alpha = s.a * pulse;
-      if (s.glow) {
-        ctx.shadowBlur = s.r * 6;
-        ctx.shadowColor = `rgba(220, 230, 255, ${alpha})`;
-      } else {
-        ctx.shadowBlur = 0;
-      }
-      ctx.fillStyle = `rgba(240, 243, 255, ${alpha})`;
+      // Calcul de la vague avec une grande fourchette dynamique
+      const wave = (Math.sin(time * s.speed + s.twinkle) + 1) / 2;
+      const factor = Math.pow(wave, s.sparklePow);
+      const alpha = s.minAlpha + (s.maxAlpha - s.minAlpha) * factor;
+      // Intensité du rayonnement lumineux blanc pur
+      ctx.shadowBlur = 4 + factor * 2;
+      ctx.shadowColor = `rgba(255, 255, 255, ${alpha})`;
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
       ctx.beginPath();
-      ctx.arc(s.x * W, s.y * H, s.r, 0, TAU);
+      ctx.arc(s.x * W, s.y * H, s.r, 0, TAU); // Rayon s.r fixe
       ctx.fill();
     });
     ctx.restore();
