@@ -112,9 +112,27 @@
     <canvas id="astroCanvas"></canvas>
 
     <section class="controls">
-      <label for="lineColor">Tracé</label>
-      <input id="lineColor" type="color" value="#d8c996">
-      <button id="resetButton" type="button">Réinitialiser</button>
+      <!-- Ligne 1 : Couleur du tracé + bouton réinitialiser -->
+      <div class="control-row">
+        <label for="lineColor">Tracé</label>
+        <input id="lineColor" type="color" value="#d8c996">
+        <button id="resetButton" type="button" title="Réinitialiser la couleur">Réinitialiser</button>
+      </div>
+
+      <!-- Ligne 2 : Widget Audio poussé tout à droite -->
+      <div class="control-row align-right">
+        <div class="audio-widget-container">
+          <button id="musicToggleBtn" type="button" class="equalizer-btn" title="Couper / Activer la musique">
+            <span class="eq-bar"></span>
+            <span class="eq-bar"></span>
+            <span class="eq-bar"></span>
+            <span class="eq-bar"></span>
+          </button>
+          <div class="volume-slider-popup">
+            <input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.5" title="Volume">
+          </div>
+        </div>
+      </div>
     </section>
 
     <p class="hint"></p>

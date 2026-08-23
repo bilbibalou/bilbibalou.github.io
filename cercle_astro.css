@@ -227,13 +227,120 @@ input:checked + .slider:before {
   right: 16px;
   z-index: 10;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   gap: 12px;
   background: var(--panel);
   border: 1px solid var(--hairline);
   padding: 8px 12px;
   border-radius: 8px;
   backdrop-filter: blur(8px);
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%; /* S'assure que la ligne prend toute la largeur */
+}
+
+.control-row.align-right {
+  justify-content: flex-end; /* Pousse le bouton audio tout à droite */
+}
+
+/* Conteneur de l'icône musique */
+.audio-widget-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bouton avec l'égaliseur à barres */
+.equalizer-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(216, 201, 150, 0.35);
+  border-radius: 8px;
+  width: 42px;
+  height: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.equalizer-btn:hover {
+  background: rgba(216, 201, 150, 0.18);
+  border-color: #d8c996;
+  transform: scale(1.05);
+}
+
+/* Les 4 barres verticales de l'égaliseur */
+.eq-bar {
+  width: 3.5px;
+  background: #d8c996;
+  border-radius: 2px;
+  transform-origin: bottom;
+  animation: eqPulse 1s ease-in-out infinite alternate;
+}
+
+.eq-bar:nth-child(1) { height: 50%; animation-duration: 0.75s; animation-delay: 0.1s; }
+.eq-bar:nth-child(2) { height: 95%; animation-duration: 0.55s; animation-delay: 0.25s; }
+.eq-bar:nth-child(3) { height: 65%; animation-duration: 0.68s; animation-delay: 0.0s; }
+.eq-bar:nth-child(4) { height: 82%; animation-duration: 0.85s; animation-delay: 0.15s; }
+@keyframes eqPulse {
+  0%   { transform: scaleY(0.25); }
+  50%  { transform: scaleY(1); }
+  100% { transform: scaleY(0.35); }
+}
+
+/* État coupé / muet : les barres se figent au minimum */
+.equalizer-btn.paused .eq-bar {
+  animation: none !important;
+  transform: scaleY(0.2) !important;
+  opacity: 0.45;
+}
+
+/* Popup de réglage du volume qui apparaît au survol */
+.volume-slider-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px; /* L'écart visuel */
+  display: none;
+  z-index: 100;
+  background: rgba(20, 20, 25, 0.95);
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* --- LE PONT INVISIBLE QUI EMPÊCHE LA DISPARITION --- */
+.volume-slider-popup::before {
+  content: '';
+  position: absolute;
+  top: -8px;          /* Comble exactement les 8px de margin-top */
+  left: 0;
+  width: 100%;
+  height: 8px;        /* Même hauteur que le margin-top */
+  background: transparent;
+}
+
+/* Affichage au survol ou au focus */
+.audio-widget-container:hover .volume-slider-popup,
+.audio-widget-container:focus-within .volume-slider-popup {
+  display: block;
+}
+
+.volume-slider-popup input[type="range"] {
+  width: 75px;
+  cursor: pointer;
+  accent-color: #d8c996;
+  margin: 0;
 }
 
 .controls label {

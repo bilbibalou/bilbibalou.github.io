@@ -12,6 +12,77 @@
   const specNameInput = document.querySelector('#specNameInput');
   const denomInput = document.querySelector('#denomInput');
 
+  // Éléments Audio
+  const musicToggleBtn = document.querySelector('#musicToggleBtn');
+  const musicVolumeInput = document.querySelector('#musicVolume');
+
+  // --- AUDIO DE FOND EN BOUCLE ---
+  const bgAudio = new Audio('./ressources/Astronomie/audio.wav');
+  bgAudio.loop = true;
+  bgAudio.volume = 0.5; // Volume initial
+
+  let lastVolume = 0.5;
+  let isMuted = false;
+
+  function updateAudioUI(playing) {
+    if (musicToggleBtn) {
+      if (playing && bgAudio.volume > 0) {
+        musicToggleBtn.classList.remove('paused');
+      } else {
+        musicToggleBtn.classList.add('paused');
+      }
+    }
+  }
+
+  function startBackgroundAudio() {
+    bgAudio.play().then(() => {
+      updateAudioUI(true);
+      window.removeEventListener('pointerdown', startBackgroundAudio);
+      window.removeEventListener('keydown', startBackgroundAudio);
+    }).catch(() => {
+      updateAudioUI(false);
+    });
+  }
+
+  startBackgroundAudio();
+  window.addEventListener('pointerdown', startBackgroundAudio, { once: true });
+  window.addEventListener('keydown', startBackgroundAudio, { once: true });
+
+  // Clic sur l'égaliseur : coupe ou relance le son
+  if (musicToggleBtn) {
+    musicToggleBtn.addEventListener('click', () => {
+      if (bgAudio.paused || isMuted || bgAudio.volume === 0) {
+        isMuted = false;
+        bgAudio.volume = lastVolume > 0 ? lastVolume : 0.5;
+        if (musicVolumeInput) musicVolumeInput.value = bgAudio.volume;
+        bgAudio.play().then(() => updateAudioUI(true)).catch(() => {});
+      } else {
+        isMuted = true;
+        lastVolume = bgAudio.volume;
+        bgAudio.volume = 0;
+        if (musicVolumeInput) musicVolumeInput.value = 0;
+        updateAudioUI(false);
+      }
+    });
+  }
+
+  // Changement du volume via le curseur qui apparaît au survol
+  if (musicVolumeInput) {
+    musicVolumeInput.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      bgAudio.volume = val;
+      if (val === 0) {
+        isMuted = true;
+        updateAudioUI(false);
+      } else {
+        isMuted = false;
+        lastVolume = val;
+        if (bgAudio.paused) bgAudio.play().catch(() => {});
+        updateAudioUI(true);
+      }
+    });
+  }
+
   // Canvas hors-écran réutilisable pour teinter les SVGs de la couleur du tracé
   const offscreenCanvas = document.createElement('canvas');
   const offscreenCtx = offscreenCanvas.getContext('2d');
@@ -91,7 +162,6 @@
     offscreenCtx.globalCompositeOperation = 'source-over';
     offscreenCtx.drawImage(img, 0, 0, pxW, pxH);
     
-    // Remplace la silhouette par la couleur sélectionnée
     offscreenCtx.globalCompositeOperation = 'source-in';
     offscreenCtx.fillStyle = lineColor;
     offscreenCtx.fillRect(0, 0, pxW, pxH);
@@ -183,12 +253,12 @@
       return {
         x: random(),
         y: random(),
-        r: 0.5 + random() * 1.5,           // Rayon STRICTEMENT d'origine (inchangé)
+        r: 0.5 + random() * 1.5,
         twinkle: random() * TAU,
-        speed: 0.0003 + random() * 0.0012,   // Large gamme de vitesses
-        sparklePow: 1.2 + random() * 4.0,  // Variété de profils (fondu doux vs flash net)
-        minAlpha: 0.03 + random() * 0.10,  // Fourchette basse : descend très bas (presque éteinte)
-        maxAlpha: 0.90 + random() * 0.10   // Fourchette haute : éclat lumineux maximal
+        speed: 0.0003 + random() * 0.0012,
+        sparklePow: 1.2 + random() * 4.0,
+        minAlpha: 0.03 + random() * 0.10,
+        maxAlpha: 0.90 + random() * 0.10
       };
     });
   }
@@ -213,16 +283,15 @@
     
     ctx.save();
     stars.forEach(s => {
-      // Calcul de la vague avec une grande fourchette dynamique
       const wave = (Math.sin(time * s.speed + s.twinkle) + 1) / 2;
       const factor = Math.pow(wave, s.sparklePow);
       const alpha = s.minAlpha + (s.maxAlpha - s.minAlpha) * factor;
-      // Intensité du rayonnement lumineux blanc pur
+
       ctx.shadowBlur = 4 + factor * 2;
       ctx.shadowColor = `rgba(255, 255, 255, ${alpha})`;
       ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
       ctx.beginPath();
-      ctx.arc(s.x * W, s.y * H, s.r, 0, TAU); // Rayon s.r fixe
+      ctx.arc(s.x * W, s.y * H, s.r, 0, TAU);
       ctx.fill();
     });
     ctx.restore();
@@ -296,7 +365,6 @@
         ctx.lineTo(xHex, yHex);
         ctx.stroke();
       } else if (i === oppositeAxis && oppositeAxis !== -1 && spec !== 'none') {
-        // Double trait fin UNIQUEMENT si le module de spécification est activé
         ctx.lineWidth = THICK.FINE * baseScale;
         const offset = 4 * baseScale;
         const perpAngle = angle + Math.PI / 2;
@@ -310,7 +378,6 @@
         ctx.lineTo(xHex - dx, yHex - dy);
         ctx.stroke();
       } else {
-        // Trait simple par défaut (ou si spec === 'none')
         ctx.lineWidth = THICK.FINE * baseScale;
         ctx.beginPath();
         ctx.moveTo(xStart, yStart);
@@ -484,7 +551,7 @@
       }
     }
 
-    // 2.1 CERCLES DE PRÉCISION (Positionnés et espacés selon les cercles activés)
+    // 2.1 CERCLES DE PRÉCISION
     if (precisionToggle.checked && activeAxis !== -1) {
       const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
       
@@ -876,32 +943,8 @@
   colorInput.addEventListener('input', e => lineColor = e.target.value);
 
   resetButton.addEventListener('click', () => {
-    view.x = 0;
-    view.y = 0;
-    view.zoom = 1;
     colorInput.value = '#d8c996';
     lineColor = colorInput.value;
-    subjectSelect.value = 'none';
-    primaryRuneSelect.value = 'none';
-    specSelect.value = 'none';
-    specNameInput.value = '';
-    denomInput.value = '0';
-    specNameGroup.classList.add('hidden');
-
-    // Réinitialisation Précision
-    precisionToggle.checked = false;
-    precisionGearBtn.classList.add('hidden');
-    precisionSubmenu.classList.add('hidden');
-    
-    for (let i = 0; i < precisionStates.length; i++) {
-      precisionStates[i] = 'center';
-    }
-
-    triSwitches.forEach((sw) => {
-      sw.setAttribute('data-state', 'center');
-    });
-
-    updatePrecisionSwitches();
   });
 
   window.addEventListener('resize', resize);
