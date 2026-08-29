@@ -148,6 +148,7 @@
 
   runeNames.forEach(rune => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = `./ressources/Astronomie/${rune}.svg`;
     runeImages[rune] = img;
   });
@@ -944,8 +945,8 @@
     requestAnimationFrame(draw);
   }
 
-  // --- TÉLÉCHARGEMENT ULTRA HAUTE DÉFINITION SUR FOND TRANSPARENT ---
-  async function downloadHighResImage() {
+  // --- TÉLÉCHARGEMENT HAUTE DÉFINITION SUR FOND TRANSPARENT ---
+  function downloadHighResImage() {
     try {
       const exportSize = 4096;
       const exportCanvas = document.createElement('canvas');
@@ -963,49 +964,29 @@
       renderScene(expCtx, exportSize, exportSize, expScale, expCenter, expCenter, performance.now(), false);
 
       const selectedSubject = subjectSelect ? subjectSelect.value : 'none';
-      const suggestedName = selectedSubject !== 'none' 
+      const filename = selectedSubject !== 'none' 
         ? `cercle_astrologique_${selectedSubject}_HD.png` 
         : `cercle_astrologique_HD.png`;
 
-      exportCanvas.toBlob(async (blob) => {
-        if (!blob) return;
-
-        // Fenêtre native Windows "Enregistrer sous..."
-        if ('showSaveFilePicker' in window) {
-          try {
-            const handle = await window.showSaveFilePicker({
-              suggestedName: suggestedName,
-              types: [{
-                description: 'Image PNG transparente (*.png)',
-                accept: { 'image/png': ['.png'] }
-              }]
-            });
-            const writable = await handle.createWritable();
-            await writable.write(blob);
-            await writable.close();
-            return;
-          } catch (pickerErr) {
-            if (pickerErr.name === 'AbortError') return;
-            console.warn("showSaveFilePicker fallback :", pickerErr);
-          }
+      exportCanvas.toBlob((blob) => {
+        if (!blob) {
+          console.error("Impossible de générer le blob de l'image.");
+          return;
         }
 
-        // Fallback classique
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.download = suggestedName;
-        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.href = url;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(link.href), 3000);
+
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
       }, 'image/png');
 
     } catch (err) {
       console.error("Erreur lors de l'enregistrement :", err);
-      const link = document.createElement('a');
-      link.download = 'cercle_astrologique_HD.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
     }
   }
 
