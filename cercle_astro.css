@@ -87,7 +87,7 @@ html, body {
   border-color: #d8c996;
 }
 
-/* Interrupteur Précision (On/Off) */
+/* Interrupteur Précision */
 .precision-header {
   display: flex;
   align-items: center;
@@ -227,13 +227,23 @@ input:checked + .slider:before {
   right: 16px;
   z-index: 10;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   background: var(--panel);
   border: 1px solid var(--hairline);
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   backdrop-filter: blur(8px);
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-row.row-right {
+  justify-content: flex-end;
 }
 
 .controls label {
@@ -258,13 +268,16 @@ input:checked + .slider:before {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
 
 .controls button:hover {
-  background: rgba(216, 201, 150, 0.25);
+  background: rgba(216, 201, 150, 0.28);
+  border-color: #d8c996;
 }
 
-/* --- BOUTON AUDIO AUTONOME EN BAS À DROITE --- */
+/* Bouton Audio en bas à droite */
 .audio-widget-container {
   position: absolute;
   bottom: 16px;
@@ -275,7 +288,6 @@ input:checked + .slider:before {
   justify-content: center;
 }
 
-/* Bouton égaliseur sans encadré supplémentaire */
 .equalizer-btn {
   background: rgba(7, 9, 29, 0.65);
   border: 1px solid var(--hairline);
@@ -299,7 +311,6 @@ input:checked + .slider:before {
   transform: scale(1.06);
 }
 
-/* Barres animées de l'égaliseur */
 .eq-bar {
   width: 3.5px;
   background: #d8c996;
@@ -319,14 +330,12 @@ input:checked + .slider:before {
   100% { transform: scaleY(0.35); }
 }
 
-/* État coupé / muet : les barres se figent */
 .equalizer-btn.paused .eq-bar {
   animation: none !important;
   transform: scaleY(0.2) !important;
   opacity: 0.45;
 }
 
-/* Popup de volume au survol (se déploie vers le haut) */
 .volume-slider-popup {
   position: absolute;
   bottom: 100%;
@@ -342,7 +351,6 @@ input:checked + .slider:before {
   backdrop-filter: blur(8px);
 }
 
-/* Pont invisible pour maintenir le survol */
 .volume-slider-popup::before {
   content: '';
   position: absolute;

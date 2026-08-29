@@ -113,12 +113,20 @@
 
     <!-- Contrôles du tracé (Haut Droite) -->
     <section class="controls">
-      <label for="lineColor">Tracé</label>
-      <input id="lineColor" type="color" value="#d8c996">
-      <button id="resetButton" type="button" title="Réinitialiser la couleur">Réinitialiser</button>
+      <!-- Ligne 1 : Tracé + Couleur + Réinitialiser -->
+      <div class="control-row">
+        <label for="lineColor">Tracé</label>
+        <input id="lineColor" type="color" value="#d8c996">
+        <button id="resetButton" type="button" title="Réinitialiser la couleur">Réinitialiser</button>
+      </div>
+
+      <!-- Ligne 2 : Bouton Enregistrer collé à droite -->
+      <div class="control-row row-right">
+        <button id="downloadBtn" type="button" title="Télécharger l'image en Ultra-Haute Définition (4K)">📥 Enregistrer HD</button>
+      </div>
     </section>
 
-    <!-- Bouton Audio autonome en bas à droite (sans encadré) -->
+    <!-- Bouton Audio autonome en bas à droite -->
     <div class="audio-widget-container">
       <button id="musicToggleBtn" type="button" class="equalizer-btn" title="Couper / Activer la musique">
         <span class="eq-bar"></span>
