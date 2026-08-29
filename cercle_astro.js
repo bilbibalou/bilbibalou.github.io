@@ -19,67 +19,88 @@
   // --- AUDIO DE FOND EN BOUCLE ---
   const bgAudio = new Audio('./ressources/Astronomie/audio.wav');
   bgAudio.loop = true;
-  bgAudio.volume = 0.5; // Volume initial
+  bgAudio.volume = 0.5; // Volume d'ambiance à 50%
 
-  let lastVolume = 0.5;
   let isMuted = false;
+  let lastVolume = 0.5;
 
-  function updateAudioUI(playing) {
-    if (musicToggleBtn) {
-      if (playing && bgAudio.volume > 0) {
-        musicToggleBtn.classList.remove('paused');
-      } else {
-        musicToggleBtn.classList.add('paused');
-      }
+  function updateAudioUI() {
+    if (!musicToggleBtn) return;
+    const isPlaying = !bgAudio.paused && bgAudio.volume > 0 && !bgAudio.muted;
+    if (isPlaying) {
+      musicToggleBtn.classList.remove('paused');
+    } else {
+      musicToggleBtn.classList.add('paused');
     }
   }
 
-  function startBackgroundAudio() {
-    bgAudio.play().then(() => {
-      updateAudioUI(true);
-      window.removeEventListener('pointerdown', startBackgroundAudio);
-      window.removeEventListener('keydown', startBackgroundAudio);
-    }).catch(() => {
-      updateAudioUI(false);
-    });
+  function tryPlayAudio() {
+    if (isMuted) return;
+    bgAudio.volume = lastVolume > 0 ? lastVolume : 0.5;
+    bgAudio.muted = false;
+    const playPromise = bgAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        updateAudioUI();
+        removeUnlockListeners();
+      }).catch(() => {
+        updateAudioUI();
+      });
+    }
   }
 
-  startBackgroundAudio();
-  window.addEventListener('pointerdown', startBackgroundAudio, { once: true });
-  window.addEventListener('keydown', startBackgroundAudio, { once: true });
+  // Déverrouillage automatique au premier geste sur la page
+  const unlockEvents = ['pointerdown', 'click', 'touchstart', 'keydown', 'wheel'];
+  function unlockAudio() {
+    tryPlayAudio();
+  }
+  function addUnlockListeners() {
+    unlockEvents.forEach(evt => window.addEventListener(evt, unlockAudio, { passive: true }));
+  }
+  function removeUnlockListeners() {
+    unlockEvents.forEach(evt => window.removeEventListener(evt, unlockAudio));
+  }
 
-  // Clic sur l'égaliseur : coupe ou relance le son
+  addUnlockListeners();
+  tryPlayAudio();
+
+  // Clic sur le bouton égaliseur : coupe ou relance le son
   if (musicToggleBtn) {
-    musicToggleBtn.addEventListener('click', () => {
+    musicToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (bgAudio.paused || isMuted || bgAudio.volume === 0) {
         isMuted = false;
+        bgAudio.muted = false;
         bgAudio.volume = lastVolume > 0 ? lastVolume : 0.5;
         if (musicVolumeInput) musicVolumeInput.value = bgAudio.volume;
-        bgAudio.play().then(() => updateAudioUI(true)).catch(() => {});
+        bgAudio.play().then(() => updateAudioUI()).catch(() => {});
       } else {
         isMuted = true;
-        lastVolume = bgAudio.volume;
-        bgAudio.volume = 0;
+        lastVolume = bgAudio.volume > 0 ? bgAudio.volume : 0.5;
+        bgAudio.pause();
         if (musicVolumeInput) musicVolumeInput.value = 0;
-        updateAudioUI(false);
+        updateAudioUI();
       }
     });
   }
 
-  // Changement du volume via le curseur qui apparaît au survol
+  // Réglage du volume via le slider au survol
   if (musicVolumeInput) {
     musicVolumeInput.addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
       bgAudio.volume = val;
       if (val === 0) {
         isMuted = true;
-        updateAudioUI(false);
+        bgAudio.pause();
       } else {
         isMuted = false;
+        bgAudio.muted = false;
         lastVolume = val;
-        if (bgAudio.paused) bgAudio.play().catch(() => {});
-        updateAudioUI(true);
+        if (bgAudio.paused) {
+          bgAudio.play().catch(() => {});
+        }
       }
+      updateAudioUI();
     });
   }
 
@@ -94,7 +115,6 @@
   const triSwitches = document.querySelectorAll('.tri-switch');
 
   // --- MAPPAGE DES CERCLES DE PRÉCISION PAR SUJET ---
-  // 0: Vivant | 1: Conjuré | 2: Sentient | 3: Mouvant | 4: Magique | 5: Tangible
   const SUBJECT_PRECISION_MAP = {
     'concept':    [1, 4],          // Conjuré, Magique
     'energie':    [1, 3, 4],       // Conjuré, Mouvant, Magique
@@ -104,7 +124,6 @@
     'etre':       [0, 1, 2, 3, 4, 5]  // Tous
   };
 
-  // Tableau des 6 états des interrupteurs
   const precisionStates = ['center', 'center', 'center', 'center', 'center', 'center'];
 
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -115,10 +134,8 @@
   const view = { x: 0, y: 0, zoom: 1 };
   const TAU = Math.PI * 2;
 
-  // Épaisseurs (Fin, Moyen, Épais)
   const THICK = { FINE: 2, MEDIUM: 4, THICK: 7 };
 
-  // Correspondance entre les choix et l'index de l'axe
   const SUBJECT_AXES = {
     'concept': 0,    // Haut
     'lieu': 1,       // Haut-droite
@@ -128,7 +145,6 @@
     'etre': 5        // Haut-gauche
   };
 
-  // Chargement et mise en cache des SVGs de Runes Primaires et de l'étoile Polaire
   const runeImages = {};
   const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune', 'sirius', 'chaos', 'deimos', 'grand attracteur', 'phobos', 'pluton', 'soleil', 'polaire'];
 
@@ -138,7 +154,6 @@
     runeImages[rune] = img;
   });
 
-  // Helper pour dessiner une image SVG teintée avec lineColor
   function drawTintedImage(img, cx, cy, maxSize, angle = 0) {
     if (!img || !img.complete || img.naturalWidth === 0 || img.naturalHeight === 0) return;
 
@@ -173,12 +188,10 @@
     ctx.restore();
   }
 
-  // Renvoie la liste des index actifs pour le sujet actuellement sélectionné
   function getActiveIndices() {
     return SUBJECT_PRECISION_MAP[subjectSelect.value] || [0, 1, 2, 3, 4, 5];
   }
 
-  // Mise à jour de la visibilité des lignes de précision selon le sujet sélectionné
   function updatePrecisionSwitches() {
     const allowed = getActiveIndices();
 
@@ -205,7 +218,6 @@
     updatePrecisionSwitches();
   });
 
-  // Gestion de la Précision
   precisionToggle.addEventListener('change', (e) => {
     if (e.target.checked) {
       precisionGearBtn.classList.remove('hidden');
@@ -220,7 +232,6 @@
     precisionSubmenu.classList.toggle('hidden');
   });
 
-  // Gestion des interrupteurs à 3 positions
   triSwitches.forEach(sw => {
     sw.addEventListener('click', () => {
       const idx = parseInt(sw.getAttribute('data-index'), 10);

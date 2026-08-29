@@ -34,7 +34,7 @@
         </select>
       </div>
 
-      <!-- Champ texte affiché uniquement si "Par nom" est sélectionné dans Spécification -->
+      <!-- Champ texte affiché uniquement si "Par nom" est sélectionné -->
       <div class="control-group hidden" id="specNameGroup">
         <label for="specNameInput">Nom de la cible</label>
         <input type="text" id="specNameInput" placeholder="Ex: Βιλβιβαλου" maxlength="24">
@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <!-- Catégorie 5 : Rune primaire (À la fin du menu) -->
+      <!-- Catégorie 5 : Rune primaire -->
       <div class="control-group">
         <label for="primaryRune">Rune primaire</label>
         <select id="primaryRune">
@@ -111,29 +111,25 @@
 
     <canvas id="astroCanvas"></canvas>
 
+    <!-- Contrôles du tracé (Haut Droite) -->
     <section class="controls">
-      <!-- Ligne 1 : Couleur du tracé + bouton réinitialiser -->
-      <div class="control-row">
-        <label for="lineColor">Tracé</label>
-        <input id="lineColor" type="color" value="#d8c996">
-        <button id="resetButton" type="button" title="Réinitialiser la couleur">Réinitialiser</button>
-      </div>
-
-      <!-- Ligne 2 : Widget Audio poussé tout à droite -->
-      <div class="control-row align-right">
-        <div class="audio-widget-container">
-          <button id="musicToggleBtn" type="button" class="equalizer-btn" title="Couper / Activer la musique">
-            <span class="eq-bar"></span>
-            <span class="eq-bar"></span>
-            <span class="eq-bar"></span>
-            <span class="eq-bar"></span>
-          </button>
-          <div class="volume-slider-popup">
-            <input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.5" title="Volume">
-          </div>
-        </div>
-      </div>
+      <label for="lineColor">Tracé</label>
+      <input id="lineColor" type="color" value="#d8c996">
+      <button id="resetButton" type="button" title="Réinitialiser la couleur">Réinitialiser</button>
     </section>
+
+    <!-- Bouton Audio autonome en bas à droite (sans encadré) -->
+    <div class="audio-widget-container">
+      <button id="musicToggleBtn" type="button" class="equalizer-btn" title="Couper / Activer la musique">
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+      </button>
+      <div class="volume-slider-popup">
+        <input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.5" title="Volume de la musique">
+      </div>
+    </div>
 
     <p class="hint"></p>
   </main>

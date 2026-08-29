@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  --muted: rgba(216, 201, 150, .58); /* Souleur de l'ecriture des titre des categorie */
+  --muted: rgba(216, 201, 150, .58);
   --panel: rgba(7, 9, 29, .65);
   --hairline: rgba(216, 201, 150, .25);
 }
@@ -73,7 +73,7 @@ html, body {
 .control-group input[type="text"],
 .control-group input[type="number"] {
   background: rgba(0, 0, 0, 0.4);
-  color: #d8c996; /* couleur de l'ecriture dans le menu deroulant */
+  color: #d8c996;
   border: 1px solid var(--hairline);
   padding: 6px 10px;
   border-radius: 4px;
@@ -160,7 +160,7 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* Sous-menu Précision à droite du menu principal */
+/* Sous-menu Précision */
 .precision-submenu {
   position: absolute;
   top: 16px;
@@ -193,7 +193,7 @@ input:checked + .slider:before {
   color: #d8c996;
 }
 
-/* Interrupteur 3 positions (Gauche, Centre, Droite) */
+/* Interrupteur 3 positions */
 .tri-switch {
   position: relative;
   width: 54px;
@@ -220,127 +220,20 @@ input:checked + .slider:before {
 .tri-switch[data-state="center"] .tri-knob { left: 19px; }
 .tri-switch[data-state="right"] .tri-knob { left: 35px; }
 
-/* Contrôles bas-droite */
+/* Contrôles du tracé (Haut Droite) */
 .controls {
   position: absolute;
   top: 16px;
   right: 16px;
   z-index: 10;
   display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   background: var(--panel);
   border: 1px solid var(--hairline);
   padding: 8px 12px;
   border-radius: 8px;
   backdrop-filter: blur(8px);
-}
-
-.control-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%; /* S'assure que la ligne prend toute la largeur */
-}
-
-.control-row.align-right {
-  justify-content: flex-end; /* Pousse le bouton audio tout à droite */
-}
-
-/* Conteneur de l'icône musique */
-.audio-widget-container {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Bouton avec l'égaliseur à barres */
-.equalizer-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(216, 201, 150, 0.35);
-  border-radius: 8px;
-  width: 42px;
-  height: 32px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  padding: 6px;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
-}
-
-.equalizer-btn:hover {
-  background: rgba(216, 201, 150, 0.18);
-  border-color: #d8c996;
-  transform: scale(1.05);
-}
-
-/* Les 4 barres verticales de l'égaliseur */
-.eq-bar {
-  width: 3.5px;
-  background: #d8c996;
-  border-radius: 2px;
-  transform-origin: bottom;
-  animation: eqPulse 1s ease-in-out infinite alternate;
-}
-
-.eq-bar:nth-child(1) { height: 50%; animation-duration: 0.75s; animation-delay: 0.1s; }
-.eq-bar:nth-child(2) { height: 95%; animation-duration: 0.55s; animation-delay: 0.25s; }
-.eq-bar:nth-child(3) { height: 65%; animation-duration: 0.68s; animation-delay: 0.0s; }
-.eq-bar:nth-child(4) { height: 82%; animation-duration: 0.85s; animation-delay: 0.15s; }
-@keyframes eqPulse {
-  0%   { transform: scaleY(0.25); }
-  50%  { transform: scaleY(1); }
-  100% { transform: scaleY(0.35); }
-}
-
-/* État coupé / muet : les barres se figent au minimum */
-.equalizer-btn.paused .eq-bar {
-  animation: none !important;
-  transform: scaleY(0.2) !important;
-  opacity: 0.45;
-}
-
-/* Popup de réglage du volume qui apparaît au survol */
-.volume-slider-popup {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 8px; /* L'écart visuel */
-  display: none;
-  z-index: 100;
-  background: rgba(20, 20, 25, 0.95);
-  padding: 8px;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-/* --- LE PONT INVISIBLE QUI EMPÊCHE LA DISPARITION --- */
-.volume-slider-popup::before {
-  content: '';
-  position: absolute;
-  top: -8px;          /* Comble exactement les 8px de margin-top */
-  left: 0;
-  width: 100%;
-  height: 8px;        /* Même hauteur que le margin-top */
-  background: transparent;
-}
-
-/* Affichage au survol ou au focus */
-.audio-widget-container:hover .volume-slider-popup,
-.audio-widget-container:focus-within .volume-slider-popup {
-  display: block;
-}
-
-.volume-slider-popup input[type="range"] {
-  width: 75px;
-  cursor: pointer;
-  accent-color: #d8c996;
-  margin: 0;
 }
 
 .controls label {
@@ -371,6 +264,108 @@ input:checked + .slider:before {
   background: rgba(216, 201, 150, 0.25);
 }
 
+/* --- BOUTON AUDIO AUTONOME EN BAS À DROITE --- */
+.audio-widget-container {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bouton égaliseur sans encadré supplémentaire */
+.equalizer-btn {
+  background: rgba(7, 9, 29, 0.65);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  width: 42px;
+  height: 34px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.equalizer-btn:hover {
+  background: rgba(216, 201, 150, 0.2);
+  border-color: #d8c996;
+  transform: scale(1.06);
+}
+
+/* Barres animées de l'égaliseur */
+.eq-bar {
+  width: 3.5px;
+  background: #d8c996;
+  border-radius: 2px;
+  transform-origin: bottom;
+  animation: eqPulse 1s ease-in-out infinite alternate;
+}
+
+.eq-bar:nth-child(1) { height: 50%; animation-duration: 0.75s; animation-delay: 0.1s; }
+.eq-bar:nth-child(2) { height: 95%; animation-duration: 0.55s; animation-delay: 0.25s; }
+.eq-bar:nth-child(3) { height: 65%; animation-duration: 0.68s; animation-delay: 0.0s; }
+.eq-bar:nth-child(4) { height: 82%; animation-duration: 0.85s; animation-delay: 0.15s; }
+
+@keyframes eqPulse {
+  0%   { transform: scaleY(0.25); }
+  50%  { transform: scaleY(1); }
+  100% { transform: scaleY(0.35); }
+}
+
+/* État coupé / muet : les barres se figent */
+.equalizer-btn.paused .eq-bar {
+  animation: none !important;
+  transform: scaleY(0.2) !important;
+  opacity: 0.45;
+}
+
+/* Popup de volume au survol (se déploie vers le haut) */
+.volume-slider-popup {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  display: none;
+  z-index: 100;
+  background: rgba(10, 8, 28, 0.95);
+  border: 1px solid var(--hairline);
+  padding: 8px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+/* Pont invisible pour maintenir le survol */
+.volume-slider-popup::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: transparent;
+}
+
+.audio-widget-container:hover .volume-slider-popup,
+.audio-widget-container:focus-within .volume-slider-popup {
+  display: flex;
+  align-items: center;
+}
+
+.volume-slider-popup input[type="range"] {
+  width: 75px;
+  cursor: pointer;
+  accent-color: #d8c996;
+  margin: 0;
+}
+
 .hint {
   position: absolute;
   bottom: 16px;
@@ -381,8 +376,7 @@ input:checked + .slider:before {
   pointer-events: none;
 }
 
-/* Couleur du menu déroulant lorsqu'il est ouvert */
 .control-group select option {
-  background-color: #0a081c; /* Remplace le gris par un bleu nuit très sombre */
-  color: #d8c996;            /* Garde le texte doré */
+  background-color: #0a081c;
+  color: #d8c996;
 }
