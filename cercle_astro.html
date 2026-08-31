@@ -79,6 +79,18 @@
           <option value="soleil">Soleil</option>
         </select>
       </div>
+
+      <!-- Catégorie 6 : Cercle intermédiaire -->
+      <div class="control-group">
+        <label>Cercle intermédiaire</label>
+        <div class="precision-header">
+          <label class="switch">
+            <input type="checkbox" id="intermediateCircleToggle">
+            <span class="slider"></span>
+          </label>
+          <button id="intermediateGearBtn" class="precision-btn hidden" type="button" title="Réglages du cercle intermédiaire">⚙️</button>
+        </div>
+      </div>
     </div>
 
     <!-- Sous-menu Précision -->
@@ -107,6 +119,12 @@
         <span class="precision-label">Tangible</span>
         <div class="tri-switch" data-index="5" data-state="center"><div class="tri-knob"></div></div>
       </div>
+    </div>
+
+    <!-- Sous-menu Cercle Intermédiaire (affiché à droite du menu principal) -->
+    <div id="intermediateSubmenu" class="precision-submenu hidden">
+      <div id="intermediateRunesList" class="intermediate-list"></div>
+      <button id="addIntermediateRuneBtn" type="button" class="add-btn">+ Ajouter</button>
     </div>
 
     <canvas id="astroCanvas"></canvas>

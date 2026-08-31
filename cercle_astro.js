@@ -108,6 +108,7 @@
 
   // Éléments Précision
   const precisionToggle = document.querySelector('#precisionToggle');
+  const intermediateCircleToggle = document.querySelector('#intermediateCircleToggle');
   const precisionGearBtn = document.querySelector('#precisionGearBtn');
   const precisionSubmenu = document.querySelector('#precisionSubmenu');
   const triSwitches = document.querySelectorAll('.tri-switch');
@@ -778,6 +779,71 @@
         targetCtx.moveTo(cx, cy - rDouble2_Out);
         targetCtx.lineTo(cx, polarY + rPolarCircle);
         targetCtx.stroke();
+      }
+    }
+
+    // CERCLE INTERMÉDIAIRE & ROND SUR L'AXE DU TYPE
+    if (intermediateCircleToggle && intermediateCircleToggle.checked) {
+      const rIntermediate = (rDouble1_Out + rDouble2_In) / 2; // Rayon au milieu (390 * baseScale)
+
+      // 1. Tracé du cercle intermédiaire en trait fin
+      targetCtx.save();
+      targetCtx.strokeStyle = lineColor;
+      targetCtx.lineWidth = THICK.FINE * baseScale;
+      targetCtx.beginPath();
+      targetCtx.arc(cx, cy, rIntermediate, 0, TAU);
+      targetCtx.stroke();
+      targetCtx.restore();
+
+      // 2. Rond évidé à l'intersection avec l'axe du type
+      if (activeAxis !== -1) {
+        const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
+        const nodeX = cx + rIntermediate * Math.cos(axisAngle);
+        const nodeY = cy + rIntermediate * Math.sin(axisAngle);
+
+        // Vider l'intérieur du rond (efface le trait du cercle intermédiaire qui passe dessous)
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = 'destination-out';
+        targetCtx.beginPath();
+        targetCtx.arc(nodeX, nodeY, rPolarCircle, 0, TAU);
+        targetCtx.fill();
+        targetCtx.restore();
+
+        // Si le fond animé est actif, on réinjecte les étoiles/le fond dans la zone évidée
+        if (withBackground) {
+          targetCtx.save();
+          targetCtx.beginPath();
+          targetCtx.arc(nodeX, nodeY, rPolarCircle, 0, TAU);
+          targetCtx.clip();
+          drawBackground(time, targetCtx, targetW, targetH);
+          targetCtx.restore();
+        }
+
+        // Contour du rond central en trait moyen
+        targetCtx.save();
+        targetCtx.strokeStyle = lineColor;
+        targetCtx.lineWidth = THICK.MEDIUM * baseScale;
+        targetCtx.beginPath();
+        targetCtx.arc(nodeX, nodeY, rPolarCircle, 0, TAU);
+        targetCtx.stroke();
+
+        // 3. Demi-cercle sur le côté gauche
+        // Angle perpendiculaire vers la gauche par rapport à l'axe radial
+        const leftAngle = axisAngle - Math.PI / 2;
+        
+        const rHalfCircle = rPolarCircle + 8 * baseScale; // Décalé vers l'extérieur
+
+        targetCtx.beginPath();
+        // Demi-cercle orienté vers l'extérieur gauche
+        targetCtx.arc(
+          nodeX,
+          nodeY,
+          rHalfCircle,
+          leftAngle - Math.PI / 2,
+          leftAngle + Math.PI / 2
+        );
+        targetCtx.stroke();
+        targetCtx.restore();
       }
     }
 

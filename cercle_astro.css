@@ -388,3 +388,64 @@ input:checked + .slider:before {
   background-color: #0a081c;
   color: #d8c996;
 }
+
+/* Sous-menu Cercle Intermédiaire */
+.intermediate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.intermediate-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.intermediate-row select {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  color: #d8c996;
+  border: 1px solid var(--hairline);
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.del-btn {
+  background: rgba(255, 60, 60, 0.15);
+  border: 1px solid rgba(255, 100, 100, 0.35);
+  color: #ff9999;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.del-btn:hover {
+  background: rgba(255, 60, 60, 0.35);
+  color: #fff;
+}
+
+.add-btn {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px dashed var(--hairline);
+  color: #d8c996;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.add-btn:hover {
+  background: rgba(216, 201, 150, 0.15);
+  border-color: #d8c996;
+}
