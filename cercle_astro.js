@@ -1208,19 +1208,10 @@
 
   colorInput.addEventListener('input', e => lineColor = e.target.value);
 
+  // Réinitialisation UNIQUEMENT de la couleur du tracé
   resetButton.addEventListener('click', () => {
     colorInput.value = '#d8c996';
     lineColor = colorInput.value;
-    
-    // Réinitialisation des menus
-    intermediateCircleToggle.checked = false;
-    intermediateGearBtn.classList.add('hidden');
-    intermediateSubmenu.classList.add('hidden');
-    initIntermediateList();
-
-    precisionToggle.checked = false;
-    precisionGearBtn.classList.add('hidden');
-    precisionSubmenu.classList.add('hidden');
   });
 
   window.addEventListener('resize', resize);
