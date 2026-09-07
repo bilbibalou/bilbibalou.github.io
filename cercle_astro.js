@@ -13,6 +13,13 @@
   const specNameInput = document.querySelector('#specNameInput');
   const denomInput = document.querySelector('#denomInput');
 
+  // Éléments Cercle Intermédiaire
+  const intermediateCircleToggle = document.querySelector('#intermediateCircleToggle');
+  const intermediateGearBtn = document.querySelector('#intermediateGearBtn');
+  const intermediateSubmenu = document.querySelector('#intermediateSubmenu');
+  const intermediateRunesList = document.querySelector('#intermediateRunesList');
+  const addIntermediateRuneBtn = document.querySelector('#addIntermediateRuneBtn');
+
   // Éléments Audio
   const musicToggleBtn = document.querySelector('#musicToggleBtn');
   const musicVolumeInput = document.querySelector('#musicVolume');
@@ -102,13 +109,12 @@
     });
   }
 
-  // Canvas hors-écran réutilisable et performant pour teinter les SVGs
+  // Canvas hors-écran réutilisable pour teinter les SVGs
   const offscreenCanvas = document.createElement('canvas');
   const offscreenCtx = offscreenCanvas.getContext('2d');
 
   // Éléments Précision
   const precisionToggle = document.querySelector('#precisionToggle');
-  const intermediateCircleToggle = document.querySelector('#intermediateCircleToggle');
   const precisionGearBtn = document.querySelector('#precisionGearBtn');
   const precisionSubmenu = document.querySelector('#precisionSubmenu');
   const triSwitches = document.querySelectorAll('.tri-switch');
@@ -123,6 +129,25 @@
   };
 
   const precisionStates = ['center', 'center', 'center', 'center', 'center', 'center'];
+
+  // Options pour les listes de sélection des runes
+  const RUNE_OPTIONS = [
+    { value: 'none', label: '-- Aucune --' },
+    { value: 'mercure', label: 'Mercure' },
+    { value: 'venus', label: 'Vénus' },
+    { value: 'mars', label: 'Mars' },
+    { value: 'jupiter', label: 'Jupiter' },
+    { value: 'saturne', label: 'Saturne' },
+    { value: 'uranus', label: 'Uranus' },
+    { value: 'neptune', label: 'Neptune' },
+    { value: 'sirius', label: 'Sirius' },
+    { value: 'chaos', label: 'Chaos' },
+    { value: 'deimos', label: 'Deimos' },
+    { value: 'grand attracteur', label: 'Grand attracteur' },
+    { value: 'phobos', label: 'Phobos' },
+    { value: 'pluton', label: 'Pluton' },
+    { value: 'soleil', label: 'Soleil' }
+  ];
 
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
   let W = 0, H = 0;
@@ -143,13 +168,12 @@
     'etre': 5
   };
 
-  // Chargement direct des SVGs
+  // Chargement des SVGs
   const runeImages = {};
   const runeNames = ['mercure', 'venus', 'mars', 'jupiter', 'saturne', 'uranus', 'neptune', 'sirius', 'chaos', 'deimos', 'grand attracteur', 'phobos', 'pluton', 'soleil', 'polaire'];
 
   runeNames.forEach(rune => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.src = `./ressources/Astronomie/${rune}.svg`;
     runeImages[rune] = img;
   });
@@ -205,6 +229,80 @@
       }
     });
   }
+
+  // Helper pour créer un élément <select> de runes
+  function createRuneSelect() {
+    const select = document.createElement('select');
+    RUNE_OPTIONS.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      select.appendChild(option);
+    });
+    return select;
+  }
+
+  // Vérifie si la limite des 9 ajouts (10 lignes au total) est atteinte
+  function checkAddButtonState() {
+    const count = intermediateRunesList.querySelectorAll('.intermediate-row').length;
+    if (count >= 10) {
+      addIntermediateRuneBtn.style.display = 'none';
+    } else {
+      addIntermediateRuneBtn.style.display = 'block';
+    }
+  }
+
+  // Initialisation du sous-menu cercle intermédiaire (1ère ligne de base)
+  function initIntermediateList() {
+    intermediateRunesList.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'intermediate-row';
+    const select = createRuneSelect();
+    row.appendChild(select);
+    intermediateRunesList.appendChild(row);
+    checkAddButtonState();
+  }
+
+  // Gestion du bouton "+ Ajouter" pour le cercle intermédiaire
+  addIntermediateRuneBtn.addEventListener('click', () => {
+    const currentCount = intermediateRunesList.querySelectorAll('.intermediate-row').length;
+    if (currentCount >= 10) return; // 1 de base + 9 ajouts maximum
+
+    const row = document.createElement('div');
+    row.className = 'intermediate-row';
+
+    const select = createRuneSelect();
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'del-btn';
+    delBtn.title = 'Supprimer cette rune';
+    delBtn.textContent = '✕';
+
+    delBtn.addEventListener('click', () => {
+      row.remove();
+      checkAddButtonState();
+    });
+
+    row.appendChild(select);
+    row.appendChild(delBtn);
+    intermediateRunesList.appendChild(row);
+
+    checkAddButtonState();
+  });
+
+  // Gestion de l'interrupteur et du bouton engrenage du cercle intermédiaire
+  intermediateCircleToggle.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      intermediateGearBtn.classList.remove('hidden');
+    } else {
+      intermediateGearBtn.classList.add('hidden');
+      intermediateSubmenu.classList.add('hidden');
+    }
+  });
+
+  intermediateGearBtn.addEventListener('click', () => {
+    intermediateSubmenu.classList.toggle('hidden');
+  });
 
   specSelect.addEventListener('change', () => {
     if (specSelect.value === 'nom') {
@@ -782,9 +880,9 @@
       }
     }
 
-    // CERCLE INTERMÉDIAIRE & ROND SUR L'AXE DU TYPE
+    // 4. CERCLE INTERMÉDIAIRE & CERCLES DE RUNES INTERMÉDIAIRES
     if (intermediateCircleToggle && intermediateCircleToggle.checked) {
-      const rIntermediate = (rDouble1_Out + rDouble2_In) / 2; // Rayon au milieu (390 * baseScale)
+      const rIntermediate = (rDouble1_Out + rDouble2_In) / 2; // Rayon = 390 * baseScale
 
       // 1. Tracé du cercle intermédiaire en trait fin
       targetCtx.save();
@@ -795,13 +893,23 @@
       targetCtx.stroke();
       targetCtx.restore();
 
-      // 2. Rond évidé à l'intersection avec l'axe du type
-      if (activeAxis !== -1) {
-        const axisAngle = activeAxis * (TAU / 6) - (Math.PI / 2);
-        const nodeX = cx + rIntermediate * Math.cos(axisAngle);
-        const nodeY = cy + rIntermediate * Math.sin(axisAngle);
+      // Récupération de la liste des runes sélectionnées
+      const interRunes = [];
+      const rowSelects = intermediateRunesList.querySelectorAll('.intermediate-row select');
+      rowSelects.forEach(sel => interRunes.push(sel.value));
 
-        // Vider l'intérieur du rond (efface le trait du cercle intermédiaire qui passe dessous)
+      const numCircles = Math.max(1, interRunes.length);
+      const baseAngle = activeAxis !== -1 
+        ? activeAxis * (TAU / 6) - (Math.PI / 2) 
+        : -Math.PI / 2;
+
+      // Découpe, tracé et dessin des runes pour chaque cercle intermédiaire
+      for (let i = 0; i < numCircles; i++) {
+        const currentAngle = baseAngle + i * (TAU / numCircles);
+        const nodeX = cx + rIntermediate * Math.cos(currentAngle);
+        const nodeY = cy + rIntermediate * Math.sin(currentAngle);
+
+        // A. Évider l'intérieur du cercle
         targetCtx.save();
         targetCtx.globalCompositeOperation = 'destination-out';
         targetCtx.beginPath();
@@ -809,7 +917,7 @@
         targetCtx.fill();
         targetCtx.restore();
 
-        // Si le fond animé est actif, on réinjecte les étoiles/le fond dans la zone évidée
+        // B. Si le fond est actif, réinjecter les étoiles
         if (withBackground) {
           targetCtx.save();
           targetCtx.beginPath();
@@ -819,7 +927,7 @@
           targetCtx.restore();
         }
 
-        // Contour du rond central en trait moyen
+        // C. Contour du cercle en trait moyen
         targetCtx.save();
         targetCtx.strokeStyle = lineColor;
         targetCtx.lineWidth = THICK.MEDIUM * baseScale;
@@ -827,23 +935,29 @@
         targetCtx.arc(nodeX, nodeY, rPolarCircle, 0, TAU);
         targetCtx.stroke();
 
-        // 3. Demi-cercle sur le côté gauche
-        // Angle perpendiculaire vers la gauche par rapport à l'axe radial
-        const leftAngle = axisAngle - Math.PI / 2;
-        
-        const rHalfCircle = rPolarCircle + 8 * baseScale; // Décalé vers l'extérieur
-
-        targetCtx.beginPath();
-        // Demi-cercle orienté vers l'extérieur gauche
-        targetCtx.arc(
-          nodeX,
-          nodeY,
-          rHalfCircle,
-          leftAngle - Math.PI / 2,
-          leftAngle + Math.PI / 2
-        );
-        targetCtx.stroke();
+        // D. Demi-cercle décoratif sur le côté gauche du cercle principal (i === 0)
+        if (i === 0) {
+          const leftAngle = currentAngle - Math.PI / 2;
+          const rHalfCircle = rPolarCircle + 8 * baseScale;
+          targetCtx.beginPath();
+          targetCtx.arc(
+            nodeX,
+            nodeY,
+            rHalfCircle,
+            leftAngle - Math.PI / 2,
+            leftAngle + Math.PI / 2
+          );
+          targetCtx.stroke();
+        }
         targetCtx.restore();
+
+        // E. Dessin de la rune associée
+        const runeKey = interRunes[i];
+        if (runeKey && runeKey !== 'none' && runeImages[runeKey]) {
+          const runeImg = runeImages[runeKey];
+          const runeSize = rPolarCircle * 1.35;
+          drawTintedImage(runeImg, nodeX, nodeY, runeSize, currentAngle + Math.PI / 2, targetCtx);
+        }
       }
     }
 
@@ -1097,11 +1211,22 @@
   resetButton.addEventListener('click', () => {
     colorInput.value = '#d8c996';
     lineColor = colorInput.value;
+    
+    // Réinitialisation des menus
+    intermediateCircleToggle.checked = false;
+    intermediateGearBtn.classList.add('hidden');
+    intermediateSubmenu.classList.add('hidden');
+    initIntermediateList();
+
+    precisionToggle.checked = false;
+    precisionGearBtn.classList.add('hidden');
+    precisionSubmenu.classList.add('hidden');
   });
 
   window.addEventListener('resize', resize);
 
   resize();
+  initIntermediateList();
   updatePrecisionSwitches();
   requestAnimationFrame(draw);
 })();

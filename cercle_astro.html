@@ -93,38 +93,41 @@
       </div>
     </div>
 
-    <!-- Sous-menu Précision -->
-    <div id="precisionSubmenu" class="precision-submenu hidden">
-      <div class="precision-item">
-        <span class="precision-label">Vivant</span>
-        <div class="tri-switch" data-index="0" data-state="center"><div class="tri-knob"></div></div>
+    <!-- Conteneur dynamique des sous-menus (évite la superposition) -->
+    <div class="submenus-container">
+      <!-- Sous-menu Précision -->
+      <div id="precisionSubmenu" class="precision-submenu hidden">
+        <div class="precision-item">
+          <span class="precision-label">Vivant</span>
+          <div class="tri-switch" data-index="0" data-state="center"><div class="tri-knob"></div></div>
+        </div>
+        <div class="precision-item">
+          <span class="precision-label">Conjuré / Transformé / Naturel</span>
+          <div class="tri-switch" data-index="1" data-state="center"><div class="tri-knob"></div></div>
+        </div>
+        <div class="precision-item">
+          <span class="precision-label">Sentient</span>
+          <div class="tri-switch" data-index="2" data-state="center"><div class="tri-knob"></div></div>
+        </div>
+        <div class="precision-item">
+          <span class="precision-label">Mouvant</span>
+          <div class="tri-switch" data-index="3" data-state="center"><div class="tri-knob"></div></div>
+        </div>
+        <div class="precision-item">
+          <span class="precision-label">Magique</span>
+          <div class="tri-switch" data-index="4" data-state="center"><div class="tri-knob"></div></div>
+        </div>
+        <div class="precision-item">
+          <span class="precision-label">Tangible</span>
+          <div class="tri-switch" data-index="5" data-state="center"><div class="tri-knob"></div></div>
+        </div>
       </div>
-      <div class="precision-item">
-        <span class="precision-label">Conjuré / Transformé / Naturel</span>
-        <div class="tri-switch" data-index="1" data-state="center"><div class="tri-knob"></div></div>
-      </div>
-      <div class="precision-item">
-        <span class="precision-label">Sentient</span>
-        <div class="tri-switch" data-index="2" data-state="center"><div class="tri-knob"></div></div>
-      </div>
-      <div class="precision-item">
-        <span class="precision-label">Mouvant</span>
-        <div class="tri-switch" data-index="3" data-state="center"><div class="tri-knob"></div></div>
-      </div>
-      <div class="precision-item">
-        <span class="precision-label">Magique</span>
-        <div class="tri-switch" data-index="4" data-state="center"><div class="tri-knob"></div></div>
-      </div>
-      <div class="precision-item">
-        <span class="precision-label">Tangible</span>
-        <div class="tri-switch" data-index="5" data-state="center"><div class="tri-knob"></div></div>
-      </div>
-    </div>
 
-    <!-- Sous-menu Cercle Intermédiaire (affiché à droite du menu principal) -->
-    <div id="intermediateSubmenu" class="precision-submenu hidden">
-      <div id="intermediateRunesList" class="intermediate-list"></div>
-      <button id="addIntermediateRuneBtn" type="button" class="add-btn">+ Ajouter</button>
+      <!-- Sous-menu Cercle Intermédiaire -->
+      <div id="intermediateSubmenu" class="precision-submenu hidden">
+        <div id="intermediateRunesList" class="intermediate-list"></div>
+        <button id="addIntermediateRuneBtn" type="button" class="add-btn">+ Ajouter</button>
+      </div>
     </div>
 
     <canvas id="astroCanvas"></canvas>

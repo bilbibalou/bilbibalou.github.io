@@ -35,6 +35,30 @@ html, body {
   cursor: grabbing;
 }
 
+/* Style global unifié pour tous les selects et inputs */
+select,
+input[type="text"],
+input[type="number"] {
+  background: rgba(0, 0, 0, 0.4);
+  color: #d8c996;
+  border: 1px solid var(--hairline);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+select:focus,
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: #d8c996;
+}
+
+select option {
+  background-color: #0a081c;
+  color: #d8c996;
+}
+
 /* Menu déroulant en haut à gauche */
 .menu-top-left {
   position: absolute;
@@ -69,25 +93,7 @@ html, body {
   color: var(--muted);
 }
 
-.control-group select,
-.control-group input[type="text"],
-.control-group input[type="number"] {
-  background: rgba(0, 0, 0, 0.4);
-  color: #d8c996;
-  border: 1px solid var(--hairline);
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  outline: none;
-}
-
-.control-group select:focus,
-.control-group input[type="text"]:focus,
-.control-group input[type="number"]:focus {
-  border-color: #d8c996;
-}
-
-/* Interrupteur Précision */
+/* Interrupteurs On/Off */
 .precision-header {
   display: flex;
   align-items: center;
@@ -160,12 +166,23 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* Sous-menu Précision */
-.precision-submenu {
+/* Conteneur dynamique des sous-menus empilés vers le bas */
+.submenus-container {
   position: absolute;
   top: 16px;
-  left: 250px;
+  left: 256px;
   z-index: 10;
+  display: flex;
+  flex-direction: column; /* Alignement vers le bas */
+  gap: 12px;
+  align-items: flex-start;
+  pointer-events: none;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+/* Sous-menus (Précision et Cercle Intermédiaire) */
+.precision-submenu {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -175,10 +192,11 @@ input:checked + .slider:before {
   border-radius: 8px;
   backdrop-filter: blur(8px);
   width: 250px;
+  pointer-events: auto;
 }
 
 .precision-submenu.hidden {
-  display: none;
+  display: none !important;
 }
 
 .precision-item {
@@ -219,6 +237,66 @@ input:checked + .slider:before {
 .tri-switch[data-state="left"] .tri-knob { left: 3px; }
 .tri-switch[data-state="center"] .tri-knob { left: 19px; }
 .tri-switch[data-state="right"] .tri-knob { left: 35px; }
+
+/* Sous-menu Cercle Intermédiaire (Listes et Lignes) */
+.intermediate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.intermediate-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.intermediate-row select {
+  flex: 1;
+  width: 100%;
+}
+
+/* Bouton croix pour supprimer une ligne */
+.del-btn {
+  background: rgba(255, 60, 60, 0.15);
+  border: 1px solid rgba(255, 100, 100, 0.35);
+  color: #ff9999;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.del-btn:hover {
+  background: rgba(255, 60, 60, 0.35);
+  color: #ffffff;
+}
+
+/* Petit bouton "+ Ajouter" collé à gauche */
+.add-btn {
+  background: rgba(216, 201, 150, 0.15);
+  border: 1px solid var(--hairline);
+  color: #d8c996;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-self: flex-start;
+  width: auto;
+}
+
+.add-btn:hover {
+  background: rgba(216, 201, 150, 0.28);
+  border-color: #d8c996;
+}
 
 /* Contrôles du tracé (Haut Droite) */
 .controls {
@@ -382,70 +460,4 @@ input:checked + .slider:before {
   font-size: 0.75rem;
   color: var(--muted);
   pointer-events: none;
-}
-
-.control-group select option {
-  background-color: #0a081c;
-  color: #d8c996;
-}
-
-/* Sous-menu Cercle Intermédiaire */
-.intermediate-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.intermediate-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.intermediate-row select {
-  flex: 1;
-  background: rgba(0, 0, 0, 0.4);
-  color: #d8c996;
-  border: 1px solid var(--hairline);
-  padding: 5px 8px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  outline: none;
-}
-
-.del-btn {
-  background: rgba(255, 60, 60, 0.15);
-  border: 1px solid rgba(255, 100, 100, 0.35);
-  color: #ff9999;
-  border-radius: 4px;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s;
-}
-
-.del-btn:hover {
-  background: rgba(255, 60, 60, 0.35);
-  color: #fff;
-}
-
-.add-btn {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px dashed var(--hairline);
-  color: #d8c996;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
-}
-
-.add-btn:hover {
-  background: rgba(216, 201, 150, 0.15);
-  border-color: #d8c996;
 }
