@@ -1145,8 +1145,8 @@
 
       const selectedSubject = subjectSelect ? subjectSelect.value : 'none';
       const filename = selectedSubject !== 'none' 
-        ? `cercle_astrologique_${selectedSubject}_HD.png` 
-        : `cercle_astrologique_HD.png`;
+        ? `cercle_astrologique_${selectedSubject}.png` 
+        : `cercle_astrologique.png`;
 
       exportCanvas.toBlob((blob) => {
         if (!blob) {
