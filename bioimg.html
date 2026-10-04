@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BioImg – Éditeur de figures scientifiques</title>
+  <link rel="stylesheet" href="bioimg.css" />
+  <script src="https://unpkg.com/konva@9/konva.min.js"></script>
+</head>
+<body>
+  <header class="toolbar">
+    <h1>🧬 BioImg</h1>
+    <div class="group">
+      <button id="btnText">T Texte</button>
+      <button id="btnArrow">➜ Flèche</button>
+      <button id="btnRect">▭ Rectangle</button>
+      <button id="btnEllipse">◯ Ellipse</button>
+    </div>
+    <div class="group">
+      <button id="btnUndo" title="Ctrl+Z">↶</button>
+      <button id="btnRedo" title="Ctrl+Y">↷</button>
+      <button id="btnFront">⬆ Avant</button>
+      <button id="btnBack">⬇ Arrière</button>
+      <button id="btnDuplicate">⧉ Dupliquer</button>
+      <button id="btnDelete" class="danger">🗑</button>
+    </div>
+    <div class="group">
+      <button id="btnNew">Nouveau</button>
+      <button id="btnSave">💾 Projet</button>
+      <label class="btn">📂 Ouvrir<input type="file" id="fileProject" accept=".json" hidden /></label>
+      <button id="btnPng" class="primary">Exporter PNG</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <input id="search" type="search" placeholder="Rechercher une icône..." />
+      <label class="btn upload">➕ Importer SVG/PNG
+        <input type="file" id="fileIcon" accept=".svg,.png,.jpg" multiple hidden />
+      </label>
+      <div id="iconList" class="icon-list"></div>
+    </aside>
+
+    <section id="canvasWrap"><div id="canvas"></div></section>
+
+    <aside class="props" id="props">
+      <h3>Propriétés</h3>
+      <p class="hint" id="noSel">Sélectionne un élément</p>
+      <div id="propFields" hidden>
+        <label>Couleur <input type="color" id="propColor" /></label>
+        <label>Contour <input type="color" id="propStroke" /></label>
+        <label>Épaisseur <input type="range" id="propStrokeW" min="0" max="20" /></label>
+        <label id="fsWrap">Taille texte <input type="number" id="propFont" min="6" max="200" /></label>
+        <label>Opacité <input type="range" id="propOpacity" min="0.1" max="1" step="0.05" /></label>
+        <p class="hint">Double-clic sur un texte pour le modifier</p>
+      </div>
+      <hr />
+      <label>Largeur page <input type="number" id="pageW" value="1200" /></label>
+      <label>Hauteur page <input type="number" id="pageH" value="800" /></label>
+    </aside>
+  </main>
+
+  <script src="bioimg-icons.js"></script>
+  <script src="bioimg.js"></script>
+</body>
+</html>
