@@ -27,22 +27,35 @@ bgLayer.add(bg);
 const layer = new Konva.Layer({ x: MARGIN, y: MARGIN });
 stage.add(bgLayer, layer);
 
+let keepRatioLocked = true;
+
 const tr = new Konva.Transformer({
   rotateEnabled: true,
-  rotateAnchorOffset: 30,
+  rotateAnchorOffset: 26,
   anchorSize: 12,
+  anchorCornerRadius: 6,
   anchorStrokeWidth: 2,
   anchorStroke: "#3b6fe0",
-  anchorFill: "#fff",
+  anchorFill: "#ffffff",
   borderStroke: "#3b6fe0",
-  borderStrokeWidth: 2,
+  borderStrokeWidth: 1.5,
+  borderDash: [5, 4],
   padding: 4,
   keepRatio: true,
-  boundBoxFunc: (oldBox, newBox) =>
-    newBox.width < 10 || newBox.height < 10 ? oldBox : newBox,
+  shiftBehavior: 'inverted',
+  boundBoxFunc: (oldBox, newBox) => {
+    if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) return oldBox;
+    return newBox;
+  },
 });
 
 layer.add(tr);
+
+tr.on("transform", () => {
+  const node = tr.nodes()[0];
+  if (node) updatePropsFields(node);
+});
+
 
 // Cache des images
 const imgCache = {};
@@ -164,7 +177,9 @@ function update(id, patch) {
 function select(id) {
   selectedId = id && nodes.has(id) ? id : null;
   tr.nodes(selectedId ? [nodes.get(selectedId)] : []);
+  tr.keepRatio(keepRatioLocked);
   tr.moveToTop();
+  tr.forceUpdate();
   layer.batchDraw();
   updateProps();
 }
@@ -205,10 +220,45 @@ function pickNode() {
   return null;
 }
 
+function isClickOnTransformer(t, p) {
+  if (!t) return false;
+  if (t === tr) return true;
+  if (t.findAncestor && t.findAncestor("Transformer")) return true;
+  if (t.getParent && t.getParent() === tr) return true;
+  if (!selectedId || !p) return false;
+
+  // Détection des clics sur ou à proximité d'une poignée du Transformer
+  const anchors = tr.find("._anchor");
+  for (const a of anchors) {
+    if (!a.visible()) continue;
+    const ap = a.getAbsolutePosition();
+    const distSq = (ap.x - p.x) ** 2 + (ap.y - p.y) ** 2;
+    if (distSq <= 324) { // rayon de 18px autour du centre de la poignée
+      return true;
+    }
+  }
+
+  // Détection sur la tige de rotation
+  const rot = tr.findOne(".rotater");
+  const topC = tr.findOne(".top-center");
+  if (rot && topC && rot.visible()) {
+    const rp = rot.getAbsolutePosition();
+    const tp = topC.getAbsolutePosition();
+    const minX = Math.min(rp.x, tp.x) - 12, maxX = Math.max(rp.x, tp.x) + 12;
+    const minY = Math.min(rp.y, tp.y) - 12, maxY = Math.max(rp.y, tp.y) + 12;
+    if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) {
+      return true;
+    }
+  }
+  return false;
+}
+
 stage.on("mousedown touchstart", (e) => {
   document.activeElement?.blur();                        // rend le clavier au canvas
+  const p = stage.getPointerPosition();
   const t = e.target;
-  if (t.findAncestor("Transformer")) return;            // clic sur une poignée
+  if (isClickOnTransformer(t, p)) return;               // clic sur une poignée ou le cadre
+
   let node = t.getLayer() === layer && nodes.has(t.id()) ? t : null;
   const fallback = !node;
   if (!node) node = pickNode();                          // détection de secours (sans le "hit canvas")

@@ -24,8 +24,14 @@ main { flex: 1; display: flex; min-height: 0; }
 #canvasWrap { flex: 1; overflow: auto; padding: 0; background: #e3e8ef; }
 #canvas { width: max-content; height: max-content; }
 
-.props { width: 210px; background: #fff; border-left: 1px solid #d5dbe3; padding: 12px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+.props { width: 220px; background: #fff; border-left: 1px solid #d5dbe3; padding: 12px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
 .props label { display: flex; flex-direction: column; gap: 3px; }
-.props input[type=number] { padding: 4px; }
+.props input[type=number] { padding: 5px 6px; border: 1px solid #cbd2dc; border-radius: 4px; font-size: 13px; width: 100%; }
+.props .row { display: flex; gap: 6px; }
+.props .row label { flex: 1; }
+.props .checkbox-label { flex-direction: row; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; cursor: pointer; color: #444; }
+.props .checkbox-label input[type=checkbox] { cursor: pointer; }
+.btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
+.btn-group button { padding: 5px 4px; font-size: 11px; text-align: center; }
 .hint { color: #888; font-size: 12px; }
 hr { border: none; border-top: 1px solid #e3e7ee; }

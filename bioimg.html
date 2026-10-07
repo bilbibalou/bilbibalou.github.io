@@ -43,6 +43,22 @@
       <div id="propFields" hidden>
         <label id="colorWrap">Couleur <input type="color" id="propColor" /></label>
         <label id="fsWrap">Taille texte <input type="number" id="propFont" min="6" max="200" /></label>
+        <div id="dimWrap">
+          <div class="row">
+            <label>Largeur <input type="number" id="propW" min="10" max="4000" /></label>
+            <label>Hauteur <input type="number" id="propH" min="10" max="4000" /></label>
+          </div>
+          <label class="checkbox-label"><input type="checkbox" id="propRatio" checked /> Conserver les proportions</label>
+        </div>
+        <div id="rotWrap">
+          <label>Rotation (°) <input type="number" id="propRot" min="-360" max="360" /></label>
+          <div class="btn-group">
+            <button type="button" id="btnRotLeft" title="Pivoter à gauche de 90°">⟲ -90°</button>
+            <button type="button" id="btnRotRight" title="Pivoter à droite de 90°">⟳ +90°</button>
+            <button type="button" id="btnFlipH" title="Retourner horizontalement">⇄ Miroir H</button>
+            <button type="button" id="btnFlipV" title="Retourner verticalement">⇅ Miroir V</button>
+          </div>
+        </div>
         <label>Opacité <input type="range" id="propOpacity" min="0.1" max="1" step="0.05" /></label>
         <p class="hint" id="textHint">Double-clic sur un texte pour le modifier</p>
       </div>
