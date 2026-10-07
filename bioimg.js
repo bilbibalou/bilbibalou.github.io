@@ -1,85 +1,140 @@
 // ===== Configuration =====
 const STORAGE_KEY = "bioimg-project";
+const MARGIN = 60;                 // marge autour de la page pour attraper les poignées
 let pageW = 1200, pageH = 800;
 
-let items = [];          // modèle de données
+let items = [];
 let selectedId = null;
 let history = [], future = [];
 let counter = Date.now();
 const newId = () => "n" + (counter++);
+const $ = (id) => document.getElementById(id);
+const setHidden = (id, v) => { const el = $(id); if (el) el.hidden = v; };
+const setValue = (id, v) => { const el = $(id); if (el) el.value = v; };
 
 // ===== Konva =====
-const stage = new Konva.Stage({ container: "canvas", width: pageW, height: pageH });
-const bgLayer = new Konva.Layer();
-const bg = new Konva.Rect({ x: 0, y: 0, width: pageW, height: pageH, fill: "#fff" });
+const stage = new Konva.Stage({
+  container: "canvas",
+  width: pageW + MARGIN * 2,
+  height: pageH + MARGIN * 2,
+});
+const bgLayer = new Konva.Layer({ x: MARGIN, y: MARGIN });
+const bg = new Konva.Rect({
+  x: 0, y: 0, width: pageW, height: pageH, fill: "#fff",
+  shadowColor: "black", shadowBlur: 8, shadowOpacity: 0.15,
+});
 bgLayer.add(bg);
-const layer = new Konva.Layer();
+const layer = new Konva.Layer({ x: MARGIN, y: MARGIN });
 stage.add(bgLayer, layer);
 
 const tr = new Konva.Transformer({
-  rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315],
-  anchorSize: 8, borderStroke: "#3b6fe0", anchorStroke: "#3b6fe0",
+  rotateEnabled: true,
+  rotateAnchorOffset: 30,
+  anchorSize: 12,
+  anchorStrokeWidth: 2,
+  anchorStroke: "#3b6fe0",
+  anchorFill: "#fff",
+  borderStroke: "#3b6fe0",
+  borderStrokeWidth: 2,
+  padding: 4,
+  keepRatio: true,
+  boundBoxFunc: (oldBox, newBox) =>
+    newBox.width < 10 || newBox.height < 10 ? oldBox : newBox,
 });
+
+layer.add(tr);
 
 // Cache des images
 const imgCache = {};
 function getImage(src) {
   if (!imgCache[src]) {
     const img = new Image();
-    img.onload = () => layer.batchDraw();
+    img.onload = () => { tr.forceUpdate(); layer.batchDraw(); };
+    img.crossOrigin = "anonymous";
     img.src = src;
     imgCache[src] = img;
   }
   return imgCache[src];
 }
 
-// ===== Rendu =====
-function render() {
-  layer.destroyChildren();
-  items.forEach((it) => layer.add(createNode(it)));
-  layer.add(tr);
-  const node = selectedId && layer.findOne("#" + selectedId);
-  tr.nodes(node ? [node] : []);
-  if (!node) selectedId = null;
-  layer.batchDraw();
+// ===== Nœuds Konva =====
+const nodes = new Map();
+let gestureSnap = null;
+
+function buildNode(it) {
+  let n;
+  if (it.type === "image") n = new Konva.Image({ id: it.id, draggable: true });
+  else if (it.type === "text") n = new Konva.Text({ id: it.id, draggable: true, fontFamily: "Arial" });
+  else return null;
+
+  n.on("dragstart transformstart", () => {
+    if (!gestureSnap) gestureSnap = JSON.stringify(items);
+  });
+  n.on("dragend transformend", () => endGesture(n));
+  return n;
+}
+
+function applyAttrs(n, it) {
+  n.setAttrs({
+    x: it.x, y: it.y, rotation: it.rotation || 0,
+    scaleX: it.scaleX || 1, scaleY: it.scaleY || 1,
+    opacity: it.opacity ?? 1,
+  });
+  if (it.type === "image") n.setAttrs({ image: getImage(it.src), width: it.width, height: it.height });
+  else n.setAttrs({ text: it.text, fontSize: it.fontSize, fill: it.fill });
+}
+
+function endGesture(n) {
+  if (gestureSnap) {
+    history.push(gestureSnap);
+    if (history.length > 100) history.shift();
+    future = [];
+    gestureSnap = null;
+  }
+  const isText = n.getClassName() === "Text";
+  if (isText && Math.abs(n.scaleX() - n.scaleY()) < 0.01 && n.scaleY() !== 1) {
+    n.fontSize(Math.max(6, Math.round(n.fontSize() * n.scaleY())));
+    n.scale({ x: 1, y: 1 });                       // on "cuit" l'échelle dans la taille de police
+  }
+  keepOnPage(n);
+  const patch = { x: n.x(), y: n.y(), rotation: n.rotation(), scaleX: n.scaleX(), scaleY: n.scaleY(),
+                  ...(isText ? { fontSize: n.fontSize() } : {}) };
+  items = items.map((i) => (i.id === n.id() ? { ...i, ...patch } : i));
+  save();
   updateProps();
 }
 
-function createNode(it) {
-  const common = {
-    id: it.id, x: it.x, y: it.y, rotation: it.rotation || 0,
-    scaleX: it.scaleX || 1, scaleY: it.scaleY || 1,
-    opacity: it.opacity ?? 1, draggable: true,
-  };
-  let n;
-  switch (it.type) {
-    case "image":
-      n = new Konva.Image({ ...common, image: getImage(it.src), width: it.width, height: it.height });
-      break;
-    case "text":
-      n = new Konva.Text({ ...common, text: it.text, fontSize: it.fontSize, fill: it.fill, fontFamily: "Arial" });
-      n.on("dblclick dbltap", () => {
-        const t = prompt("Texte :", it.text);
-        if (t !== null) update(it.id, { text: t });
-      });
-      break;
-    case "arrow":
-      n = new Konva.Arrow({ ...common, points: [0, 0, it.width, 0], stroke: it.stroke, fill: it.stroke,
-        strokeWidth: it.strokeWidth, pointerLength: 14, pointerWidth: 14, hitStrokeWidth: 20 });
-      break;
-    case "rect":
-      n = new Konva.Rect({ ...common, width: it.width, height: it.height, fill: it.fill,
-        stroke: it.stroke, strokeWidth: it.strokeWidth, cornerRadius: 8 });
-      break;
-    case "ellipse":
-      n = new Konva.Ellipse({ ...common, radiusX: it.width / 2, radiusY: it.height / 2,
-        fill: it.fill, stroke: it.stroke, strokeWidth: it.strokeWidth });
-      break;
+// Empêche de perdre un élément hors de la zone visible
+function keepOnPage(n) {
+  const r = n.getClientRect({ relativeTo: layer }), m = 30;
+  let dx = 0, dy = 0;
+  if (r.x + r.width < m) dx = m - (r.x + r.width); else if (r.x > pageW - m) dx = pageW - m - r.x;
+  if (r.y + r.height < m) dy = m - (r.y + r.height); else if (r.y > pageH - m) dy = pageH - m - r.y;
+  n.x(n.x() + dx); n.y(n.y() + dy);
+}
+
+function sync() {
+  const ids = new Set(items.map((i) => i.id));
+  for (const [id, n] of nodes) {
+    if (!ids.has(id)) { n.destroy(); nodes.delete(id); }
   }
-  n.on("mousedown tap", () => select(it.id));
-  n.on("dragend transformend", () =>
-    update(it.id, { x: n.x(), y: n.y(), rotation: n.rotation(), scaleX: n.scaleX(), scaleY: n.scaleY() }));
-  return n;
+  items.forEach((it) => {
+    let n = nodes.get(it.id);
+    if (!n) {
+      n = buildNode(it);
+      if (!n) return;
+      nodes.set(it.id, n);
+      layer.add(n);
+    }
+    applyAttrs(n, it);
+    n.moveToTop();
+  });
+  tr.moveToTop();                       // le cadre toujours au-dessus
+  if (selectedId && !nodes.has(selectedId)) selectedId = null;
+  tr.nodes(selectedId ? [nodes.get(selectedId)] : []);
+  tr.forceUpdate();
+  layer.batchDraw();
+  updateProps();
 }
 
 // ===== État / historique =====
@@ -89,9 +144,10 @@ function snapshot() {
   future = [];
 }
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ pageW, pageH, items }));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ pageW, pageH, items })); }
+  catch { console.warn("Sauvegarde locale impossible (projet trop gros ?)"); }
 }
-function commit() { save(); render(); }
+function commit() { save(); sync(); }
 
 function add(item) {
   snapshot();
@@ -106,9 +162,9 @@ function update(id, patch) {
   commit();
 }
 function select(id) {
-  selectedId = id;
-  const node = id && layer.findOne("#" + id);
-  tr.nodes(node ? [node] : []);
+  selectedId = id && nodes.has(id) ? id : null;
+  tr.nodes(selectedId ? [nodes.get(selectedId)] : []);
+  tr.moveToTop();
   layer.batchDraw();
   updateProps();
 }
@@ -125,6 +181,56 @@ function redo() {
   commit();
 }
 
+// ===== Sélection =====
+// Détection géométrique : élément le plus haut sous le curseur (gère la rotation/l'échelle)
+let fallbackDrag = null;
+const endFallbackDrag = () => {
+  if (!fallbackDrag) return;
+  const n = fallbackDrag;
+  fallbackDrag = null;
+  if (n.isDragging()) n.stopDrag();                    // relâcher la souris termine toujours le drag
+};
+["mouseup", "pointerup", "touchend", "touchcancel", "blur"].forEach((ev) => window.addEventListener(ev, endFallbackDrag, true));
+window.addEventListener("mousemove", (e) => { if (fallbackDrag && e.buttons === 0) endFallbackDrag(); }, true);
+
+function pickNode() {
+  const p = stage.getPointerPosition();
+  if (!p) return null;
+  for (let i = items.length - 1; i >= 0; i--) {
+    const n = nodes.get(items[i].id);
+    if (!n) continue;
+    const q = n.getAbsoluteTransform().copy().invert().point(p);
+    if (q.x >= 0 && q.y >= 0 && q.x <= n.width() && q.y <= n.height()) return n;
+  }
+  return null;
+}
+
+stage.on("mousedown touchstart", (e) => {
+  document.activeElement?.blur();                        // rend le clavier au canvas
+  const t = e.target;
+  if (t.findAncestor("Transformer")) return;            // clic sur une poignée
+  let node = t.getLayer() === layer && nodes.has(t.id()) ? t : null;
+  const fallback = !node;
+  if (!node) node = pickNode();                          // détection de secours (sans le "hit canvas")
+  if (!node) { select(null); return; }                   // clic dans le vide
+  if (selectedId !== node.id()) select(node.id());
+  if (fallback && !node.isDragging()) {                 // Konva n'a pas démarré le drag tout seul
+    fallbackDrag = node;
+    node.startDrag();
+  }
+});
+
+$("canvasWrap").addEventListener("mousedown", (e) => {
+  if (!stage.container().contains(e.target)) select(null);
+});
+
+stage.on("dblclick dbltap", (e) => {
+  const it = items.find((i) => i.id === e.target.id());
+  if (!it || it.type !== "text") return;
+  const t = prompt("Texte :", it.text);
+  if (t !== null && t !== it.text) update(it.id, { text: t });
+});
+
 // ===== Ajout d'éléments =====
 const center = () => ({ x: pageW / 2 - 60, y: pageH / 2 - 60 });
 
@@ -132,21 +238,14 @@ function addIcon(src, x, y) {
   const img = getImage(src);
   const place = () => {
     const ratio = (img.naturalWidth || 100) / (img.naturalHeight || 100);
-    const w = 120, h = 120 / ratio;
     const c = center();
-    add({ type: "image", src, x: x ?? c.x, y: y ?? c.y, width: w, height: h });
+    add({ type: "image", src, x: x ?? c.x, y: y ?? c.y, width: 120, height: 120 / ratio });
   };
-  img.complete && img.naturalWidth ? place() : img.addEventListener("load", place, { once: true });
+  img.complete ? place() : img.addEventListener("load", place, { once: true });
 }
 
-document.getElementById("btnText").onclick = () =>
+$("btnText").onclick = () =>
   add({ type: "text", text: "Texte", fontSize: 28, fill: "#222222", ...center() });
-document.getElementById("btnArrow").onclick = () =>
-  add({ type: "arrow", width: 150, stroke: "#222222", strokeWidth: 4, ...center() });
-document.getElementById("btnRect").onclick = () =>
-  add({ type: "rect", width: 160, height: 100, fill: "#dbe7ff", stroke: "#3b6fe0", strokeWidth: 2, ...center() });
-document.getElementById("btnEllipse").onclick = () =>
-  add({ type: "ellipse", width: 140, height: 100, fill: "#ffe3d6", stroke: "#e05a3b", strokeWidth: 2, x: pageW / 2, y: pageH / 2 });
 
 // ===== Actions =====
 function deleteSelected() {
@@ -156,10 +255,6 @@ function deleteSelected() {
   selectedId = null;
   commit();
 }
-function duplicate() {
-  const it = items.find((i) => i.id === selectedId);
-  if (it) add({ ...structuredClone(it), x: it.x + 20, y: it.y + 20 });
-}
 function reorder(dir) {
   const idx = items.findIndex((i) => i.id === selectedId);
   if (idx < 0) return;
@@ -168,65 +263,104 @@ function reorder(dir) {
   dir > 0 ? items.push(it) : items.unshift(it);
   commit();
 }
+$("btnDelete").onclick = deleteSelected;
+$("btnFront").onclick = () => reorder(1);
+$("btnBack").onclick = () => reorder(-1);
 
-document.getElementById("btnDelete").onclick = deleteSelected;
-document.getElementById("btnDuplicate").onclick = duplicate;
-document.getElementById("btnFront").onclick = () => reorder(1);
-document.getElementById("btnBack").onclick = () => reorder(-1);
-document.getElementById("btnUndo").onclick = undo;
-document.getElementById("btnRedo").onclick = redo;
+// ===== Copier / Couper / Coller =====
+const isTyping = () => {
+  const a = document.activeElement;
+  return !!a && (a.tagName === "TEXTAREA" ||
+    (a.tagName === "INPUT" && !["range", "color", "file", "button", "checkbox"].includes(a.type)));
+};
+let clipboard = null, pasteCount = 0;
 
-// Désélection en cliquant dans le vide
-stage.on("mousedown tap", (e) => {
-  if (e.target === stage || e.target === bg) select(null);
+function copySelected() {
+  const it = items.find((i) => i.id === selectedId);
+  if (!it) return false;
+  clipboard = structuredClone(it);
+  pasteCount = 0;
+  navigator.clipboard?.writeText("BIOIMG:" + JSON.stringify(it)).catch(() => {});
+  return true;
+}
+function pasteItem(it) {
+  if (!clipboard || JSON.stringify(it) !== JSON.stringify(clipboard)) {
+    clipboard = structuredClone(it);
+    pasteCount = 0;
+  }
+  pasteCount++;
+  const copy = structuredClone(it);
+  delete copy.id;
+  add({ ...copy, x: it.x + 20 * pasteCount, y: it.y + 20 * pasteCount });
+}
+document.addEventListener("paste", (e) => {
+  if (isTyping()) return;
+  const dt = e.clipboardData;
+  const text = dt.getData("text/plain");
+  if (text && text.startsWith("BIOIMG:")) {
+    try { e.preventDefault(); pasteItem(JSON.parse(text.slice(7))); return; } catch {}
+  }
+  const imgItem = [...dt.items].find((i) => i.type.startsWith("image/"));
+  if (imgItem) {
+    e.preventDefault();
+    const reader = new FileReader();
+    reader.onload = () => addIcon(reader.result);
+    reader.readAsDataURL(imgItem.getAsFile());
+    return;
+  }
+  if (clipboard) { e.preventDefault(); pasteItem(clipboard); }
 });
 
-// Raccourcis clavier
+// ===== Raccourcis clavier =====
+let lastNudge = 0;
 window.addEventListener("keydown", (e) => {
-  if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+  if (isTyping()) return;
   const k = e.key.toLowerCase();
-  if ((e.ctrlKey || e.metaKey) && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
-  else if ((e.ctrlKey || e.metaKey) && k === "y") { e.preventDefault(); redo(); }
-  else if ((e.ctrlKey || e.metaKey) && k === "d") { e.preventDefault(); duplicate(); }
-  else if (k === "delete" || k === "backspace") deleteSelected();
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (ctrl && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (ctrl && k === "y") { e.preventDefault(); redo(); }
+  else if (ctrl && k === "c") copySelected();
+  else if (ctrl && k === "x") { if (copySelected()) deleteSelected(); }
+  else if (k === "delete" || k === "backspace") { e.preventDefault(); deleteSelected(); }
+  else if (k === "escape") select(null);
   else if (selectedId && k.startsWith("arrow")) {
     e.preventDefault();
     const it = items.find((i) => i.id === selectedId);
+    if (!it) return;
     const s = e.shiftKey ? 10 : 1;
     const d = { arrowleft: [-s, 0], arrowright: [s, 0], arrowup: [0, -s], arrowdown: [0, s] }[k];
-    update(selectedId, { x: it.x + d[0], y: it.y + d[1] });
+    if (Date.now() - lastNudge > 600) snapshot();
+    lastNudge = Date.now();
+    items = items.map((i) => (i.id === selectedId ? { ...i, x: it.x + d[0], y: it.y + d[1] } : i));
+    commit();
   }
 });
 
 // ===== Panneau des propriétés =====
-const $ = (id) => document.getElementById(id);
 function updateProps() {
   const it = items.find((i) => i.id === selectedId);
-  $("noSel").hidden = !!it;
-  $("propFields").hidden = !it;
+  setHidden("noSel", !!it);
+  setHidden("propFields", !it);
   if (!it) return;
-  $("propColor").value = it.fill || it.stroke || "#000000";
-  $("propStroke").value = it.stroke || "#000000";
-  $("propStrokeW").value = it.strokeWidth || 0;
-  $("propFont").value = it.fontSize || 20;
-  $("propOpacity").value = it.opacity ?? 1;
-  $("fsWrap").hidden = it.type !== "text";
+  const isText = it.type === "text";
+  setHidden("colorWrap", !isText);
+  setHidden("fsWrap", !isText);
+  setHidden("textHint", !isText);
+  setValue("propColor", it.fill || "#000000");
+  setValue("propFont", it.fontSize || 20);
+  setValue("propOpacity", it.opacity ?? 1);
 }
-$("propColor").onchange = (e) => {
-  const it = items.find((i) => i.id === selectedId);
-  if (!it) return;
-  update(it.id, it.type === "arrow" ? { stroke: e.target.value } : { fill: e.target.value });
-};
-$("propStroke").onchange = (e) => selectedId && update(selectedId, { stroke: e.target.value });
-$("propStrokeW").onchange = (e) => selectedId && update(selectedId, { strokeWidth: +e.target.value });
-$("propFont").onchange = (e) => selectedId && update(selectedId, { fontSize: +e.target.value });
-$("propOpacity").onchange = (e) => selectedId && update(selectedId, { opacity: +e.target.value });
+const onChange = (id, fn) => { const el = $(id); if (el) el.onchange = (e) => { fn(e); el.blur(); }; };
+onChange("propColor", (e) => selectedId && update(selectedId, { fill: e.target.value }));
+onChange("propFont", (e) => selectedId && update(selectedId, { fontSize: +e.target.value }));
+onChange("propOpacity", (e) => selectedId && update(selectedId, { opacity: +e.target.value }));
 
 function resizePage() {
   pageW = +$("pageW").value || 1200;
   pageH = +$("pageH").value || 800;
-  stage.size({ width: pageW, height: pageH });
+  stage.size({ width: pageW + MARGIN * 2, height: pageH + MARGIN * 2 });
   bg.size({ width: pageW, height: pageH });
+  bgLayer.batchDraw();
   save();
 }
 $("pageW").onchange = resizePage;
@@ -246,7 +380,7 @@ function renderIcons() {
       div.className = "icon-item";
       div.draggable = true;
       div.title = icon.name;
-      div.innerHTML = `<img src="${icon.src}" alt=""><div>${icon.name}</div>`;
+      div.innerHTML = `<img src="${icon.src}" alt="" draggable="false"><div>${icon.name}</div>`;
       div.onclick = () => addIcon(icon.src);
       div.ondragstart = (e) => e.dataTransfer.setData("text/plain", icon.src);
       list.appendChild(div);
@@ -254,19 +388,17 @@ function renderIcons() {
 }
 $("search").oninput = renderIcons;
 
-// Glisser-déposer vers le canvas
 const container = stage.container();
 container.addEventListener("dragover", (e) => e.preventDefault());
 container.addEventListener("drop", (e) => {
   e.preventDefault();
   const src = e.dataTransfer.getData("text/plain");
-  if (!src) return;
+  if (!src || src.startsWith("BIOIMG:")) return;
   stage.setPointersPositions(e);
-  const p = stage.getPointerPosition();
+  const p = layer.getRelativePointerPosition();   // position dans la page
   addIcon(src, p.x - 60, p.y - 60);
 });
 
-// Importer ses propres icônes (enregistrées dans le projet)
 $("fileIcon").onchange = (e) => {
   [...e.target.files].forEach((file) => {
     const reader = new FileReader();
@@ -279,7 +411,7 @@ $("fileIcon").onchange = (e) => {
   e.target.value = "";
 };
 
-// ===== Projet : nouveau / sauvegarde / ouverture =====
+// ===== Projet =====
 $("btnNew").onclick = () => {
   if (!confirm("Effacer la figure actuelle ?")) return;
   snapshot();
@@ -298,12 +430,12 @@ $("btnSave").onclick = () => {
 };
 
 function loadProject(data) {
-  items = data.items || [];
+  items = (data.items || []).filter((i) => i.type === "image" || i.type === "text");
   $("pageW").value = data.pageW || 1200;
   $("pageH").value = data.pageH || 800;
   resizePage();
   selectedId = null;
-  render();
+  sync();
 }
 
 $("fileProject").onchange = (e) => {
@@ -318,11 +450,14 @@ $("fileProject").onchange = (e) => {
   e.target.value = "";
 };
 
-// ===== Export PNG haute résolution =====
+// ===== Export PNG (uniquement la page, sans la marge ni le cadre) =====
 $("btnPng").onclick = () => {
-  tr.nodes([]);
-  const url = stage.toDataURL({ pixelRatio: 3 });
-  select(selectedId);
+  tr.hide();
+  bg.shadowEnabled(false);
+  const url = stage.toDataURL({ x: MARGIN, y: MARGIN, width: pageW, height: pageH, pixelRatio: 3 });
+  bg.shadowEnabled(true);
+  tr.show();
+  layer.batchDraw();
   const a = document.createElement("a");
   a.href = url;
   a.download = "figure.png";
@@ -335,4 +470,4 @@ try {
   if (saved) loadProject(saved);
 } catch {}
 renderIcons();
-render();
+sync();
