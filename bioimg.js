@@ -496,7 +496,11 @@ function applyAttrs(n, it) {
     opacity: it.opacity ?? 1,
   });
   if (it.type === "image") { n.setAttrs({ width: it.width, height: it.height }); setNodeImage(n, srcFor(it)); }
-  else n.setAttrs({ text: it.text, fontSize: it.fontSize, fill: it.fill, fontFamily: it.fontFamily || "Arial" });
+  else n.setAttrs({
+    text: it.text, fontSize: it.fontSize, fill: it.fill, fontFamily: it.fontFamily || "Arial",
+    fontStyle: [it.italic ? "italic" : "", it.bold ? "bold" : ""].join(" ").trim() || "normal",
+    textDecoration: it.underline ? "underline" : "",
+  });
 }
 
 function endGesture(n) {
@@ -780,7 +784,6 @@ function reorder(dir) {
   dir > 0 ? items.push(it) : items.unshift(it);
   commit();
 }
-$("btnDelete").onclick = deleteSelected;
 $("btnFront").onclick = () => reorder(1);
 $("btnBack").onclick = () => reorder(-1);
 
@@ -886,6 +889,12 @@ function updateProps() {
   setValue("propTint", it.tint || "#000000");
   if (isSvgImg) refreshPalette(it); else { paletteFor = null; picker.close(); }
   setValue("propFontFamily", it.fontFamily || "Arial");
+  setHidden("styleWrap", !isText);
+  if (isText) {
+    $("btnBold").classList.toggle("active", !!it.bold);
+    $("btnItalic").classList.toggle("active", !!it.italic);
+    $("btnUnderline").classList.toggle("active", !!it.underline);
+  }
   setValue("propOpacity", it.opacity ?? 1);
 }
 const onChange = (id, fn) => { const el = $(id); if (el) el.onchange = (e) => { fn(e); el.blur(); }; };
@@ -1115,6 +1124,20 @@ if (tintInput) {
 const btnTintReset = $("btnTintReset");
 if (btnTintReset) btnTintReset.onclick = () => { pendingTint = null; if (selectedId) update(selectedId, { tint: null, colorMap: null, colorOpacity: null }); };
 
+// ===== Gras / italique / souligné =====
+function toggleTextStyle(key) {
+  return async () => {
+    const id = selectedId, it = items.find((i) => i.id === id);
+    if (!it || it.type !== "text") return;
+    const next = { ...it, [key]: !it[key] };
+    if (key !== "underline") await loadFonts([fontSpec(next)]);    // la variante de police doit être chargée avant le calcul de taille
+    if (items.some((i) => i.id === id)) update(id, { [key]: !it[key] });
+  };
+}
+$("btnBold").onclick = toggleTextStyle("bold");
+$("btnItalic").onclick = toggleTextStyle("italic");
+$("btnUnderline").onclick = toggleTextStyle("underline");
+
 // ===== Polices =====
 const FONTS = ["Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Courier New",
                "Comic Sans MS", "Impact", "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Playfair Display", "Caveat"];
@@ -1135,14 +1158,16 @@ function refreshTextFonts() {
   tr.forceUpdate();
   layer.batchDraw();
 }
+const fontSpec = (it, fam) => `${it.italic ? "italic " : ""}${it.bold ? "bold " : ""}16px "${fam || it.fontFamily || "Arial"}"`;
 async function loadFonts(families) {
-  try { await Promise.all([...new Set(families)].map((f) => document.fonts.load(`16px "${f}"`))); } catch {}
+  try { await Promise.all([...new Set(families)].map((f) => document.fonts.load(f.includes("px") ? f : `16px "${f}"`))); } catch {}
   refreshTextFonts();
 }
 onChange("propFontFamily", async (e) => {
   if (!selectedId) return;
   const f = e.target.value;
-  await loadFonts([f]);
+  const cur = items.find((i) => i.id === selectedId);
+  await loadFonts([fontSpec(cur || {}, f)]);
   update(selectedId, { fontFamily: f });
 });
 
@@ -1250,7 +1275,7 @@ function loadProject(data) {
   resizePage();
   selectedId = null;
   sync();
-  loadFonts(items.filter((i) => i.type === "text").map((i) => i.fontFamily || "Arial"));
+  loadFonts(items.filter((i) => i.type === "text").map((i) => fontSpec(i)));
 }
 
 $("fileProject").onchange = (e) => {

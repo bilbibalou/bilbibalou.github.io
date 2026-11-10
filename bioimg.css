@@ -9,7 +9,6 @@ button, .btn { background: #fff; border: 1px solid #cbd2dc; border-radius: 6px; 
 button:hover, .btn:hover { background: #e7eefc; }
 .primary { background: #3b6fe0; color: #fff; border-color: #3b6fe0; }
 .primary:hover { background: #2c58b8; }
-.danger:hover { background: #fde2e2; }
 
 main { flex: 1; display: flex; min-height: 0; }
 
@@ -60,3 +59,7 @@ hr { border: none; border-top: 1px solid #e3e7ee; }
 #arrowWrap { display: flex; flex-direction: column; gap: 8px; }
 .props select { width: 100%; }
 #warpWrap { display: flex; flex-direction: column; gap: 8px; }
+.style-group { display: flex; gap: 4px; }
+.style-group button { flex: 1; padding: 6px 0; font-size: 14px; }
+.style-group button.active { background: #3b6fe0; color: #fff; border-color: #3b6fe0; }
+.style-group button.active:hover { background: #2c58b8; }
