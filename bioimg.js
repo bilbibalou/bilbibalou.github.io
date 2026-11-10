@@ -52,6 +52,61 @@ const tr = new Konva.Transformer({
 
 layer.add(tr);
 
+// ===== Flèches : poignées de départ / arrivée / courbure =====
+const handles = new Konva.Group({ visible: false });
+function mkHandle(role, fill, stroke) {
+  const h = new Konva.Circle({ radius: 7, fill, stroke, strokeWidth: 2, draggable: true, name: "ahandle" });
+  h.setAttr("role", role);
+  h.on("dragstart", () => { if (!gestureSnap) gestureSnap = JSON.stringify(items); });
+  h.on("dragmove", () => onHandleMove(h));
+  h.on("dragend", () => { onHandleMove(h); commitArrowGeo(); });
+  handles.add(h);
+  return h;
+}
+const hStart = mkHandle("start", "#ffffff", "#3b6fe0");
+const hEnd = mkHandle("end", "#ffffff", "#3b6fe0");
+const hMid = mkHandle("mid", "#3b6fe0", "#ffffff");      // sur la courbe : on l'attrape pour courber
+layer.add(handles);
+
+const midOf = (g) => ({ x: (g.x1 + 2 * g.cx + g.x2) / 4, y: (g.y1 + 2 * g.cy + g.y2) / 4 });   // milieu réel de la courbe
+function placeHandles(g, skip) {
+  if (skip !== "start") hStart.position({ x: g.x1, y: g.y1 });
+  if (skip !== "end") hEnd.position({ x: g.x2, y: g.y2 });
+  if (skip !== "mid") hMid.position(midOf(g));
+}
+function showHandles(it) {
+  if (!it) { handles.hide(); return; }
+  handles.position({ x: 0, y: 0 });
+  placeHandles(it);
+  handles.show();
+  handles.moveToTop();
+}
+function onHandleMove(h) {
+  const n = nodes.get(selectedId);
+  if (!n || !n.getAttr("geo")) return;
+  const g = { ...n.getAttr("geo") }, role = h.getAttr("role");
+  if (role === "start") { g.x1 = h.x(); g.y1 = h.y(); }
+  else if (role === "end") { g.x2 = h.x(); g.y2 = h.y(); }
+  else { g.cx = 2 * h.x() - (g.x1 + g.x2) / 2; g.cy = 2 * h.y() - (g.y1 + g.y2) / 2; }
+  n.setAttr("geo", g);
+  placeHandles(g, role);
+  layer.batchDraw();
+}
+function commitArrowGeo() {
+  const n = nodes.get(selectedId);
+  if (!n || !n.getAttr("geo")) return;
+  const g = n.getAttr("geo");
+  if (gestureSnap) {
+    history.push(gestureSnap);
+    if (history.length > 100) history.shift();
+    future = [];
+    gestureSnap = null;
+  }
+  items = items.map((i) => (i.id === selectedId ? { ...i, x1: g.x1, y1: g.y1, x2: g.x2, y2: g.y2, cx: g.cx, cy: g.cy } : i));
+  commit();
+}
+const shiftArrow = (i, dx, dy) => ({ ...i, x1: i.x1 + dx, y1: i.y1 + dy, x2: i.x2 + dx, y2: i.y2 + dy, cx: i.cx + dx, cy: i.cy + dy });
+
 
 
 // Cache des images
@@ -208,7 +263,7 @@ function srcFor(it) {
   getSvgText(it.src).then((t) => {
     tintCache[key] = svgDataUri(renderVariant(t, it));
     items.filter((i) => i.src === it.src && variantOf(i) === variant)
-         .forEach((i) => { const n = nodes.get(i.id); if (n) setNodeImage(n, tintCache[key]); });
+         .forEach((i) => { const n = nodes.get(i.id); if (n) setAnyImage(n, tintCache[key]); });
   }).catch(() => {});
   return it.src;                                  // en attendant, on garde l'original
 }
@@ -230,10 +285,184 @@ function setNodeImage(n, src) {
 const nodes = new Map();
 let gestureSnap = null;
 
+// ----- Dessin d'une flèche (courbe de Bézier + pointes) -----
+function arrowTangents(g) {
+  const fx = g.x2 - g.x1, fy = g.y2 - g.y1;
+  const unit = (x, y) => { const l = Math.hypot(x, y); if (l >= 0.5) return [x / l, y / l]; const m = Math.hypot(fx, fy) || 1; return [fx / m, fy / m]; };
+  return { s: unit(g.cx - g.x1, g.cy - g.y1), e: unit(g.x2 - g.cx, g.y2 - g.cy) };   // s : sortie du départ, e : arrivée
+}
+function drawHead(c, tip, d, type, hl, hw) {
+  if (!type || type === "none") return;
+  const px = -d[1], py = d[0];
+  if (type === "triangle") {
+    const bx = tip.x - d[0] * hl, by = tip.y - d[1] * hl;
+    c.beginPath(); c.moveTo(tip.x, tip.y);
+    c.lineTo(bx + px * hw / 2, by + py * hw / 2); c.lineTo(bx - px * hw / 2, by - py * hw / 2);
+    c.closePath(); c.fill();
+  } else if (type === "open") {
+    const bx = tip.x - d[0] * hl * 0.9, by = tip.y - d[1] * hl * 0.9;
+    c.beginPath();
+    c.moveTo(bx + px * hw / 2, by + py * hw / 2); c.lineTo(tip.x, tip.y); c.lineTo(bx - px * hw / 2, by - py * hw / 2);
+    c.stroke();
+  } else if (type === "dot") {
+    c.beginPath(); c.arc(tip.x - d[0] * hl * 0.25, tip.y - d[1] * hl * 0.25, hl * 0.3, 0, Math.PI * 2); c.fill();
+  }
+}
+function drawArrow(ctx, shape) {
+  const g = shape.getAttr("geo"), s = shape.getAttr("style");
+  if (!g || !s) return;
+  const c = ctx._context, w = s.strokeWidth;
+  const hl = Math.max(12, w * 4), hw = hl * 0.9;
+  const t = arrowTangents(g);
+  const inset = (type) => (type === "triangle" ? hl * 0.85 : type === "dot" ? hl * 0.25 : 0);   // le trait s'arrête avant la pointe
+  const a0 = inset(s.headStart), a1 = inset(s.headEnd);
+  c.save();
+  c.strokeStyle = s.stroke; c.fillStyle = s.stroke; c.lineWidth = w; c.lineJoin = "round";
+  c.lineCap = s.dash === "dotted" ? "round" : "butt";
+  c.setLineDash(s.dash === "dashed" ? [w * 3, w * 2] : s.dash === "dotted" ? [0.01, w * 2.2] : []);
+  c.beginPath();
+  c.moveTo(g.x1 + t.s[0] * a0, g.y1 + t.s[1] * a0);
+  c.quadraticCurveTo(g.cx, g.cy, g.x2 - t.e[0] * a1, g.y2 - t.e[1] * a1);
+  c.stroke();
+  c.setLineDash([]); c.lineCap = "butt";
+  drawHead(c, { x: g.x1, y: g.y1 }, [-t.s[0], -t.s[1]], s.headStart, hl, hw);
+  drawHead(c, { x: g.x2, y: g.y2 }, t.e, s.headEnd, hl, hw);
+  c.restore();
+}
+function arrowRect(n) {
+  const g = n.getAttr("geo"), s = n.getAttr("style");
+  if (!g) return { x: 0, y: 0, width: 0, height: 0 };
+  const m = s ? Math.max(12, s.strokeWidth * 4) + s.strokeWidth : (n.getAttr("thick") || 20);
+  const xs = [g.x1, g.cx, g.x2], ys = [g.y1, g.cy, g.y2];
+  const x = Math.min(...xs) - m, y = Math.min(...ys) - m;
+  return { x, y, width: Math.max(...xs) + m - x, height: Math.max(...ys) + m - y };
+}
+function distToSeg(x, y, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
+  const t = l2 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2)) : 0;
+  return Math.hypot(x - (ax + t * dx), y - (ay + t * dy));
+}
+function hitArrow(n, p) {                       // p : position écran ; test géométrique le long de la courbe
+  const g = n.getAttr("geo"), s = n.getAttr("style");
+  if (!g) return false;
+  const q = layer.getAbsoluteTransform().copy().invert().point(p);
+  const half = s ? s.strokeWidth / 2 + 6 : (n.getAttr("thick") || 20) / 2;     // icône déformée : demi-épaisseur
+  const x = q.x - n.x(), y = q.y - n.y(), tol = Math.max(8, half);
+  let px = g.x1, py = g.y1;
+  for (let i = 1; i <= 48; i++) {
+    const t = i / 48, u = 1 - t;
+    const nx = u * u * g.x1 + 2 * u * t * g.cx + t * t * g.x2, ny = u * u * g.y1 + 2 * u * t * g.cy + t * t * g.y2;
+    if (distToSeg(x, y, px, py, nx, ny) <= tol) return true;
+    px = nx; py = ny;
+  }
+  return false;
+}
+
+// ----- Icônes-flèches déformables : l'image est découpée en tranches posées le long d'une courbe de Bézier -----
+const isArrowLike = (it) => !!it && (it.type === "arrow" || it.type === "arrowicon");
+function baseName(src) {
+  try { return decodeURIComponent((src.split("?")[0].split("/").pop() || "")).replace(/\.[a-z0-9]+$/i, ""); } catch { return ""; }
+}
+const isArrowSrc = (src) => !!src && !src.startsWith("data:") && /^arrow[ _-]/i.test(baseName(src));   // fichiers "Arrow ..."
+// Rotation (0/90/180/270) à appliquer à l'icône pour que sa flèche pointe vers la droite
+function autoOrient(name, ratio) {
+  const n = " " + name.toLowerCase().replace(/[_-]+/g, " ") + " ";
+  if (/ up /.test(n)) return 90;
+  if (/ down /.test(n)) return 270;
+  if (/ left /.test(n)) return 180;
+  if (/ right /.test(n)) return 0;
+  return ratio < 0.8 ? 90 : 0;
+}
+const rasterCache = new WeakMap();
+// Rasterise l'icône (haute résolution, une seule fois) dans un canvas, orienté "flèche vers la droite"
+function makeRaster(img, orient) {
+  let byImg = rasterCache.get(img);
+  if (!byImg) rasterCache.set(img, (byImg = {}));
+  if (byImg[orient]) return byImg[orient];
+  const ratio = (img.naturalWidth || 100) / (img.naturalHeight || 100), MAX = 1200;
+  const cw = ratio >= 1 ? MAX : Math.round(MAX * ratio), ch = ratio >= 1 ? Math.round(MAX / ratio) : MAX;
+  const quarter = orient % 180 !== 0;
+  const cv = document.createElement("canvas");
+  cv.width = quarter ? ch : cw; cv.height = quarter ? cw : ch;
+  const c = cv.getContext("2d");
+  c.translate(cv.width / 2, cv.height / 2);
+  c.rotate((orient * Math.PI) / 180);
+  c.drawImage(img, -cw / 2, -ch / 2, cw, ch);
+  return (byImg[orient] = cv);
+}
+function setWarpImage(n, src, orient) {
+  const want = (n._wantSrc = src + "|" + orient);
+  const img = getImage(src);
+  const go = () => { if (n._wantSrc === want) { n.setAttr("raster", makeRaster(img, orient)); layer.batchDraw(); } };
+  if (!img.complete) img.addEventListener("load", go, { once: true });
+  else if (img.naturalWidth || img.naturalHeight) go();
+}
+function setAnyImage(n, src) {
+  if (n.getAttr("geo")) setWarpImage(n, src, n.getAttr("orient") || 0);
+  else setNodeImage(n, src);
+}
+function drawWarp(ctx, shape) {
+  const g = shape.getAttr("geo"), r = shape.getAttr("raster");
+  if (!g || !r) return;
+  const thick = shape.getAttr("thick") || 20, flip = !!shape.getAttr("flip");
+  const c = ctx._context;
+  const M = 160, cum = [0];
+  const P = (t) => { const u = 1 - t; return { x: u * u * g.x1 + 2 * u * t * g.cx + t * t * g.x2, y: u * u * g.y1 + 2 * u * t * g.cy + t * t * g.y2 }; };
+  let prev = P(0), minX = prev.x, maxX = prev.x, minY = prev.y, maxY = prev.y;
+  for (let i = 1; i <= M; i++) {
+    const p = P(i / M);
+    cum.push(cum[i - 1] + Math.hypot(p.x - prev.x, p.y - prev.y));
+    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    prev = p;
+  }
+  const L = cum[M];
+  if (L < 1) return;
+  const N = Math.max(24, Math.min(160, Math.round(L / 3)));
+  const sw = r.width / N, dw = L / N, ov = 0.4;
+  const paint = (cc) => {
+    let j = 0;
+    for (let k = 0; k < N; k++) {
+      const s = (k + 0.5) * dw;
+      while (j < M - 1 && cum[j + 1] < s) j++;
+      const seg = cum[j + 1] - cum[j] || 1;
+      const t = (j + Math.min(1, Math.max(0, (s - cum[j]) / seg))) / M, u = 1 - t;
+      const p = P(t);
+      const tx = 2 * u * (g.cx - g.x1) + 2 * t * (g.x2 - g.cx), ty = 2 * u * (g.cy - g.y1) + 2 * t * (g.y2 - g.cy);
+      cc.save();
+      cc.translate(p.x, p.y);
+      cc.rotate(Math.atan2(ty, tx));
+      if (flip) cc.scale(1, -1);
+      cc.drawImage(r, k * sw, 0, sw, r.height, -dw / 2 - ov, -thick / 2, dw + 2 * ov, thick);
+      cc.restore();
+    }
+  };
+  if (c.globalAlpha < 0.999) {
+    // opacité générale : on dessine d'abord en opaque puis on applique l'opacité une seule fois (pas de rayures aux jointures)
+    const m = c.getTransform(), sc = Math.min(4, Math.hypot(m.a, m.b) || 1);
+    const bx = minX - thick, by = minY - thick, bw = maxX - minX + 2 * thick, bh = maxY - minY + 2 * thick;
+    const off = document.createElement("canvas");
+    off.width = Math.max(1, Math.ceil(bw * sc)); off.height = Math.max(1, Math.ceil(bh * sc));
+    const oc = off.getContext("2d");
+    oc.scale(sc, sc); oc.translate(-bx, -by);
+    paint(oc);
+    c.drawImage(off, bx, by, bw, bh);
+  } else paint(c);
+}
+
 function buildNode(it) {
   let n;
   if (it.type === "image") n = new Konva.Image({ id: it.id, draggable: true });
   else if (it.type === "text") n = new Konva.Text({ id: it.id, draggable: true, fontFamily: "Arial" });
+  else if (it.type === "arrowicon") {
+    n = new Konva.Shape({ id: it.id, draggable: true, sceneFunc: drawWarp, hitFunc: () => {} });
+    n.getSelfRect = () => arrowRect(n);
+    n.on("dragmove", () => { handles.position({ x: n.x(), y: n.y() }); });
+  }
+  else if (it.type === "arrow") {
+    n = new Konva.Shape({ id: it.id, draggable: true, sceneFunc: drawArrow, hitFunc: () => {} });
+    n.getSelfRect = () => arrowRect(n);
+    n.on("dragmove", () => { handles.position({ x: n.x(), y: n.y() }); });   // les poignées suivent la flèche
+  }
   else return null;
 
   n.on("dragstart transformstart", () => {
@@ -244,6 +473,23 @@ function buildNode(it) {
 }
 
 function applyAttrs(n, it) {
+  if (it.type === "arrowicon") {
+    n.setAttrs({
+      x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, opacity: it.opacity ?? 1,
+      geo: { x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2, cx: it.cx, cy: it.cy },
+      thick: it.thick || 20, flip: !!it.flip, orient: it.orient || 0,
+    });
+    setWarpImage(n, srcFor(it), it.orient || 0);
+    return;
+  }
+  if (it.type === "arrow") {
+    n.setAttrs({
+      x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, opacity: it.opacity ?? 1,
+      geo: { x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2, cx: it.cx, cy: it.cy },
+      style: { stroke: it.stroke || "#222222", strokeWidth: it.strokeWidth || 4, headStart: it.headStart || "none", headEnd: it.headEnd || "triangle", dash: it.dash || "solid" },
+    });
+    return;
+  }
   n.setAttrs({
     x: it.x, y: it.y, rotation: it.rotation || 0,
     scaleX: it.scaleX || 1, scaleY: it.scaleY || 1,
@@ -259,6 +505,12 @@ function endGesture(n) {
     if (history.length > 100) history.shift();
     future = [];
     gestureSnap = null;
+  }
+  if (n.getAttr("geo")) {                         // flèche déplacée : on "cuit" le décalage dans ses points
+    const dx = n.x(), dy = n.y();
+    if (dx || dy) items = items.map((i) => (i.id === n.id() ? shiftArrow(i, dx, dy) : i));
+    save(); sync();
+    return;
   }
   const isText = n.getClassName() === "Text";
   if (isText && Math.abs(n.scaleX() - n.scaleY()) < 0.01 && n.scaleY() !== 1) {
@@ -282,6 +534,18 @@ function keepOnPage(n) {
   n.x(n.x() + dx); n.y(n.y() + dy);
 }
 
+// Cadre de transformation pour images/textes, poignées dédiées pour les flèches
+function attachSelection() {
+  const it = items.find((i) => i.id === selectedId);
+  const n = it && nodes.get(it.id);
+  const isArrow = isArrowLike(it);
+  tr.nodes(n && !isArrow ? [n] : []);
+  tr.keepRatio(keepRatioLocked);
+  showHandles(isArrow ? it : null);
+  tr.moveToTop();
+  handles.moveToTop();
+}
+
 function sync() {
   const ids = new Set(items.map((i) => i.id));
   for (const [id, n] of nodes) {
@@ -289,9 +553,11 @@ function sync() {
   }
   items.forEach((it) => {
     let n = nodes.get(it.id);
+    if (n && n._kind !== it.type) { n.destroy(); nodes.delete(it.id); n = null; }   // type changé (conversion / annulation)
     if (!n) {
       n = buildNode(it);
       if (!n) return;
+      n._kind = it.type;
       nodes.set(it.id, n);
       layer.add(n);
     }
@@ -300,7 +566,7 @@ function sync() {
   });
   tr.moveToTop();                       // le cadre toujours au-dessus
   if (selectedId && !nodes.has(selectedId)) selectedId = null;
-  tr.nodes(selectedId ? [nodes.get(selectedId)] : []);
+  attachSelection();
   tr.forceUpdate();
   layer.batchDraw();
   updateProps();
@@ -335,9 +601,7 @@ function select(id) {
   commitPendingTint();
   picker.close();
   selectedId = id && nodes.has(id) ? id : null;
-  tr.nodes(selectedId ? [nodes.get(selectedId)] : []);
-  tr.keepRatio(keepRatioLocked);
-  tr.moveToTop();
+  attachSelection();
   tr.forceUpdate();
   layer.batchDraw();
   updateProps();
@@ -385,6 +649,12 @@ function pickNode() {
 bgLayer.listening(false);
 function geoHit(p) {
   if (!p) return null;
+  if (handles.isVisible()) {
+    for (const h of handles.getChildren()) {                // poignées de flèche
+      const ap = h.getAbsolutePosition();
+      if (Math.hypot(ap.x - p.x, ap.y - p.y) <= 12) return h;
+    }
+  }
   if (tr.nodes().length && tr.isVisible()) {
     for (const a of tr.find("._anchor")) {                 // 8 poignées + poignée de rotation
       if (!a.isVisible()) continue;
@@ -396,6 +666,7 @@ function geoHit(p) {
   for (let i = items.length - 1; i >= 0; i--) {
     const n = nodes.get(items[i].id);
     if (!n) continue;
+    if (isArrowLike(items[i])) { if (hitArrow(n, p)) return n; continue; }
     const q = n.getAbsoluteTransform().copy().invert().point(p);
     if (q.x >= 0 && q.y >= 0 && q.x <= n.width() && q.y <= n.height()) return n;
   }
@@ -405,6 +676,7 @@ layer.getIntersection = (pos) => geoHit(pos);
 
 function isClickOnTransformer(t, p) {
   if (!t) return false;
+  if (t.hasName && t.hasName("ahandle")) return true;
   if (t === tr) return true;
   if (t.findAncestor && t.findAncestor("Transformer")) return true;
   if (t.getParent && t.getParent() === tr) return true;
@@ -472,11 +744,23 @@ function addIcon(src, x, y) {
   const place = () => {
     const ratio = (img.naturalWidth || 100) / (img.naturalHeight || 100);
     const c = center();
+    if (isArrowSrc(src)) {                       // icône "Arrow ..." : flèche modifiable (départ, arrivée, courbure)
+      const orient = autoOrient(baseName(src), ratio), r2 = orient % 180 ? 1 / ratio : ratio;
+      const mx = (x ?? c.x) + 60, my = (y ?? c.y) + 60;
+      add({ type: "arrowicon", src, x1: mx - 120, y1: my, x2: mx + 120, y2: my, cx: mx, cy: my,
+            thick: Math.round(Math.max(8, Math.min(300, 240 / r2))), orient, flip: false });
+      return;
+    }
     add({ type: "image", src, x: x ?? c.x, y: y ?? c.y, width: 120, height: 120 / ratio });
   };
   img.complete ? place() : img.addEventListener("load", place, { once: true });
 }
 
+$("btnArrow").onclick = () => {
+  const cx = pageW / 2, cy = pageH / 2;
+  add({ type: "arrow", x1: cx - 120, y1: cy + 30, x2: cx + 120, y2: cy + 30, cx, cy: cy - 50,
+        stroke: "#222222", strokeWidth: 4, headStart: "none", headEnd: "triangle", dash: "solid" });
+};
 $("btnText").onclick = () =>
   add({ type: "text", text: "Texte", fontSize: 28, fill: "#222222", fontFamily: "Arial", ...center() });
 
@@ -524,7 +808,7 @@ function pasteItem(it) {
   pasteCount++;
   const copy = structuredClone(it);
   delete copy.id;
-  add({ ...copy, x: it.x + 20 * pasteCount, y: it.y + 20 * pasteCount });
+  add(isArrowLike(copy) ? shiftArrow(copy, 20 * pasteCount, 20 * pasteCount) : { ...copy, x: it.x + 20 * pasteCount, y: it.y + 20 * pasteCount });
 }
 document.addEventListener("paste", (e) => {
   if (isTyping()) return;
@@ -564,7 +848,7 @@ window.addEventListener("keydown", (e) => {
     const d = { arrowleft: [-s, 0], arrowright: [s, 0], arrowup: [0, -s], arrowdown: [0, s] }[k];
     if (Date.now() - lastNudge > 600) snapshot();
     lastNudge = Date.now();
-    items = items.map((i) => (i.id === selectedId ? { ...i, x: it.x + d[0], y: it.y + d[1] } : i));
+    items = items.map((i) => (i.id === selectedId ? (isArrowLike(i) ? shiftArrow(i, d[0], d[1]) : { ...i, x: it.x + d[0], y: it.y + d[1] }) : i));
     commit();
   }
 });
@@ -577,13 +861,27 @@ function updateProps() {
   setHidden("pageWrap", !!it);
   if (!it) return;
   const isText = it.type === "text";
-  setHidden("colorWrap", !isText);
+  const isArrow = it.type === "arrow";
+  setHidden("colorWrap", !(isText || isArrow));
+  setHidden("arrowWrap", !isArrow);
+  const isWarp = it.type === "arrowicon";
+  setHidden("warpWrap", !isWarp);
+  setHidden("toWarpWrap", !(it.type === "image" && isArrowSrc(it.src)));
+  setHidden("dimWrap", isArrow || isWarp);
+  setHidden("rotWrap", isArrow || isWarp);
+  if (isWarp) setValue("propThick", Math.round(it.thick || 20));
   setHidden("fsWrap", !isText);
   setHidden("textHint", !isText);
-  setValue("propColor", it.fill || "#000000");
+  setValue("propColor", (isArrow ? it.stroke : it.fill) || "#000000");
+  if (isArrow) {
+    setValue("propStroke", it.strokeWidth || 4);
+    setValue("propHeadStart", it.headStart || "none");
+    setValue("propHeadEnd", it.headEnd || "triangle");
+    setValue("propDash", it.dash || "solid");
+  }
   setValue("propFont", it.fontSize || 20);
   setHidden("ffWrap", !isText);
-  const isSvgImg = it.type === "image" && isSvgSrc(it.src);
+  const isSvgImg = (it.type === "image" || isWarp) && isSvgSrc(it.src);
   setHidden("tintWrap", !isSvgImg);
   setValue("propTint", it.tint || "#000000");
   if (isSvgImg) refreshPalette(it); else { paletteFor = null; picker.close(); }
@@ -591,7 +889,44 @@ function updateProps() {
   setValue("propOpacity", it.opacity ?? 1);
 }
 const onChange = (id, fn) => { const el = $(id); if (el) el.onchange = (e) => { fn(e); el.blur(); }; };
-onChange("propColor", (e) => selectedId && update(selectedId, { fill: e.target.value }));
+const selIsArrow = () => { const it = items.find((i) => i.id === selectedId); return !!it && it.type === "arrow"; };
+onChange("propColor", (e) => selectedId && update(selectedId, selIsArrow() ? { stroke: e.target.value } : { fill: e.target.value }));
+onChange("propStroke", (e) => selectedId && update(selectedId, { strokeWidth: Math.max(1, Math.min(60, +e.target.value || 4)) }));
+onChange("propHeadStart", (e) => selectedId && update(selectedId, { headStart: e.target.value }));
+onChange("propHeadEnd", (e) => selectedId && update(selectedId, { headEnd: e.target.value }));
+onChange("propDash", (e) => selectedId && update(selectedId, { dash: e.target.value }));
+$("btnStraighten").onclick = () => {
+  const it = items.find((i) => i.id === selectedId);
+  if (it && it.type === "arrow") update(it.id, { cx: (it.x1 + it.x2) / 2, cy: (it.y1 + it.y2) / 2 });
+};
+// --- icônes-flèches déformables ---
+onChange("propThick", (e) => selectedId && update(selectedId, { thick: Math.max(4, Math.min(600, +e.target.value || 20)) }));
+const warpItem = () => { const it = items.find((i) => i.id === selectedId); return it && it.type === "arrowicon" ? it : null; };
+$("btnWStraighten").onclick = () => { const it = warpItem(); if (it) update(it.id, { cx: (it.x1 + it.x2) / 2, cy: (it.y1 + it.y2) / 2 }); };
+$("btnWSwap").onclick = () => { const it = warpItem(); if (it) update(it.id, { x1: it.x2, y1: it.y2, x2: it.x1, y2: it.y1 }); };
+$("btnWFlip").onclick = () => { const it = warpItem(); if (it) update(it.id, { flip: !it.flip }); };
+$("btnWOrient").onclick = () => { const it = warpItem(); if (it) update(it.id, { orient: ((it.orient || 0) + 90) % 360 }); };
+$("btnToWarp").onclick = () => {
+  const it = items.find((i) => i.id === selectedId);
+  if (!it || it.type !== "image") return;
+  const ratio = it.width / it.height, orient = autoOrient(baseName(it.src), ratio);
+  const w = it.width * (it.scaleX || 1), h = it.height * (it.scaleY || 1), th = ((it.rotation || 0) * Math.PI) / 180;
+  const P = ([lx, ly]) => ({ x: it.x + lx * Math.cos(th) - ly * Math.sin(th), y: it.y + lx * Math.sin(th) + ly * Math.cos(th) });
+  const [a, b] = orient === 0 ? [[0, h / 2], [w, h / 2]] : orient === 180 ? [[w, h / 2], [0, h / 2]] : orient === 90 ? [[w / 2, h], [w / 2, 0]] : [[w / 2, 0], [w / 2, h]];
+  const s = P(a), e = P(b);
+  snapshot();
+  const old = nodes.get(it.id);
+  if (old) { old.destroy(); nodes.delete(it.id); }          // le nœud image est remplacé par un nœud déformable
+  items = items.map((i) => (i.id === it.id ? {
+    type: "arrowicon", id: i.id, src: i.src, x1: s.x, y1: s.y, x2: e.x, y2: e.y, cx: (s.x + e.x) / 2, cy: (s.y + e.y) / 2,
+    thick: Math.round(orient % 180 ? w : h), orient, flip: false, opacity: i.opacity, tint: i.tint, colorMap: i.colorMap, colorOpacity: i.colorOpacity,
+  } : i));
+  commit();
+};
+$("btnSwapArrow").onclick = () => {
+  const it = items.find((i) => i.id === selectedId);
+  if (it && it.type === "arrow") update(it.id, { x1: it.x2, y1: it.y2, x2: it.x1, y2: it.y1, headStart: it.headEnd || "triangle", headEnd: it.headStart || "none" });
+};
 onChange("propFont", (e) => selectedId && update(selectedId, { fontSize: +e.target.value }));
 onChange("propOpacity", (e) => selectedId && update(selectedId, { opacity: +e.target.value }));
 
@@ -600,7 +935,7 @@ const live = (id, fn) => {
   const el = $(id);
   if (el) el.oninput = (e) => { const n = nodes.get(selectedId); if (n) { fn(n, e.target.value); layer.batchDraw(); } };
 };
-live("propColor", (n, v) => n.fill(v));
+live("propColor", (n, v) => (n.getAttr("geo") ? n.setAttr("style", { ...n.getAttr("style"), stroke: v }) : n.fill(v)));
 live("propOpacity", (n, v) => n.opacity(+v));
 
 // Couleurs de l'icône SVG : aperçu en direct, enregistré dès qu'on quitte le sélecteur,
@@ -616,13 +951,13 @@ function startPreview(it, n, patch) {
   getSvgText(it.src).then((t) => {
     if (pendingTint !== token) return;
     const img = new Image();
-    img.onload = () => { n.image(img); layer.batchDraw(); };
+    img.onload = () => { if (n.getAttr("geo")) n.setAttr("raster", makeRaster(img, n.getAttr("orient") || 0)); else n.image(img); layer.batchDraw(); };
     img.src = svgDataUri(renderVariant(t, { ...it, ...patch }));
   }).catch(() => {});
 }
 const currentSvgItem = () => {
   const it = items.find((i) => i.id === selectedId), n = nodes.get(selectedId);
-  return it && n && it.type === "image" && isSvgSrc(it.src) ? { it, n } : null;
+  return it && n && (it.type === "image" || it.type === "arrowicon") && isSvgSrc(it.src) ? { it, n } : null;
 };
 function bindCommit(el) { el.addEventListener("change", commitPendingTint); el.addEventListener("blur", commitPendingTint); }
 
@@ -909,7 +1244,7 @@ $("btnSave").onclick = () => {
 };
 
 function loadProject(data) {
-  items = (data.items || []).filter((i) => i.type === "image" || i.type === "text");
+  items = (data.items || []).filter((i) => i.type === "image" || i.type === "text" || i.type === "arrow" || i.type === "arrowicon");
   $("pageW").value = data.pageW || 1200;
   $("pageH").value = data.pageH || 800;
   resizePage();
@@ -933,10 +1268,12 @@ $("fileProject").onchange = (e) => {
 // ===== Export PNG (uniquement la page, sans la marge ni le cadre) =====
 $("btnPng").onclick = () => {
   tr.hide();
+  handles.hide();
   bg.shadowEnabled(false);
   const url = stage.toDataURL({ x: MARGIN, y: MARGIN, width: pageW, height: pageH, pixelRatio: 3 });
   bg.shadowEnabled(true);
   tr.show();
+  if (isArrowLike(items.find((i) => i.id === selectedId))) handles.show();
   layer.batchDraw();
   const a = document.createElement("a");
   a.href = url;

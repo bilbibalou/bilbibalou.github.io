@@ -13,6 +13,7 @@
     <h1>🧬 BioImg</h1>
     <div class="group">
       <button id="btnText">T Texte</button>
+      <button id="btnArrow">➜ Flèche</button>
     </div>
     <div class="group">
       <button id="btnFront">⬆ Avant</button>
@@ -50,6 +51,36 @@
           <p class="hint">Clique sur une pastille pour changer la couleur et la transparence de cette partie.</p>
           <label>Tout en une couleur <input type="color" id="propTint" /></label>
           <button type="button" id="btnTintReset" style="margin-top:6px;width:100%">Couleurs d'origine</button>
+        </div>
+        <div id="arrowWrap">
+          <label>Épaisseur <input type="number" id="propStroke" min="1" max="60" /></label>
+          <label>Pointe de départ
+            <select id="propHeadStart"><option value="none">Aucune</option><option value="triangle">Triangle</option><option value="open">Ouverte (V)</option><option value="dot">Rond</option></select>
+          </label>
+          <label>Pointe d'arrivée
+            <select id="propHeadEnd"><option value="none">Aucune</option><option value="triangle">Triangle</option><option value="open">Ouverte (V)</option><option value="dot">Rond</option></select>
+          </label>
+          <label>Trait
+            <select id="propDash"><option value="solid">Plein</option><option value="dashed">Tirets</option><option value="dotted">Pointillés</option></select>
+          </label>
+          <div class="btn-group">
+            <button type="button" id="btnStraighten">Redresser</button>
+            <button type="button" id="btnSwapArrow">⇄ Inverser</button>
+          </div>
+          <p class="hint">Points blancs : départ et arrivée. Point bleu : tire pour courber.</p>
+        </div>
+        <div id="warpWrap">
+          <label>Épaisseur <input type="number" id="propThick" min="4" max="600" /></label>
+          <div class="btn-group">
+            <button type="button" id="btnWStraighten">Redresser</button>
+            <button type="button" id="btnWSwap">⇄ Inverser</button>
+            <button type="button" id="btnWFlip">⇅ Miroir</button>
+            <button type="button" id="btnWOrient">↻ Orientation</button>
+          </div>
+          <p class="hint">Points blancs : départ et arrivée. Point bleu : tire pour courber. « Orientation » tourne l'icône si elle pointe dans le mauvais sens.</p>
+        </div>
+        <div id="toWarpWrap">
+          <button type="button" id="btnToWarp" style="width:100%">➜ Rendre cette flèche modifiable</button>
         </div>
         <label id="fsWrap">Taille texte <input type="number" id="propFont" min="6" max="200" /></label>
         <div id="dimWrap">

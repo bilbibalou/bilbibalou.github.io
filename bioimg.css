@@ -16,10 +16,10 @@ main { flex: 1; display: flex; min-height: 0; }
 .sidebar { width: 230px; background: #fff; border-right: 1px solid #d5dbe3; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .sidebar input[type=search] { padding: 7px; border: 1px solid #cbd2dc; border-radius: 6px; }
 .upload { text-align: center; }
-.icon-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; align-content: start; }
+.icon-list { flex: 1; overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-content: start; }
 .icon-item { border: 1px solid #e3e7ee; border-radius: 6px; padding: 4px; text-align: center; cursor: grab; font-size: 10px; background: #fafbfd; }
 .icon-item:hover { border-color: #3b6fe0; background: #eef3ff; }
-.icon-item img { width: 100%; height: 50px; object-fit: contain; pointer-events: none; }
+.icon-item img { width: 100%; height: 60px; object-fit: contain; pointer-events: none; }
 
 #canvasWrap { flex: 1; overflow: auto; padding: 0; background: #e3e8ef; }
 #canvas { width: max-content; height: max-content; }
@@ -57,3 +57,6 @@ hr { border: none; border-top: 1px solid #e3e7ee; }
 .cp-track input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid #3b6fe0; cursor: pointer; }
 .cpick .cp-hex { padding: 5px 6px; border: 1px solid #cbd2dc; border-radius: 4px; font-size: 13px; width: 100%; }
 #tintWrap { display: flex; flex-direction: column; gap: 4px; }
+#arrowWrap { display: flex; flex-direction: column; gap: 8px; }
+.props select { width: 100%; }
+#warpWrap { display: flex; flex-direction: column; gap: 8px; }
