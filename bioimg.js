@@ -41,7 +41,8 @@ const tr = new Konva.Transformer({
   borderStrokeWidth: 1.5,
   borderDash: [5, 4],
   padding: 4,
-  keepRatio: true,
+  keepRatio: true,                       // coins : proportions conservées (Maj = libre)
+  enabledAnchors: ["top-left", "top-center", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-center", "bottom-right"],
   shiftBehavior: 'inverted',
   boundBoxFunc: (oldBox, newBox) => {
     if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) return oldBox;
@@ -51,10 +52,6 @@ const tr = new Konva.Transformer({
 
 layer.add(tr);
 
-tr.on("transform", () => {
-  const node = tr.nodes()[0];
-  if (node) updatePropsFields(node);
-});
 
 
 // Cache des images
