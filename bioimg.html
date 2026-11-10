@@ -45,8 +45,11 @@
         <label id="colorWrap">Couleur <input type="color" id="propColor" /></label>
         <label id="ffWrap">Police <select id="propFontFamily"></select></label>
         <div id="tintWrap">
-          <label>Couleur de l'icône <input type="color" id="propTint" /></label>
-          <button type="button" id="btnTintReset" style="margin-top:6px;width:100%">Couleur d'origine</button>
+          <span class="subtitle">Couleurs de l'icône</span>
+          <div id="palette" class="palette"></div>
+          <p class="hint">Clique sur une pastille pour changer cette couleur seulement.</p>
+          <label>Tout en une couleur <input type="color" id="propTint" /></label>
+          <button type="button" id="btnTintReset" style="margin-top:6px;width:100%">Couleurs d'origine</button>
         </div>
         <label id="fsWrap">Taille texte <input type="number" id="propFont" min="6" max="200" /></label>
         <div id="dimWrap">

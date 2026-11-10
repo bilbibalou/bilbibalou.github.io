@@ -106,15 +106,103 @@ function tintSvg(text, color) {
   return out;
 }
 
+// ----- Palette : changer une couleur précise de l'icône (ex. le liquide) en gardant le reste -----
+const _cctx = document.createElement("canvas").getContext("2d");
+const _colorCache = new Map();
+// Convertit n'importe quelle couleur CSS (#abc, rgb(), nom...) en [r,g,b] ; null si ce n'est pas une couleur
+function parseColor(v) {
+  v = (v || "").trim();
+  if (_colorCache.has(v)) return _colorCache.get(v);
+  let res = null;
+  if (v && !/^(none|transparent|currentcolor|inherit|url\()/i.test(v)) {
+    _cctx.fillStyle = "#123456"; _cctx.fillStyle = v;
+    const r = _cctx.fillStyle;
+    if (!(r === "#123456" && v.toLowerCase().replace(/\s/g, "") !== "#123456")) {
+      if (r[0] === "#") res = [1, 3, 5].map((i) => parseInt(r.slice(i, i + 2), 16));
+      else { const m = r.match(/[\d.]+/g).map(Number); if (m.length < 4 || m[3] > 0) res = m.slice(0, 3); }
+    }
+  }
+  _colorCache.set(v, res);
+  return res;
+}
+const toHex = (c) => "#" + c.map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
+const hexToRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function rgbToHsl([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  let h = 0, s = 0;
+  if (d) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  return [h, s, l];
+}
+function hslToRgb(h, s, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+// Nouvelle couleur d'une nuance : teinte/saturation de la cible, en gardant l'écart de clarté (dégradés conservés)
+function shiftColor(memberHex, repHex, targetHex) {
+  const m = rgbToHsl(hexToRgb(memberHex)), r = rgbToHsl(hexToRgb(repHex)), t = rgbToHsl(hexToRgb(targetHex));
+  return toHex(hslToRgb(t[0], t[1], Math.min(1, Math.max(0, t[2] + (m[2] - r[2])))));
+}
+const ATTR_RX = /\b(fill|stroke|stop-color)\s*=\s*(["'])(.*?)\2/gi;
+const CSS_RX = /\b(fill|stroke|stop-color)\s*:\s*([^;"'}]+)/gi;
+const CLUSTER_DIST = 55;           // nuances proches regroupées en une seule pastille
+
+// Deux couleurs sont de la même famille si elles ont presque la même teinte (ex. jaune clair / jaune foncé d'un dégradé)
+// ou, pour les gris/blancs/noirs, si elles sont proches
+function sameFamily(c1, c2) {
+  const a = rgbToHsl(c1), b = rgbToHsl(c2);
+  if (a[1] > 0.25 && b[1] > 0.25) {
+    const dh = Math.min(Math.abs(a[0] - b[0]), 360 - Math.abs(a[0] - b[0]));
+    return dh < 25 && Math.abs(a[2] - b[2]) < 0.45;
+  }
+  return Math.hypot(c1[0] - c2[0], c1[1] - c2[1], c1[2] - c2[2]) < CLUSTER_DIST;
+}
+// Liste des couleurs principales du SVG (nuances proches regroupées), les plus utilisées d'abord
+function svgPalette(text) {
+  const counts = new Map();
+  const add = (v) => { const c = parseColor(v); if (c) { const h = toHex(c); counts.set(h, (counts.get(h) || 0) + 1); } };
+  text.replace(ATTR_RX, (m, a, q, v) => { add(v); return m; });
+  text.replace(CSS_RX, (m, a, v) => { add(v); return m; });
+  const clusters = [];
+  [...counts].sort((x, y) => y[1] - x[1]).forEach(([hex, n]) => {
+    const rgb = hexToRgb(hex);
+    const cl = clusters.find((k) => sameFamily(k.rgb, rgb));
+    if (cl) { cl.members.push(hex); cl.n += n; } else clusters.push({ rep: hex, rgb, members: [hex], n });
+  });
+  return clusters;
+}
+function applyColorMap(text, colorMap) {
+  const memberMap = {};
+  svgPalette(text).forEach((cl) => {
+    const target = colorMap[cl.rep];
+    if (target) cl.members.forEach((m) => { memberMap[m] = shiftColor(m, cl.rep, target); });
+  });
+  const fix = (v) => { const c = parseColor(v); return c && memberMap[toHex(c)] ? memberMap[toHex(c)] : v; };
+  return text
+    .replace(ATTR_RX, (m, a, q, v) => `${a}=${q}${fix(v)}${q}`)
+    .replace(CSS_RX, (m, a, v) => `${a}:${fix(v)}`);
+}
+
+// Variante d'une icône : "" (originale), "t:#rrggbb" (tout en une couleur) ou "m:{...}" (couleurs choisies)
+const hasMap = (it) => it.colorMap && Object.keys(it.colorMap).length > 0;
+const variantOf = (it) => (it.tint ? "t:" + it.tint : hasMap(it) ? "m:" + JSON.stringify(it.colorMap) : "");
+const renderVariant = (text, it) => (it.tint ? tintSvg(text, it.tint) : hasMap(it) ? applyColorMap(text, it.colorMap) : text);
+
 // Source à afficher pour un élément (version recolorée si disponible)
 function srcFor(it) {
-  if (!it.tint || !isSvgSrc(it.src)) return it.src;
-  const key = it.src + "|" + it.tint;
+  const variant = variantOf(it);
+  if (!variant || !isSvgSrc(it.src)) return it.src;
+  const key = it.src + "|" + variant;
   if (tintCache[key]) return tintCache[key];
-  if (svgTextSync[it.src]) return (tintCache[key] = svgDataUri(tintSvg(svgTextSync[it.src], it.tint)));
+  if (svgTextSync[it.src]) return (tintCache[key] = svgDataUri(renderVariant(svgTextSync[it.src], it)));
   getSvgText(it.src).then((t) => {
-    tintCache[key] = svgDataUri(tintSvg(t, it.tint));
-    items.filter((i) => i.src === it.src && i.tint === it.tint)
+    tintCache[key] = svgDataUri(renderVariant(t, it));
+    items.filter((i) => i.src === it.src && variantOf(i) === variant)
          .forEach((i) => { const n = nodes.get(i.id); if (n) setNodeImage(n, tintCache[key]); });
   }).catch(() => {});
   return it.src;                                  // en attendant, on garde l'original
@@ -489,8 +577,10 @@ function updateProps() {
   setValue("propColor", it.fill || "#000000");
   setValue("propFont", it.fontSize || 20);
   setHidden("ffWrap", !isText);
-  setHidden("tintWrap", !(it.type === "image" && isSvgSrc(it.src)));
+  const isSvgImg = it.type === "image" && isSvgSrc(it.src);
+  setHidden("tintWrap", !isSvgImg);
   setValue("propTint", it.tint || "#000000");
+  if (isSvgImg) refreshPalette(it); else paletteFor = null;
   setValue("propFontFamily", it.fontFamily || "Arial");
   setValue("propOpacity", it.opacity ?? 1);
 }
@@ -507,34 +597,73 @@ const live = (id, fn) => {
 live("propColor", (n, v) => n.fill(v));
 live("propOpacity", (n, v) => n.opacity(+v));
 
-// Couleur de l'icône SVG : aperçu en direct, enregistrée dès qu'on quitte le sélecteur,
+// Couleurs de l'icône SVG : aperçu en direct, enregistré dès qu'on quitte le sélecteur,
 // qu'on sélectionne autre chose ou qu'on ajoute un élément (toujours sur l'icône d'origine)
 function commitPendingTint() {
   if (!pendingTint) return;
-  const { id, color } = pendingTint;
+  const { id, patch } = pendingTint;
   pendingTint = null;
-  const it = items.find((i) => i.id === id);
-  if (it && it.tint !== color) update(id, { tint: color });
+  if (items.some((i) => i.id === id)) update(id, patch);
 }
+function startPreview(it, n, patch) {
+  const token = (pendingTint = { id: it.id, patch });
+  getSvgText(it.src).then((t) => {
+    if (pendingTint !== token) return;
+    const img = new Image();
+    img.onload = () => { n.image(img); layer.batchDraw(); };
+    img.src = svgDataUri(renderVariant(t, { ...it, ...patch }));
+  }).catch(() => {});
+}
+const currentSvgItem = () => {
+  const it = items.find((i) => i.id === selectedId), n = nodes.get(selectedId);
+  return it && n && it.type === "image" && isSvgSrc(it.src) ? { it, n } : null;
+};
+function bindCommit(el) { el.addEventListener("change", commitPendingTint); el.addEventListener("blur", commitPendingTint); }
+
+// Pastilles de la palette (une par couleur principale de l'icône)
+let paletteFor = null;
+function refreshPalette(it) {
+  const box = $("palette");
+  if (!box) return;
+  const key = it.id + "|" + it.src;
+  if (paletteFor && paletteFor.key === key) {          // même icône : on met juste les valeurs à jour
+    paletteFor.inputs.forEach(({ rep, el }) => {
+      if (document.activeElement !== el) el.value = (!it.tint && it.colorMap && it.colorMap[rep]) || rep;
+    });
+    return;
+  }
+  const state = (paletteFor = { key, inputs: [] });
+  box.innerHTML = "";
+  getSvgText(it.src).then((t) => {
+    if (paletteFor !== state) return;
+    svgPalette(t).slice(0, 12).forEach((cl) => {
+      const el = document.createElement("input");
+      el.type = "color";
+      el.value = cl.rep;
+      el.title = "Changer cette couleur";
+      el.oninput = () => {
+        const cur = currentSvgItem();
+        if (cur) startPreview(cur.it, cur.n, { colorMap: { ...(cur.it.colorMap || {}), [cl.rep]: el.value }, tint: null });
+      };
+      bindCommit(el);
+      box.appendChild(el);
+      state.inputs.push({ rep: cl.rep, el });
+    });
+    const cur = items.find((i) => i.id === selectedId);
+    if (cur) refreshPalette(cur);
+  }).catch(() => {});
+}
+
 const tintInput = $("propTint");
 if (tintInput) {
   tintInput.oninput = (e) => {
-    const it = items.find((i) => i.id === selectedId), n = nodes.get(selectedId);
-    if (!it || !n) return;
-    const color = e.target.value;
-    pendingTint = { id: it.id, color };
-    getSvgText(it.src).then((t) => {
-      if (!pendingTint || pendingTint.id !== it.id || pendingTint.color !== color) return;
-      const img = new Image();
-      img.onload = () => { n.image(img); layer.batchDraw(); };
-      img.src = svgDataUri(tintSvg(t, color));
-    }).catch(() => {});
+    const cur = currentSvgItem();
+    if (cur) startPreview(cur.it, cur.n, { tint: e.target.value, colorMap: null });
   };
-  tintInput.addEventListener("change", commitPendingTint);
-  tintInput.addEventListener("blur", commitPendingTint);
+  bindCommit(tintInput);
 }
 const btnTintReset = $("btnTintReset");
-if (btnTintReset) btnTintReset.onclick = () => { pendingTint = null; if (selectedId) update(selectedId, { tint: null }); };
+if (btnTintReset) btnTintReset.onclick = () => { pendingTint = null; if (selectedId) update(selectedId, { tint: null, colorMap: null }); };
 
 // ===== Polices =====
 const FONTS = ["Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Courier New",
