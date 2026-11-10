@@ -42,7 +42,6 @@ const tr = new Konva.Transformer({
   borderDash: [5, 4],
   padding: 4,
   keepRatio: true,                       // coins : proportions conservées (Maj = libre)
-  enabledAnchors: ["top-left", "top-center", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-center", "bottom-right"],
   shiftBehavior: 'inverted',
   boundBoxFunc: (oldBox, newBox) => {
     if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) return oldBox;
@@ -216,6 +215,29 @@ function pickNode() {
   }
   return null;
 }
+
+// Détection géométrique branchée directement dans Konva : remplace le "hit canvas" (lecture de pixels),
+// que Brave / Firefox anti-empreinte / certaines extensions faussent. Poignées d'abord, puis éléments.
+bgLayer.listening(false);
+function geoHit(p) {
+  if (!p) return null;
+  if (tr.nodes().length && tr.isVisible()) {
+    for (const a of tr.find("._anchor")) {                 // 8 poignées + poignée de rotation
+      if (!a.isVisible()) continue;
+      const q = a.getAbsoluteTransform().copy().invert().point(p);
+      const pad = 6;                                        // zone de clic un peu plus large que le dessin
+      if (q.x >= -pad && q.y >= -pad && q.x <= a.width() + pad && q.y <= a.height() + pad) return a;
+    }
+  }
+  for (let i = items.length - 1; i >= 0; i--) {
+    const n = nodes.get(items[i].id);
+    if (!n) continue;
+    const q = n.getAbsoluteTransform().copy().invert().point(p);
+    if (q.x >= 0 && q.y >= 0 && q.x <= n.width() && q.y <= n.height()) return n;
+  }
+  return null;
+}
+layer.getIntersection = (pos) => geoHit(pos);
 
 function isClickOnTransformer(t, p) {
   if (!t) return false;
