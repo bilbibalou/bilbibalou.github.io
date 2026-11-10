@@ -176,11 +176,16 @@ function svgPalette(text) {
   });
   return clusters;
 }
-function applyColorMap(text, colorMap) {
+function applyColorMap(text, colorMap, opacity) {
   const memberMap = {};
   svgPalette(text).forEach((cl) => {
-    const target = colorMap[cl.rep];
-    if (target) cl.members.forEach((m) => { memberMap[m] = shiftColor(m, cl.rep, target); });
+    const target = colorMap[cl.rep], alpha = opacity[cl.rep];
+    const transparent = typeof alpha === "number" && alpha < 1;
+    if (!target && !transparent) return;
+    cl.members.forEach((m) => {
+      const hex = target ? shiftColor(m, cl.rep, target) : m;
+      memberMap[m] = transparent ? `rgba(${hexToRgb(hex).join(",")},${alpha})` : hex;   // rgba : s'ajoute aux opacités déjà présentes
+    });
   });
   const fix = (v) => { const c = parseColor(v); return c && memberMap[toHex(c)] ? memberMap[toHex(c)] : v; };
   return text
@@ -189,9 +194,9 @@ function applyColorMap(text, colorMap) {
 }
 
 // Variante d'une icône : "" (originale), "t:#rrggbb" (tout en une couleur) ou "m:{...}" (couleurs choisies)
-const hasMap = (it) => it.colorMap && Object.keys(it.colorMap).length > 0;
-const variantOf = (it) => (it.tint ? "t:" + it.tint : hasMap(it) ? "m:" + JSON.stringify(it.colorMap) : "");
-const renderVariant = (text, it) => (it.tint ? tintSvg(text, it.tint) : hasMap(it) ? applyColorMap(text, it.colorMap) : text);
+const hasMap = (it) => (it.colorMap && Object.keys(it.colorMap).length > 0) || (it.colorOpacity && Object.keys(it.colorOpacity).length > 0);
+const variantOf = (it) => (it.tint ? "t:" + it.tint : hasMap(it) ? "m:" + JSON.stringify([it.colorMap || {}, it.colorOpacity || {}]) : "");
+const renderVariant = (text, it) => (it.tint ? tintSvg(text, it.tint) : hasMap(it) ? applyColorMap(text, it.colorMap || {}, it.colorOpacity || {}) : text);
 
 // Source à afficher pour un élément (version recolorée si disponible)
 function srcFor(it) {
@@ -328,6 +333,7 @@ function update(id, patch) {
 }
 function select(id) {
   commitPendingTint();
+  picker.close();
   selectedId = id && nodes.has(id) ? id : null;
   tr.nodes(selectedId ? [nodes.get(selectedId)] : []);
   tr.keepRatio(keepRatioLocked);
@@ -580,7 +586,7 @@ function updateProps() {
   const isSvgImg = it.type === "image" && isSvgSrc(it.src);
   setHidden("tintWrap", !isSvgImg);
   setValue("propTint", it.tint || "#000000");
-  if (isSvgImg) refreshPalette(it); else paletteFor = null;
+  if (isSvgImg) refreshPalette(it); else { paletteFor = null; picker.close(); }
   setValue("propFontFamily", it.fontFamily || "Arial");
   setValue("propOpacity", it.opacity ?? 1);
 }
@@ -620,34 +626,143 @@ const currentSvgItem = () => {
 };
 function bindCommit(el) { el.addEventListener("change", commitPendingTint); el.addEventListener("blur", commitPendingTint); }
 
-// Pastilles de la palette (une par couleur principale de l'icône)
+// Valeurs de l'icône en tenant compte d'un aperçu en cours (évite de perdre un réglage non encore validé)
+const baseOf = (it) => (pendingTint && pendingTint.id === it.id ? { ...it, ...pendingTint.patch } : it);
+
+// ----- Mini sélecteur de couleur (carré + teinte + transparence), ouvert au clic sur une pastille -----
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+function rgbToHsv([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+  let h = 0;
+  if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; }
+  return [h, mx ? d / mx : 0, mx];
+}
+function hsvToRgb(h, s, v) {
+  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+const picker = (() => {
+  let el, sv, dot, hue, alpha, afill, aval, hex, anchor = null, cb = null;
+  const st = { h: 0, s: 1, v: 1, a: 1 };
+  const hexOf = () => toHex(hsvToRgb(st.h, st.s, st.v));
+  function paint() {
+    const c = hexOf(), [r, g, b] = hexToRgb(c);
+    sv.style.background = `linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,hsl(${st.h},100%,50%))`;
+    dot.style.left = st.s * 100 + "%"; dot.style.top = (1 - st.v) * 100 + "%";
+    hue.value = st.h; alpha.value = st.a;
+    afill.style.background = `linear-gradient(to right,rgba(${r},${g},${b},0),rgb(${r},${g},${b}))`;
+    aval.textContent = Math.round(st.a * 100) + "%";
+    if (document.activeElement !== hex) hex.value = c;
+  }
+  const emit = () => { paint(); if (cb) cb(hexOf(), Math.round(st.a * 100) / 100); };
+  function build() {
+    el = document.createElement("div");
+    el.className = "cpick";
+    el.hidden = true;
+    el.innerHTML = `<div class="cp-sv"><div class="cp-dot"></div></div>
+      <div class="cp-cap">Teinte</div>
+      <div class="cp-track cp-hue-track"><input type="range" class="cp-hue" min="0" max="360" step="1"></div>
+      <div class="cp-cap">Transparence <b class="cp-aval"></b></div>
+      <div class="cp-track cp-alpha-track"><div class="cp-afill"></div><input type="range" class="cp-alpha" min="0" max="1" step="0.01"></div>
+      <input type="text" class="cp-hex" maxlength="7" spellcheck="false">`;
+    document.body.appendChild(el);
+    sv = el.querySelector(".cp-sv"); dot = el.querySelector(".cp-dot");
+    hue = el.querySelector(".cp-hue"); alpha = el.querySelector(".cp-alpha");
+    afill = el.querySelector(".cp-afill"); aval = el.querySelector(".cp-aval"); hex = el.querySelector(".cp-hex");
+    const pick = (e) => {
+      const r = sv.getBoundingClientRect();
+      st.s = clamp01((e.clientX - r.left) / r.width);
+      st.v = 1 - clamp01((e.clientY - r.top) / r.height);
+      emit();
+    };
+    sv.addEventListener("pointerdown", (e) => { sv.setPointerCapture(e.pointerId); pick(e); sv.onpointermove = pick; });
+    ["pointerup", "pointercancel"].forEach((ev) => sv.addEventListener(ev, () => { sv.onpointermove = null; }));
+    hue.oninput = () => { st.h = +hue.value; emit(); };
+    alpha.oninput = () => { st.a = +alpha.value; emit(); };
+    hex.oninput = () => {
+      if (!/^#[0-9a-f]{6}$/i.test(hex.value)) return;
+      const [h, s, v] = rgbToHsv(hexToRgb(hex.value.toLowerCase()));
+      st.s = s; st.v = v; if (s > 0.001 && v > 0.001) st.h = h;
+      emit();
+    };
+    // clic en dehors / Échap : on ferme (et on enregistre)
+    document.addEventListener("pointerdown", (e) => {
+      if (!el.hidden && !el.contains(e.target) && !(anchor && anchor.contains(e.target))) close();
+    }, true);
+    window.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  }
+  function open(btn, color, a, onChange) {
+    if (!el) build();
+    commitPendingTint();
+    cb = null;
+    const [h, s, v] = rgbToHsv(hexToRgb(color));
+    st.s = s; st.v = v; st.a = a; if (s > 0.001 && v > 0.001) st.h = h;
+    paint();
+    el.hidden = false;
+    anchor = btn;
+    const r = btn.getBoundingClientRect(), w = el.offsetWidth, hh = el.offsetHeight;
+    let left = r.left - w - 10;
+    if (left < 8) left = Math.min(r.right + 10, window.innerWidth - w - 8);
+    el.style.left = left + "px";
+    el.style.top = Math.max(8, Math.min(r.top, window.innerHeight - hh - 8)) + "px";
+    cb = onChange;
+  }
+  function close() {
+    if (!el || el.hidden) return;
+    el.hidden = true;
+    cb = null; anchor = null;
+    commitPendingTint();
+  }
+  return { open, close, anchor: () => anchor };
+})();
+
+// Palette : une pastille par couleur principale ; clic = sélecteur (couleur + transparence de cette couleur)
 let paletteFor = null;
+const paintSwatch = (btn, color, a) => { const [r, g, b] = hexToRgb(color); btn.firstChild.style.background = `rgba(${r},${g},${b},${a})`; };
 function refreshPalette(it) {
   const box = $("palette");
   if (!box) return;
   const key = it.id + "|" + it.src;
-  if (paletteFor && paletteFor.key === key) {          // même icône : on met juste les valeurs à jour
-    paletteFor.inputs.forEach(({ rep, el }) => {
-      if (document.activeElement !== el) el.value = (!it.tint && it.colorMap && it.colorMap[rep]) || rep;
+  if (paletteFor && paletteFor.key === key) {          // même icône : on met juste les pastilles à jour
+    paletteFor.inputs.forEach(({ rep, btn }) => {
+      const op = !it.tint && it.colorOpacity && it.colorOpacity[rep];
+      paintSwatch(btn, (!it.tint && it.colorMap && it.colorMap[rep]) || rep, typeof op === "number" ? op : 1);
     });
     return;
   }
+  picker.close();
   const state = (paletteFor = { key, inputs: [] });
   box.innerHTML = "";
   getSvgText(it.src).then((t) => {
     if (paletteFor !== state) return;
     svgPalette(t).slice(0, 12).forEach((cl) => {
-      const el = document.createElement("input");
-      el.type = "color";
-      el.value = cl.rep;
-      el.title = "Changer cette couleur";
-      el.oninput = () => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "sw";
+      btn.title = "Couleur et transparence";
+      btn.innerHTML = "<span></span>";
+      paintSwatch(btn, cl.rep, 1);
+      btn.onclick = () => {
+        if (picker.anchor() === btn) return picker.close();
         const cur = currentSvgItem();
-        if (cur) startPreview(cur.it, cur.n, { colorMap: { ...(cur.it.colorMap || {}), [cl.rep]: el.value }, tint: null });
+        if (!cur) return;
+        const b = baseOf(cur.it);
+        const op = !b.tint && b.colorOpacity && b.colorOpacity[cl.rep];
+        picker.open(btn, (!b.tint && b.colorMap && b.colorMap[cl.rep]) || cl.rep, typeof op === "number" ? op : 1, (hex, a) => {
+          const cur2 = currentSvgItem();
+          if (!cur2) return;
+          const b2 = baseOf(cur2.it);
+          const colorMap = { ...(b2.colorMap || {}) }, colorOpacity = { ...(b2.colorOpacity || {}) };
+          if (hex.toLowerCase() === cl.rep) delete colorMap[cl.rep]; else colorMap[cl.rep] = hex;   // inchangé = pas d'entrée
+          if (a >= 1) delete colorOpacity[cl.rep]; else colorOpacity[cl.rep] = a;
+          paintSwatch(btn, hex, a);
+          startPreview(cur2.it, cur2.n, { colorMap, colorOpacity, tint: null });
+        });
       };
-      bindCommit(el);
-      box.appendChild(el);
-      state.inputs.push({ rep: cl.rep, el });
+      box.appendChild(btn);
+      state.inputs.push({ rep: cl.rep, btn });
     });
     const cur = items.find((i) => i.id === selectedId);
     if (cur) refreshPalette(cur);
@@ -658,12 +773,12 @@ const tintInput = $("propTint");
 if (tintInput) {
   tintInput.oninput = (e) => {
     const cur = currentSvgItem();
-    if (cur) startPreview(cur.it, cur.n, { tint: e.target.value, colorMap: null });
+    if (cur) startPreview(cur.it, cur.n, { tint: e.target.value, colorMap: null, colorOpacity: null });
   };
   bindCommit(tintInput);
 }
 const btnTintReset = $("btnTintReset");
-if (btnTintReset) btnTintReset.onclick = () => { pendingTint = null; if (selectedId) update(selectedId, { tint: null, colorMap: null }); };
+if (btnTintReset) btnTintReset.onclick = () => { pendingTint = null; if (selectedId) update(selectedId, { tint: null, colorMap: null, colorOpacity: null }); };
 
 // ===== Polices =====
 const FONTS = ["Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Courier New",
