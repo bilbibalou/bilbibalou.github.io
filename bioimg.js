@@ -5,6 +5,7 @@ let pageW = 1200, pageH = 800;
 
 let items = [];
 let selectedId = null;
+let pendingTint = null;               // couleur d'icône en cours de choix (pas encore enregistrée)
 let history = [], future = [];
 let counter = Date.now();
 const newId = () => "n" + (counter++);
@@ -66,6 +67,72 @@ function getImage(src) {
   return imgCache[src];
 }
 
+// ===== Recoloration des icônes SVG =====
+const isSvgSrc = (src) => /^data:image\/svg/i.test(src || "") || /\.svg([?#]|$)/i.test(src || "");
+const svgDataUri = (s) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
+const svgTextCache = {};
+const tintCache = {};
+const svgTextSync = {};            // code SVG déjà chargé (permet de recolorer sans attendre)
+
+// Récupère le code source du SVG (data: URI ou fichier du site)
+function getSvgText(src) {
+  if (!svgTextCache[src]) {
+    svgTextCache[src] = (async () => {
+      if (src.startsWith("data:")) {
+        const i = src.indexOf(",");
+        const head = src.slice(0, i), data = src.slice(i + 1);
+        return /;base64/i.test(head)
+          ? new TextDecoder().decode(Uint8Array.from(atob(data), (c) => c.charCodeAt(0)))
+          : decodeURIComponent(data);
+      }
+      const r = await fetch(src);
+      if (!r.ok) throw new Error("SVG introuvable");
+      return r.text();
+    })().then((t) => { svgTextSync[src] = t; return t; })
+      .catch((e) => { delete svgTextCache[src]; throw e; });
+  }
+  return svgTextCache[src];
+}
+
+// Remplace les couleurs (fill / stroke) du SVG ; le blanc et "none" sont conservés
+function tintSvg(text, color) {
+  const KEEP = /^(none|transparent|white|#fff|#ffffff|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))$/i;
+  const fix = (v) => (KEEP.test(v.trim()) ? v : color);
+  let out = text
+    .replace(/\b(fill|stroke)\s*=\s*(["'])(.*?)\2/gi, (m, a, q, v) => `${a}=${q}${fix(v)}${q}`)
+    .replace(/\b(fill|stroke)\s*:\s*([^;"'}]+)/gi, (m, a, v) => `${a}:${fix(v)}`);
+  // éléments sans couleur explicite (noir par défaut) : on colore la racine
+  out = out.replace(/<svg\b([^>]*)>/i, (m, attrs) => (/\sfill\s*=/.test(attrs) ? m : `<svg${attrs} fill="${color}">`));
+  return out;
+}
+
+// Source à afficher pour un élément (version recolorée si disponible)
+function srcFor(it) {
+  if (!it.tint || !isSvgSrc(it.src)) return it.src;
+  const key = it.src + "|" + it.tint;
+  if (tintCache[key]) return tintCache[key];
+  if (svgTextSync[it.src]) return (tintCache[key] = svgDataUri(tintSvg(svgTextSync[it.src], it.tint)));
+  getSvgText(it.src).then((t) => {
+    tintCache[key] = svgDataUri(tintSvg(t, it.tint));
+    items.filter((i) => i.src === it.src && i.tint === it.tint)
+         .forEach((i) => { const n = nodes.get(i.id); if (n) setNodeImage(n, tintCache[key]); });
+  }).catch(() => {});
+  return it.src;                                  // en attendant, on garde l'original
+}
+
+// Change l'image d'un nœud sans clignotement (attend que la nouvelle soit chargée)
+function setNodeImage(n, src) {
+  n._wantSrc = src;
+  const img = getImage(src);
+  if (n.image() === img) return;
+  if (img.complete || !n.image()) n.image(img);
+  if (!img.complete) {
+    img.addEventListener("load", () => {
+      if (n._wantSrc === src) { n.image(img); tr.forceUpdate(); layer.batchDraw(); }
+    }, { once: true });
+  }
+}
+
 // ===== Nœuds Konva =====
 const nodes = new Map();
 let gestureSnap = null;
@@ -89,8 +156,8 @@ function applyAttrs(n, it) {
     scaleX: it.scaleX || 1, scaleY: it.scaleY || 1,
     opacity: it.opacity ?? 1,
   });
-  if (it.type === "image") n.setAttrs({ image: getImage(it.src), width: it.width, height: it.height });
-  else n.setAttrs({ text: it.text, fontSize: it.fontSize, fill: it.fill });
+  if (it.type === "image") { n.setAttrs({ width: it.width, height: it.height }); setNodeImage(n, srcFor(it)); }
+  else n.setAttrs({ text: it.text, fontSize: it.fontSize, fill: it.fill, fontFamily: it.fontFamily || "Arial" });
 }
 
 function endGesture(n) {
@@ -148,6 +215,7 @@ function sync() {
 
 // ===== État / historique =====
 function snapshot() {
+  commitPendingTint();
   history.push(JSON.stringify(items));
   if (history.length > 100) history.shift();
   future = [];
@@ -171,6 +239,7 @@ function update(id, patch) {
   commit();
 }
 function select(id) {
+  commitPendingTint();
   selectedId = id && nodes.has(id) ? id : null;
   tr.nodes(selectedId ? [nodes.get(selectedId)] : []);
   tr.keepRatio(keepRatioLocked);
@@ -180,6 +249,7 @@ function select(id) {
   updateProps();
 }
 function undo() {
+  commitPendingTint();
   if (!history.length) return;
   future.push(JSON.stringify(items));
   items = JSON.parse(history.pop());
@@ -314,7 +384,7 @@ function addIcon(src, x, y) {
 }
 
 $("btnText").onclick = () =>
-  add({ type: "text", text: "Texte", fontSize: 28, fill: "#222222", ...center() });
+  add({ type: "text", text: "Texte", fontSize: 28, fill: "#222222", fontFamily: "Arial", ...center() });
 
 // ===== Actions =====
 function deleteSelected() {
@@ -410,6 +480,7 @@ function updateProps() {
   const it = items.find((i) => i.id === selectedId);
   setHidden("noSel", !!it);
   setHidden("propFields", !it);
+  setHidden("pageWrap", !!it);
   if (!it) return;
   const isText = it.type === "text";
   setHidden("colorWrap", !isText);
@@ -417,12 +488,84 @@ function updateProps() {
   setHidden("textHint", !isText);
   setValue("propColor", it.fill || "#000000");
   setValue("propFont", it.fontSize || 20);
+  setHidden("ffWrap", !isText);
+  setHidden("tintWrap", !(it.type === "image" && isSvgSrc(it.src)));
+  setValue("propTint", it.tint || "#000000");
+  setValue("propFontFamily", it.fontFamily || "Arial");
   setValue("propOpacity", it.opacity ?? 1);
 }
 const onChange = (id, fn) => { const el = $(id); if (el) el.onchange = (e) => { fn(e); el.blur(); }; };
 onChange("propColor", (e) => selectedId && update(selectedId, { fill: e.target.value }));
 onChange("propFont", (e) => selectedId && update(selectedId, { fontSize: +e.target.value }));
 onChange("propOpacity", (e) => selectedId && update(selectedId, { opacity: +e.target.value }));
+
+// Aperçu en direct pendant qu'on déplace le curseur / choisit la couleur (validé au relâchement)
+const live = (id, fn) => {
+  const el = $(id);
+  if (el) el.oninput = (e) => { const n = nodes.get(selectedId); if (n) { fn(n, e.target.value); layer.batchDraw(); } };
+};
+live("propColor", (n, v) => n.fill(v));
+live("propOpacity", (n, v) => n.opacity(+v));
+
+// Couleur de l'icône SVG : aperçu en direct, enregistrée dès qu'on quitte le sélecteur,
+// qu'on sélectionne autre chose ou qu'on ajoute un élément (toujours sur l'icône d'origine)
+function commitPendingTint() {
+  if (!pendingTint) return;
+  const { id, color } = pendingTint;
+  pendingTint = null;
+  const it = items.find((i) => i.id === id);
+  if (it && it.tint !== color) update(id, { tint: color });
+}
+const tintInput = $("propTint");
+if (tintInput) {
+  tintInput.oninput = (e) => {
+    const it = items.find((i) => i.id === selectedId), n = nodes.get(selectedId);
+    if (!it || !n) return;
+    const color = e.target.value;
+    pendingTint = { id: it.id, color };
+    getSvgText(it.src).then((t) => {
+      if (!pendingTint || pendingTint.id !== it.id || pendingTint.color !== color) return;
+      const img = new Image();
+      img.onload = () => { n.image(img); layer.batchDraw(); };
+      img.src = svgDataUri(tintSvg(t, color));
+    }).catch(() => {});
+  };
+  tintInput.addEventListener("change", commitPendingTint);
+  tintInput.addEventListener("blur", commitPendingTint);
+}
+const btnTintReset = $("btnTintReset");
+if (btnTintReset) btnTintReset.onclick = () => { pendingTint = null; if (selectedId) update(selectedId, { tint: null }); };
+
+// ===== Polices =====
+const FONTS = ["Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Courier New",
+               "Comic Sans MS", "Impact", "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Playfair Display", "Caveat"];
+const fontSel = $("propFontFamily");
+if (fontSel) FONTS.forEach((f) => {
+  const o = document.createElement("option");
+  o.value = f; o.textContent = f; o.style.fontFamily = `"${f}"`;
+  fontSel.appendChild(o);
+});
+
+// Force Konva à recalculer la taille des textes une fois la police réellement chargée
+function refreshTextFonts() {
+  nodes.forEach((n) => {
+    if (n.getClassName() !== "Text") return;
+    const f = n.fontFamily();
+    n.fontFamily("serif"); n.fontFamily(f);
+  });
+  tr.forceUpdate();
+  layer.batchDraw();
+}
+async function loadFonts(families) {
+  try { await Promise.all([...new Set(families)].map((f) => document.fonts.load(`16px "${f}"`))); } catch {}
+  refreshTextFonts();
+}
+onChange("propFontFamily", async (e) => {
+  if (!selectedId) return;
+  const f = e.target.value;
+  await loadFonts([f]);
+  update(selectedId, { fontFamily: f });
+});
 
 function resizePage() {
   pageW = +$("pageW").value || 1200;
@@ -438,24 +581,47 @@ $("pageH").onchange = resizePage;
 // ===== Bibliothèque d'icônes =====
 let icons = [...(window.BIOIMG_ICONS || [])];
 
+const ICON_BATCH = 60;                       // nombre d'icônes ajoutées à chaque étape
+let iconObserver = null;
+
 function renderIcons() {
   const q = $("search").value.toLowerCase();
   const list = $("iconList");
   list.innerHTML = "";
-  icons
-    .filter((i) => (i.name + " " + (i.tags || "")).toLowerCase().includes(q))
-    .forEach((icon) => {
+  iconObserver?.disconnect();
+  const filtered = icons.filter((i) => (i.name + " " + (i.tags || "")).toLowerCase().includes(q));
+
+  // Sentinelle en bas de la liste : quand elle devient visible, on ajoute le lot suivant
+  const sentinel = document.createElement("div");
+  sentinel.style.cssText = "grid-column:1/-1;height:1px";
+  list.appendChild(sentinel);
+
+  let shown = 0;
+  const addBatch = () => {
+    const frag = document.createDocumentFragment();
+    filtered.slice(shown, shown + ICON_BATCH).forEach((icon) => {
       const div = document.createElement("div");
       div.className = "icon-item";
       div.draggable = true;
       div.title = icon.name;
-      div.innerHTML = `<img src="${icon.src}" alt="" draggable="false"><div>${icon.name}</div>`;
+      div.innerHTML = `<img src="${icon.src}" alt="" draggable="false" loading="lazy" decoding="async"><div>${icon.name}</div>`;
       div.onclick = () => addIcon(icon.src);
       div.ondragstart = (e) => e.dataTransfer.setData("text/plain", icon.src);
-      list.appendChild(div);
+      frag.appendChild(div);
     });
+    shown += ICON_BATCH;
+    list.insertBefore(frag, sentinel);
+    if (shown >= filtered.length) { iconObserver.disconnect(); sentinel.remove(); }
+    else { iconObserver.unobserve(sentinel); iconObserver.observe(sentinel); }   // re-vérifie si la sentinelle est encore visible
+  };
+
+  iconObserver = new IntersectionObserver((entries) => { if (entries[0].isIntersecting) addBatch(); },
+                                          { root: list, rootMargin: "300px" });
+  addBatch();
 }
-$("search").oninput = renderIcons;
+
+let searchTimer = null;
+$("search").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(renderIcons, 150); };
 
 const container = stage.container();
 container.addEventListener("dragover", (e) => e.preventDefault());
@@ -505,6 +671,7 @@ function loadProject(data) {
   resizePage();
   selectedId = null;
   sync();
+  loadFonts(items.filter((i) => i.type === "text").map((i) => i.fontFamily || "Arial"));
 }
 
 $("fileProject").onchange = (e) => {
