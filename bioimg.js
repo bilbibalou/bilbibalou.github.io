@@ -4,7 +4,9 @@ const MARGIN = 60;                 // marge autour de la page pour attraper les 
 let pageW = 1200, pageH = 800;
 
 let items = [];
-let selectedId = null;
+let selectedIds = [];                 // sélection (plusieurs éléments possibles)
+let selectedId = null;                // = l'élément sélectionné quand il n'y en a qu'un seul (panneau de propriétés)
+function setSel(ids) { selectedIds = [...new Set(ids)]; selectedId = selectedIds.length === 1 ? selectedIds[0] : null; }
 let pendingTint = null;               // couleur d'icône en cours de choix (pas encore enregistrée)
 let history = [], future = [];
 let counter = Date.now();
@@ -510,10 +512,21 @@ function endGesture(n) {
     future = [];
     gestureSnap = null;
   }
-  if (n.getAttr("geo")) {                         // flèche déplacée : on "cuit" le décalage dans ses points
-    const dx = n.x(), dy = n.y();
-    if (dx || dy) items = items.map((i) => (i.id === n.id() ? shiftArrow(i, dx, dy) : i));
-    save(); sync();
+  if (n.getAttr("geo")) {                         // flèche déplacée / transformée : on "cuit" la transformation dans ses points
+    const it0 = items.find((i) => i.id === n.id());
+    if (it0) {
+      const tf = n.getTransform(), mp = (x, y) => tf.point({ x, y });
+      const a = mp(it0.x1, it0.y1), b = mp(it0.x2, it0.y2), c = mp(it0.cx, it0.cy);
+      const sc = Math.sqrt(Math.abs(n.scaleX() * n.scaleY())) || 1;
+      const patch = { x1: a.x, y1: a.y, x2: b.x, y2: b.y, cx: c.x, cy: c.y };
+      if (it0.thick != null) patch.thick = Math.max(4, it0.thick * sc);
+      if (it0.strokeWidth != null) patch.strokeWidth = Math.max(1, it0.strokeWidth * sc);
+      items = items.map((i) => (i.id === it0.id ? { ...i, ...patch } : i));
+      const upd = items.find((i) => i.id === it0.id);
+      applyAttrs(n, upd);
+      if (selectedId === upd.id) showHandles(upd);
+    }
+    save(); updateProps(); layer.batchDraw();
     return;
   }
   const isText = n.getClassName() === "Text";
@@ -540,10 +553,11 @@ function keepOnPage(n) {
 
 // Cadre de transformation pour images/textes, poignées dédiées pour les flèches
 function attachSelection() {
-  const it = items.find((i) => i.id === selectedId);
-  const n = it && nodes.get(it.id);
+  const sel = selectedIds.map((id) => items.find((i) => i.id === id)).filter(Boolean);
+  const it = sel.length === 1 ? sel[0] : null;
   const isArrow = isArrowLike(it);
-  tr.nodes(n && !isArrow ? [n] : []);
+  const picked = sel.map((i) => nodes.get(i.id)).filter(Boolean);
+  tr.nodes(picked.length && !isArrow ? picked : []);
   tr.keepRatio(keepRatioLocked);
   showHandles(isArrow ? it : null);
   tr.moveToTop();
@@ -569,7 +583,7 @@ function sync() {
     n.moveToTop();
   });
   tr.moveToTop();                       // le cadre toujours au-dessus
-  if (selectedId && !nodes.has(selectedId)) selectedId = null;
+  setSel(selectedIds.filter((id) => nodes.has(id)));
   attachSelection();
   tr.forceUpdate();
   layer.batchDraw();
@@ -593,7 +607,14 @@ function add(item) {
   snapshot();
   item.id = newId();
   items.push(item);
-  selectedId = item.id;
+  setSel([item.id]);
+  commit();
+}
+function addMany(list) {                        // plusieurs éléments d'un coup (collage multiple), une seule étape d'historique
+  if (!list.length) return;
+  snapshot();
+  const ids = list.map((item) => { item.id = newId(); items.push(item); return item.id; });
+  setSel(ids);
   commit();
 }
 function update(id, patch) {
@@ -601,15 +622,16 @@ function update(id, patch) {
   items = items.map((i) => (i.id === id ? { ...i, ...patch } : i));
   commit();
 }
-function select(id) {
+function selectMany(ids) {
   commitPendingTint();
   picker.close();
-  selectedId = id && nodes.has(id) ? id : null;
+  setSel(ids.filter((id) => nodes.has(id)));
   attachSelection();
   tr.forceUpdate();
   layer.batchDraw();
   updateProps();
 }
+function select(id) { selectMany(id ? [id] : []); }
 function undo() {
   commitPendingTint();
   if (!history.length) return;
@@ -684,7 +706,7 @@ function isClickOnTransformer(t, p) {
   if (t === tr) return true;
   if (t.findAncestor && t.findAncestor("Transformer")) return true;
   if (t.getParent && t.getParent() === tr) return true;
-  if (!selectedId || !p) return false;
+  if (!selectedIds.length || !p) return false;
 
   // Détection des clics sur ou à proximité d'une poignée du Transformer
   const anchors = tr.find("._anchor");
@@ -712,6 +734,47 @@ function isClickOnTransformer(t, p) {
   return false;
 }
 
+// Rectangle de sélection (glisser dans le vide)
+const bandRect = new Konva.Rect({ fill: "rgba(59,111,224,0.12)", stroke: "#3b6fe0", strokeWidth: 1, dash: [4, 3], listening: false, visible: false });
+layer.add(bandRect);
+let band = null;
+const toLayerPt = (cx, cy) => {
+  const r = stage.container().getBoundingClientRect();
+  return layer.getAbsoluteTransform().copy().invert().point({ x: cx - r.left, y: cy - r.top });
+};
+function startBand(e, additive) {
+  const pe = e.evt.touches ? e.evt.touches[0] : e.evt;
+  band = { p0: toLayerPt(pe.clientX, pe.clientY), additive, base: additive ? [...selectedIds] : [], moved: false };
+  if (!additive) select(null);
+}
+function finishBand() {
+  if (!band) return;
+  const b = band;
+  band = null;
+  if (!b.moved) { bandRect.visible(false); layer.batchDraw(); return; }
+  const r = { x: bandRect.x(), y: bandRect.y(), width: bandRect.width(), height: bandRect.height() };
+  bandRect.visible(false);
+  const hit = items.filter((it) => {
+    const n = nodes.get(it.id);
+    if (!n) return false;
+    const c = n.getClientRect({ relativeTo: layer });
+    return c.x < r.x + r.width && c.x + c.width > r.x && c.y < r.y + r.height && c.y + c.height > r.y;   // l'élément touche la zone
+  }).map((i) => i.id);
+  selectMany([...b.base, ...hit]);
+}
+window.addEventListener("pointermove", (e) => {
+  if (!band) return;
+  if (!(e.buttons & 1)) { finishBand(); return; }       // bouton relâché hors de la fenêtre
+  const q = toLayerPt(e.clientX, e.clientY);
+  if (!band.moved && Math.hypot(q.x - band.p0.x, q.y - band.p0.y) < 4) return;
+  band.moved = true;
+  bandRect.setAttrs({ x: Math.min(band.p0.x, q.x), y: Math.min(band.p0.y, q.y), width: Math.abs(q.x - band.p0.x), height: Math.abs(q.y - band.p0.y), visible: true });
+  bandRect.moveToTop();
+  layer.batchDraw();
+});
+window.addEventListener("pointerup", finishBand);
+window.addEventListener("pointercancel", finishBand);
+
 stage.on("mousedown touchstart", (e) => {
   document.activeElement?.blur();                        // rend le clavier au canvas
   const p = stage.getPointerPosition();
@@ -721,12 +784,23 @@ stage.on("mousedown touchstart", (e) => {
   let node = t.getLayer() === layer && nodes.has(t.id()) ? t : null;
   const fallback = !node;
   if (!node) node = pickNode();                          // détection de secours (sans le "hit canvas")
-  if (!node) { select(null); return; }                   // clic dans le vide
-  if (selectedId !== node.id()) select(node.id());
+  const mod = e.evt.ctrlKey || e.evt.metaKey || e.evt.shiftKey;
+  if (!node) { startBand(e, mod); return; }              // clic dans le vide : début du rectangle de sélection
+  const id = node.id();
+  if (mod) selectMany(selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id]);   // Ctrl/Maj + clic
+  else if (!selectedIds.includes(id)) select(id);        // (clic sur un élément déjà sélectionné : on garde le groupe)
   if (fallback && !node.isDragging()) {                 // Konva n'a pas démarré le drag tout seul
     fallbackDrag = node;
     node.startDrag();
   }
+});
+
+// Simple clic (sans glisser) sur un élément d'un groupe : on ne garde que lui
+stage.on("click tap", (e) => {
+  const t = e.target;
+  if (selectedIds.length < 2 || !t || !t.id || !nodes.has(t.id())) return;
+  if (e.evt.ctrlKey || e.evt.metaKey || e.evt.shiftKey) return;
+  if (selectedIds.includes(t.id())) select(t.id());
 });
 
 $("canvasWrap").addEventListener("mousedown", (e) => {
@@ -770,18 +844,19 @@ $("btnText").onclick = () =>
 
 // ===== Actions =====
 function deleteSelected() {
-  if (!selectedId) return;
+  if (!selectedIds.length) return;
+  const ids = new Set(selectedIds);
   snapshot();
-  items = items.filter((i) => i.id !== selectedId);
-  selectedId = null;
+  items = items.filter((i) => !ids.has(i.id));
+  setSel([]);
   commit();
 }
 function reorder(dir) {
-  const idx = items.findIndex((i) => i.id === selectedId);
-  if (idx < 0) return;
+  const ids = new Set(selectedIds);
+  if (!ids.size) return;
   snapshot();
-  const [it] = items.splice(idx, 1);
-  dir > 0 ? items.push(it) : items.unshift(it);
+  const sel = items.filter((i) => ids.has(i.id)), rest = items.filter((i) => !ids.has(i.id));
+  items = dir > 0 ? [...rest, ...sel] : [...sel, ...rest];      // l'ordre entre éléments sélectionnés est conservé
   commit();
 }
 $("btnFront").onclick = () => reorder(1);
@@ -796,29 +871,34 @@ const isTyping = () => {
 let clipboard = null, pasteCount = 0;
 
 function copySelected() {
-  const it = items.find((i) => i.id === selectedId);
-  if (!it) return false;
-  clipboard = structuredClone(it);
+  const sel = items.filter((i) => selectedIds.includes(i.id));
+  if (!sel.length) return false;
+  clipboard = structuredClone(sel);
   pasteCount = 0;
-  navigator.clipboard?.writeText("BIOIMG:" + JSON.stringify(it)).catch(() => {});
+  navigator.clipboard?.writeText("BIOIMG:" + JSON.stringify(sel)).catch(() => {});
   return true;
 }
-function pasteItem(it) {
-  if (!clipboard || JSON.stringify(it) !== JSON.stringify(clipboard)) {
-    clipboard = structuredClone(it);
+function pasteItems(arr) {
+  arr = Array.isArray(arr) ? arr : [arr];
+  if (!arr.length) return;
+  if (!clipboard || JSON.stringify(arr) !== JSON.stringify(clipboard)) {
+    clipboard = structuredClone(arr);
     pasteCount = 0;
   }
   pasteCount++;
-  const copy = structuredClone(it);
-  delete copy.id;
-  add(isArrowLike(copy) ? shiftArrow(copy, 20 * pasteCount, 20 * pasteCount) : { ...copy, x: it.x + 20 * pasteCount, y: it.y + 20 * pasteCount });
+  const d = 20 * pasteCount;
+  addMany(arr.map((it) => {
+    const c = structuredClone(it);
+    delete c.id;
+    return isArrowLike(c) ? shiftArrow(c, d, d) : { ...c, x: it.x + d, y: it.y + d };
+  }));
 }
 document.addEventListener("paste", (e) => {
   if (isTyping()) return;
   const dt = e.clipboardData;
   const text = dt.getData("text/plain");
   if (text && text.startsWith("BIOIMG:")) {
-    try { e.preventDefault(); pasteItem(JSON.parse(text.slice(7))); return; } catch {}
+    try { e.preventDefault(); pasteItems(JSON.parse(text.slice(7))); return; } catch {}
   }
   const imgItem = [...dt.items].find((i) => i.type.startsWith("image/"));
   if (imgItem) {
@@ -828,7 +908,7 @@ document.addEventListener("paste", (e) => {
     reader.readAsDataURL(imgItem.getAsFile());
     return;
   }
-  if (clipboard) { e.preventDefault(); pasteItem(clipboard); }
+  if (clipboard) { e.preventDefault(); pasteItems(clipboard); }
 });
 
 // ===== Raccourcis clavier =====
@@ -842,16 +922,16 @@ window.addEventListener("keydown", (e) => {
   else if (ctrl && k === "c") copySelected();
   else if (ctrl && k === "x") { if (copySelected()) deleteSelected(); }
   else if (k === "delete" || k === "backspace") { e.preventDefault(); deleteSelected(); }
+  else if (ctrl && k === "a") { e.preventDefault(); selectMany(items.map((i) => i.id)); }
   else if (k === "escape") select(null);
-  else if (selectedId && k.startsWith("arrow")) {
+  else if (selectedIds.length && k.startsWith("arrow")) {
     e.preventDefault();
-    const it = items.find((i) => i.id === selectedId);
-    if (!it) return;
-    const s = e.shiftKey ? 10 : 1;
-    const d = { arrowleft: [-s, 0], arrowright: [s, 0], arrowup: [0, -s], arrowdown: [0, s] }[k];
+    const sdist = e.shiftKey ? 10 : 1;
+    const d = { arrowleft: [-sdist, 0], arrowright: [sdist, 0], arrowup: [0, -sdist], arrowdown: [0, sdist] }[k];
     if (Date.now() - lastNudge > 600) snapshot();
     lastNudge = Date.now();
-    items = items.map((i) => (i.id === selectedId ? (isArrowLike(i) ? shiftArrow(i, d[0], d[1]) : { ...i, x: it.x + d[0], y: it.y + d[1] }) : i));
+    const ids = new Set(selectedIds);
+    items = items.map((i) => (ids.has(i.id) ? (isArrowLike(i) ? shiftArrow(i, d[0], d[1]) : { ...i, x: i.x + d[0], y: i.y + d[1] }) : i));
     commit();
   }
 });
@@ -859,9 +939,11 @@ window.addEventListener("keydown", (e) => {
 // ===== Panneau des propriétés =====
 function updateProps() {
   const it = items.find((i) => i.id === selectedId);
+  const multi = selectedIds.length > 1;
+  $("noSel").textContent = multi ? `${selectedIds.length} éléments sélectionnés (glisse pour les déplacer, Suppr pour les supprimer)` : "Sélectionne un élément";
   setHidden("noSel", !!it);
   setHidden("propFields", !it);
-  setHidden("pageWrap", !!it);
+  setHidden("pageWrap", !!it || multi);
   if (!it) return;
   const isText = it.type === "text";
   const isArrow = it.type === "arrow";
@@ -1255,7 +1337,7 @@ $("btnNew").onclick = () => {
   if (!confirm("Effacer la figure actuelle ?")) return;
   snapshot();
   items = [];
-  selectedId = null;
+  setSel([]);
   commit();
 };
 
@@ -1273,7 +1355,7 @@ function loadProject(data) {
   $("pageW").value = data.pageW || 1200;
   $("pageH").value = data.pageH || 800;
   resizePage();
-  selectedId = null;
+  setSel([]);
   sync();
   loadFonts(items.filter((i) => i.type === "text").map((i) => fontSpec(i)));
 }
